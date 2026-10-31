@@ -230,7 +230,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } catch {
           // ignore
         }
-        void notifyEmail('borrow_requested', profile?.email || user?.email, {
+        await notifyEmail('borrow_requested', profile?.email || user?.email, {
           name: profile?.full_name || user?.email,
           email: profile?.email || user?.email,
           item: `${data.quantity}x ${item.name}`,
@@ -362,7 +362,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : newStatus === 'rejected'
           ? 'borrow_rejected'
           : 'item_returned';
-        void notifyEmail(event, targetReq.user_email, {
+        await notifyEmail(event, targetReq.user_email, {
           name: targetReq.user_name,
           email: targetReq.user_email,
           item: `${targetReq.quantity}x ${targetReq.item_name}`,

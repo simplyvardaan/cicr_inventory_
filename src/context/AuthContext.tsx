@@ -243,6 +243,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setSession(null);
               await loadProfile(fallbackUser);
               localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
+              await notifyEmail('login', fallbackUser.email, {
+                name: fallbackUser.user_metadata?.full_name,
+                email: fallbackUser.email,
+                role: fallbackUser.user_metadata?.role,
+              });
               return { success: true };
             }
           }
@@ -315,7 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-in log error:', logErr);
         }
-        void notifyEmail('login', res.data.user.email, {
+        await notifyEmail('login', res.data.user.email, {
           name: profData?.full_name || res.data.user.user_metadata?.full_name,
           email: res.data.user.email,
           role: profData?.role || res.data.user.user_metadata?.role,
@@ -456,7 +461,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await fetch('/api/accounts', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ action: 'approve', target_id: targetId }),
       });
       const result = await response.json().catch(() => ({}));
@@ -597,7 +605,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await fetch('/api/accounts', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ action: 'reject', target_id: targetId }),
       });
       const result = await response.json().catch(() => ({}));
@@ -747,7 +758,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-out log error:', logErr);
         }
-        void notifyEmail('logout', user.email, {
+        await notifyEmail('logout', user.email, {
           name: profile?.full_name || user.user_metadata?.full_name,
         });
       }

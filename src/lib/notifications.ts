@@ -7,7 +7,8 @@ export type NotificationEvent =
   | 'borrow_requested'
   | 'borrow_approved'
   | 'borrow_rejected'
-  | 'item_returned';
+  | 'item_returned'
+  | 'return_reminder';
 
 export async function notifyEmail(
   event: NotificationEvent,

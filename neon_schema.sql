@@ -10,12 +10,31 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL UNIQUE,
   roll_number TEXT,
   role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   phone TEXT,
   avatar_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   password_reset_required BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
+
+UPDATE profiles
+SET status = 'approved'
+WHERE status IS NULL;
+
+ALTER TABLE profiles
+  ALTER COLUMN status SET DEFAULT 'pending',
+  ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE profiles
+  DROP CONSTRAINT IF EXISTS profiles_status_check;
+
+ALTER TABLE profiles
+  ADD CONSTRAINT profiles_status_check
+  CHECK (status IN ('pending', 'approved', 'rejected'));
 
 CREATE TABLE IF NOT EXISTS inventory_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

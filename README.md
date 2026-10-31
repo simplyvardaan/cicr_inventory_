@@ -202,6 +202,9 @@ from the repository's **Actions** tab.
 in the Supabase SQL Editor to create the matching Supabase tables. The schema is
 safe to rerun because existing RLS policies are replaced. The Supabase
 REST API cannot execute schema DDL using an anon or service-role key.
+If an existing Supabase project reports that `profiles.status` is missing, rerun
+[`supabase_schema.sql`](./supabase_schema.sql) in the SQL Editor and refresh the
+PostgREST schema cache; account approval workflows require this column.
 
 The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
 It replaces each mirrored table's backup snapshot atomically and records each run
