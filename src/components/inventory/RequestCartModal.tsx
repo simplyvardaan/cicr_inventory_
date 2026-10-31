@@ -114,7 +114,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-zinc-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-purple-950/70 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-400 flex items-center justify-center">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
@@ -172,7 +172,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                       <span className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
                         {item.category}
                       </span>
-                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-black">
+                      <span className="text-[10px] text-blue-600 dark:text-purple-400 font-black">
                         {item.available_qty} In Vault
                       </span>
                     </div>
@@ -228,7 +228,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                       value={projectName}
                       onChange={(e) => setProjectName(e.target.value)}
                       placeholder="e.g. Autonomous Maze Rover"
-                      className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
                     />
                   </div>
 
@@ -242,7 +242,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                         required
                         value={returnDate}
                         onChange={(e) => setReturnDate(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
                     placeholder="Specify project requirements, lab session testing, or breadboard assembly..."
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none resize-none transition-all"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none resize-none transition-all"
                   />
                 </div>
 

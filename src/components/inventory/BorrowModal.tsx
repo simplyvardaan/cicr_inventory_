@@ -77,7 +77,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-purple-950/60 text-blue-600 dark:text-purple-400 border border-blue-200 dark:border-purple-800">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
@@ -98,13 +98,13 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
         {/* Selected Component Card */}
         <div className="my-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-bold block">{item.category}</span>
+            <span className="text-[10px] font-mono text-blue-600 dark:text-purple-400 font-bold block">{item.category}</span>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h4>
             <span className="text-xs text-slate-500 dark:text-zinc-400">{item.location}</span>
           </div>
           <div className="text-right">
             <span className="text-xs text-slate-500 dark:text-zinc-400 block font-semibold">Available</span>
-            <span className="text-xl font-black text-blue-600 dark:text-blue-400">{item.available_qty}</span>
+            <span className="text-xl font-black text-blue-600 dark:text-purple-400">{item.available_qty}</span>
             <span className="text-[10px] text-slate-400 block font-medium">units</span>
           </div>
         </div>
@@ -130,7 +130,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                 required
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
               />
             </div>
 
@@ -143,7 +143,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                 required
                 value={expectedReturnDate}
                 onChange={(e) => setExpectedReturnDate(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
               />
             </div>
           </div>
@@ -158,7 +158,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="e.g. Autonomous Maze Rover"
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
             />
           </div>
 
@@ -172,7 +172,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               placeholder="Describe how the component will be integrated in your project..."
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none resize-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none resize-none transition-all"
             />
           </div>
 
@@ -188,7 +188,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-all cursor-pointer disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{loading ? 'Submitting...' : 'Dispatch Request'}</span>

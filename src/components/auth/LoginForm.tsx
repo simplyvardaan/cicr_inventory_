@@ -66,7 +66,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
       <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-[#120d22] border border-slate-200 dark:border-slate-800 mb-6">
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-sm transition-all cursor-default"
+          className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 dark:bg-purple-600 text-white font-bold text-xs shadow-sm transition-all cursor-default"
         >
           <LogIn className="w-3.5 h-3.5" />
           <span>Sign In</span>
@@ -103,7 +103,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="Enter your name, email, or username"
-              className="w-full pl-10 pr-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-medium transition-all outline-none"
+              className="w-full pl-10 pr-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-medium transition-all outline-none"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
             <button
               type="button"
               onClick={() => setForgotOpen(!forgotOpen)}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1 transition-colors"
+              className="text-xs text-blue-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-1 transition-colors"
             >
               <Key className="w-3.5 h-3.5" />
               <span>Forgot Password?</span>
@@ -130,7 +130,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-medium transition-all outline-none"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-medium transition-all outline-none"
             />
             <button
               type="button"
@@ -152,7 +152,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 mt-5 cursor-pointer disabled:opacity-50 transition-all"
+          className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 flex items-center justify-center gap-2 mt-5 cursor-pointer disabled:opacity-50 transition-all"
         >
           <LogIn className="w-4 h-4" />
           <span>{loading ? 'Authenticating...' : 'Authenticate'}</span>
@@ -166,7 +166,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
           <button
             type="button"
             onClick={onSwitchToSignup}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-bold underline-offset-2 transition-colors ml-1"
+            className="text-blue-600 dark:text-purple-400 hover:underline font-bold underline-offset-2 transition-colors ml-1"
           >
             Create Account
           </button>

@@ -23,16 +23,16 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
   const availablePct = Math.round((item.available_qty / (item.total_qty || 1)) * 100);
 
   return (
-    <div className="flex flex-col justify-between rounded-3xl bg-white dark:bg-[#0c0819]/85 border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 transition-all p-5 group shadow-sm hover:shadow-md space-y-4">
+    <div className="flex flex-col justify-between rounded-3xl bg-white dark:bg-[#0c0819]/85 border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500 transition-all p-5 group shadow-sm hover:shadow-md space-y-4">
       {/* Top Header Row: Category, Location, and Status Badge */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50">
+          <span className="text-[10px] font-bold text-blue-700 dark:text-purple-300 uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-900/50">
             {item.category}
           </span>
           {item.location && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-[#120b24] px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-zinc-800">
-              <MapPin className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+              <MapPin className="w-3 h-3 text-blue-600 dark:text-purple-400 shrink-0" />
               <span className="truncate max-w-[120px]">{item.location}</span>
             </span>
           )}
@@ -42,7 +42,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
 
       {/* Body info */}
       <div onClick={() => onSelect(item)} className="cursor-pointer space-y-1.5 flex-1">
-        <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors line-clamp-1">
+        <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:text-purple-400 dark:hover:text-purple-400 dark:group-hover:text-purple-400 transition-colors line-clamp-1">
           {item.name}
         </h4>
         <p className="text-xs text-slate-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
@@ -55,7 +55,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-600 dark:text-zinc-400 font-medium">Available Stock:</span>
           <span className="font-bold text-slate-900 dark:text-white">
-            <span className={item.available_qty <= item.min_threshold ? 'text-amber-500 font-black' : 'text-blue-600 dark:text-blue-400 font-black'}>
+            <span className={item.available_qty <= item.min_threshold ? 'text-amber-500 font-black' : 'text-blue-600 dark:text-purple-400 font-black'}>
               {item.available_qty}
             </span>{' '}
             / {item.total_qty}
@@ -81,7 +81,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
               href={item.datasheet_url}
               target="_blank"
               rel="noreferrer"
-              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors font-medium"
+              className="text-[11px] text-blue-600 dark:text-purple-400 hover:underline flex items-center gap-1 transition-colors font-medium"
               title="View Datasheet"
             >
               <span>Docs</span>
@@ -104,7 +104,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
             disabled={item.available_qty <= 0}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
               item.available_qty > 0
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25'
+                ? 'bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white shadow-md shadow-blue-600/25 dark:shadow-purple-950/40'
                 : 'bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500 border border-slate-200 dark:border-zinc-700'
             }`}
           >
@@ -116,7 +116,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onEdit(item)}
-                className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-2 rounded-xl text-slate-500 hover:text-blue-600 dark:text-purple-400 dark:hover:text-purple-400 hover:bg-blue-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Edit Item"
               >
                 <Edit className="w-3.5 h-3.5" />

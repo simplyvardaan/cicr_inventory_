@@ -130,7 +130,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-purple-950/60 text-blue-600 dark:text-purple-400 border border-blue-200 dark:border-purple-800">
               <PlusCircle className="w-5 h-5" />
             </div>
             <div>
@@ -170,7 +170,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. ESP32-WROOM-32D Development Board"
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
             />
           </div>
 
@@ -183,7 +183,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as ItemCategory)}
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-medium outline-none transition-all"
               >
                 {CATEGORIES.filter((c) => c !== 'All Categories').map((c) => (
                   <option key={c} value={c} className="bg-white dark:bg-[#0c0918] text-slate-900 dark:text-white">
@@ -204,7 +204,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Lab 2, Cabinet A1, Bin 4"
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 required
                 value={totalQty}
                 onChange={(e) => setTotalQty(parseInt(e.target.value) || 0)}
-                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 rounded-lg text-slate-900 dark:text-white font-black outline-none"
+                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 rounded-lg text-slate-900 dark:text-white font-black outline-none"
               />
             </div>
 
@@ -231,7 +231,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 required
                 value={availableQty}
                 onChange={(e) => setAvailableQty(parseInt(e.target.value) || 0)}
-                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 rounded-lg text-blue-600 dark:text-blue-400 font-black outline-none"
+                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 rounded-lg text-blue-600 dark:text-purple-400 font-black outline-none"
               />
             </div>
 
@@ -242,7 +242,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 min="0"
                 value={minThreshold}
                 onChange={(e) => setMinThreshold(parseInt(e.target.value) || 0)}
-                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 rounded-lg text-amber-600 dark:text-amber-400 font-black outline-none"
+                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 rounded-lg text-amber-600 dark:text-amber-400 font-black outline-none"
               />
             </div>
           </div>
@@ -255,7 +255,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
               value={datasheetUrl}
               onChange={(e) => setDatasheetUrl(e.target.value)}
               placeholder="https://docs.espressif.com/..."
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
             />
           </div>
 
@@ -267,7 +267,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Pins, voltage ratings, communication protocols, suitable projects..."
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none resize-none transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none resize-none transition-all"
             />
           </div>
 
@@ -283,7 +283,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-all cursor-pointer disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               <span>{loading ? 'Saving...' : isEditing ? 'Update Component' : 'Add to Inventory'}</span>

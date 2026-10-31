@@ -126,7 +126,7 @@ export const MeetTheDevelopers: React.FC = () => {
             onClick={() => handleTabChange('mentor')}
             className={`flex items-center gap-2 px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'mentor'
-                ? 'bg-blue-600 text-white shadow-md font-bold'
+                ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
                 : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-transparent font-medium'
             }`}
           >
@@ -140,11 +140,11 @@ export const MeetTheDevelopers: React.FC = () => {
             onClick={() => handleTabChange('developer')}
             className={`flex items-center gap-2 px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'developer'
-                ? 'bg-blue-600 text-white shadow-md font-bold'
+                ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
                 : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-transparent font-medium'
             }`}
           >
-            <Code2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <Code2 className="w-4 h-4 text-blue-600 dark:text-purple-400" />
             <span>Developer</span>
           </button>
         </div>
@@ -219,7 +219,7 @@ export const MeetTheDevelopers: React.FC = () => {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#09090d] hover:bg-[#151520] border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-200 hover:text-white transition-all shadow-md"
               >
-                <Github className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <Github className="w-4 h-4 text-blue-600 dark:text-purple-400 shrink-0" />
                 <span>{currentMember.githubUser}</span>
               </a>
             )}
@@ -253,7 +253,7 @@ export const MeetTheDevelopers: React.FC = () => {
                 onClick={() => setSelectedMemberId(member.id)}
                 className={`relative rounded-full transition-all duration-300 cursor-pointer shrink-0 ${
                   isSelected
-                    ? 'p-1.5 ring-4 ring-blue-600 shadow-xl shadow-blue-600/30 opacity-100 scale-105'
+                    ? 'p-1.5 ring-4 ring-blue-600 dark:ring-purple-600 shadow-xl shadow-blue-600/30 opacity-100 scale-105'
                     : 'opacity-40 grayscale hover:opacity-90 hover:grayscale-0 hover:scale-105'
                 }`}
                 title={`${member.name} (${member.role})`}

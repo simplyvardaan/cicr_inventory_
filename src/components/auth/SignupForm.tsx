@@ -127,7 +127,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         </button>
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-sm transition-all cursor-default"
+          className="flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-600 dark:bg-purple-600 text-white font-bold text-xs shadow-sm transition-all cursor-default"
         >
           <span className="text-base font-light leading-none">+</span>
           <span>Register</span>
@@ -147,7 +147,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative group shrink-0">
-              <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-md overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-black text-sm flex items-center justify-center shadow-md overflow-hidden">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -173,7 +173,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-purple-950/40 hover:bg-blue-100 text-blue-700 dark:text-purple-300 border border-blue-200 dark:border-purple-800 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>Upload</span>
@@ -196,7 +196,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter Your Name"
-                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
             </div>
           </div>
@@ -214,7 +214,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={collegeEmail}
                 onChange={(e) => setCollegeEmail(e.target.value)}
                 placeholder="Enter your College Email"
-                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
             </div>
           </div>
@@ -229,7 +229,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={enrollmentNo}
                 onChange={(e) => setEnrollmentNo(e.target.value)}
                 placeholder="Enter your Enrollment Number"
-                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
             </div>
           </div>
@@ -244,7 +244,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
                 placeholder="Enter your Contact Number"
-                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
             </div>
           </div>
@@ -262,7 +262,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your Password"
-                className="w-full pl-9 pr-9 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-9 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
               <button
                 type="button"
@@ -287,7 +287,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your Password"
-                className="w-full pl-9 pr-9 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
+                className="w-full pl-9 pr-9 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-xs outline-none transition-all"
               />
               <button
                 type="button"
@@ -300,17 +300,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </div>
         </div>
 
-        {/* Notice on Approval */}
-        <div className="text-[11px] text-blue-900 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 py-2.5 px-3.5 rounded-xl leading-snug flex items-center gap-2">
-          <Info className="w-4 h-4 text-blue-600 shrink-0" />
-          <span><strong>Account Approval:</strong> Registration request will be routed to Admin Portal for administrator approval before login.</span>
-        </div>
-
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 mt-1 cursor-pointer disabled:opacity-50 transition-all"
+          className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 flex items-center justify-center gap-2 mt-1 cursor-pointer disabled:opacity-50 transition-all"
         >
           <span className="text-sm font-light leading-none">+</span>
           <span>{loading ? 'Submitting Request...' : 'Submit Registration Request'}</span>
@@ -324,7 +318,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-bold underline-offset-2 transition-colors ml-1 cursor-pointer"
+            className="text-blue-600 dark:text-purple-400 hover:underline font-bold underline-offset-2 transition-colors ml-1 cursor-pointer"
           >
             Sign In
           </button>

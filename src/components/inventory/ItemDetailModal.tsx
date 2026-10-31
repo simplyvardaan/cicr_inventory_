@@ -38,7 +38,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               <StatusBadge status={item.status} />
             </div>
             <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{item.name}</h3>
-            <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">{item.category}</p>
+            <p className="text-xs text-blue-600 dark:text-purple-400 font-bold">{item.category}</p>
           </div>
           <button
             onClick={onClose}
@@ -54,7 +54,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-bold">Available Units</span>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{item.available_qty}</span>
+              <span className="text-2xl font-black text-blue-600 dark:text-purple-400">{item.available_qty}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-bold">Total Stock</span>
@@ -69,21 +69,21 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           {/* Location & Details */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800 space-y-2.5 text-xs">
             <div className="flex items-center gap-2 text-slate-700 dark:text-zinc-300">
-              <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+              <MapPin className="w-4 h-4 text-blue-600 dark:text-purple-400 shrink-0" />
               <span><strong>Storage Location:</strong> {item.location}</span>
             </div>
             <div className="flex items-center gap-2 text-slate-700 dark:text-zinc-300">
-              <Layers className="w-4 h-4 text-blue-600 shrink-0" />
+              <Layers className="w-4 h-4 text-blue-600 dark:text-purple-400 shrink-0" />
               <span><strong>Category Domain:</strong> {item.category}</span>
             </div>
             {item.datasheet_url && (
               <div className="flex items-center gap-2">
-                <ExternalLink className="w-4 h-4 text-blue-600 shrink-0" />
+                <ExternalLink className="w-4 h-4 text-blue-600 dark:text-purple-400 shrink-0" />
                 <a
                   href={item.datasheet_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-bold"
+                  className="text-blue-600 dark:text-purple-400 hover:underline font-bold"
                 >
                   View Technical Datasheet
                 </a>
@@ -95,7 +95,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           {item.description && (
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800 space-y-1.5 text-xs">
               <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-                <FileText className="w-4 h-4 text-blue-600" />
+                <FileText className="w-4 h-4 text-blue-600 dark:text-purple-400" />
                 <span>Description &amp; Specifications</span>
               </div>
               <p className="text-slate-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">

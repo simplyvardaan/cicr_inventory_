@@ -3,7 +3,7 @@ import { ItemStatus, BorrowStatus, UserRole } from '../../types/inventory';
 
 export const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const styles: Record<ItemStatus, string> = {
-    'In Stock': 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+    'In Stock': 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
     'Low Stock': 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
     'Out of Stock': 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
     'Maintenance': 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
@@ -31,7 +31,7 @@ export const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
 export const ConditionBadge: React.FC<{ condition?: string }> = ({ condition }) => {
   if (!condition) return null;
   const styles: Record<string, string> = {
-    New: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+    New: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
     Good: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
     Fair: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
     'Needs Maintenance': 'bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300',
@@ -52,7 +52,7 @@ export const ConditionBadge: React.FC<{ condition?: string }> = ({ condition }) 
 export const BorrowStatusBadge: React.FC<{ status: BorrowStatus }> = ({ status }) => {
   const styles: Record<BorrowStatus, string> = {
     pending: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse',
-    approved: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+    approved: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
     rejected: 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
     returned: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
     overdue: 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
@@ -72,7 +72,7 @@ export const BorrowStatusBadge: React.FC<{ status: BorrowStatus }> = ({ status }
 export const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
   const styles: Record<UserRole, string> = {
     admin: 'bg-red-50 text-red-700 border-2 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
-    lead: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+    lead: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
     member: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
   };
 

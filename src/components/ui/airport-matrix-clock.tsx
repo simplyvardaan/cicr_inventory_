@@ -387,7 +387,7 @@ export function AirportMatrixClock({
                   const firstInCountry = (Object.keys(AIRPORT_MATRIX_CITIES) as AirportMatrixCityId[]).find((id) => AIRPORT_MATRIX_CITIES[id].country === country) ?? 'new-delhi';
                   setSelectedCity(firstAvailable ?? firstInCountry);
                 }}
-                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500"
+                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500 dark:focus:border-purple-500"
               >
                 {SUPPORTED_COUNTRIES.map((country) => <option key={country} value={country}>{country}</option>)}
               </select>
@@ -397,7 +397,7 @@ export function AirportMatrixClock({
                 aria-label="City"
                 value={selectedCity}
                 onChange={(event) => setSelectedCity(event.target.value as AirportMatrixCityId)}
-                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500"
+                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500 dark:focus:border-purple-500"
               >
                 {countryCityIds.map((id) => <option key={id} value={id}>{AIRPORT_MATRIX_CITIES[id].name}</option>)}
               </select>

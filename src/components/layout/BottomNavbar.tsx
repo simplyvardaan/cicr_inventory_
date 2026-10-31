@@ -117,7 +117,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-blue-600 shadow-md shadow-blue-600/30"
+                  className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                 />
               )}
               <LayoutGrid className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -149,10 +149,10 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                   <motion.span
                     layoutId="easyui-pill-active-dock"
                     transition={motionTransitions.springMorph}
-                    className="absolute inset-0 rounded-full bg-blue-600 shadow-md shadow-blue-600/30"
+                    className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                   />
                 )}
-                <Boxes className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${activeView === 'inventory' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+                <Boxes className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${activeView === 'inventory' ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
                 <span className="relative z-10 hidden sm:inline">Inventory</span>
                 <ChevronDown
                   className={`relative z-10 w-3 h-3 transition-transform duration-200 ${
@@ -190,10 +190,10 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                             <motion.span
                               layoutId="easyui-pill-cat-indicator"
                               transition={motionTransitions.springMorph}
-                              className="absolute inset-0 rounded-full bg-blue-600 shadow-sm"
+                              className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-sm"
                             />
                           )}
-                          <Icon className={`relative z-10 w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+                          <Icon className={`relative z-10 w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
                           <span className="relative z-10">{cat.label}</span>
                         </motion.button>
                       );
@@ -223,13 +223,13 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-blue-600 shadow-md shadow-blue-600/30"
+                  className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                 />
               )}
               <Bell className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span className="relative z-10 hidden md:inline">Requests</span>
               {pendingCount > 0 && (
-                <span className={`relative z-10 px-1.5 py-0.2 rounded-full font-black text-[10px] ${activeView === 'review-requests' ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+                <span className={`relative z-10 px-1.5 py-0.2 rounded-full font-black text-[10px] ${activeView === 'review-requests' ? 'bg-white text-blue-600 dark:text-purple-600' : 'bg-blue-600 dark:bg-purple-600 text-white'}`}>
                   {pendingCount}
                 </span>
               )}
@@ -256,7 +256,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                   <motion.span
                     layoutId="easyui-pill-active-dock"
                     transition={motionTransitions.springMorph}
-                    className="absolute inset-0 rounded-full bg-blue-600 shadow-md shadow-blue-600/30"
+                    className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                   />
                 )}
                 <ScrollText className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -289,7 +289,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-blue-600 shadow-md shadow-blue-600/30"
+                  className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                 />
               )}
               <Code2 className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -314,7 +314,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
               className="flex items-center gap-2 px-2 py-1 sm:px-2.5 sm:py-1 rounded-full transition-colors cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800/60 border border-transparent hover:border-slate-300 dark:hover:border-zinc-700"
               title="Change Password / Account Settings"
             >
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-600 dark:bg-purple-600 text-white flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm">
                 {profile?.avatar_url &&
                 (profile.avatar_url.startsWith('data:image') || profile.avatar_url.startsWith('http')) ? (
                   <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
@@ -326,7 +326,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <span className="block text-xs font-bold text-slate-900 dark:text-white leading-tight whitespace-nowrap">
                   {displayName}
                 </span>
-                <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider block whitespace-nowrap">
+                <span className="text-[9px] font-black text-blue-600 dark:text-purple-400 uppercase tracking-wider block whitespace-nowrap">
                   {roleName}
                 </span>
               </div>
