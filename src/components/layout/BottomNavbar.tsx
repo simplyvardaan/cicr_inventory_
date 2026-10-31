@@ -316,15 +316,11 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
               type="button"
               whileTap={{ scale: 0.96 }}
               onClick={() => {
-                setActiveView('profile');
+                onOpenChangePassword();
                 setSubmenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-2 py-1 sm:px-2.5 sm:py-1 rounded-full transition-colors cursor-pointer ${
-                activeView === 'profile'
-                  ? 'bg-purple-600/20 border border-purple-500/50'
-                  : 'hover:bg-zinc-800/60 border border-transparent'
-              }`}
-              title="View Profile"
+              className="flex items-center gap-2 px-2 py-1 sm:px-2.5 sm:py-1 rounded-full transition-colors cursor-pointer hover:bg-zinc-800/60 border border-transparent hover:border-purple-500/30"
+              title="Change Password / Account Settings"
             >
               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#171722] border border-purple-500/40 text-purple-300 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-inner">
                 {profile?.avatar_url &&

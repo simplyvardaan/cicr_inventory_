@@ -119,7 +119,7 @@ export const UserDashboard: React.FC = () => {
   const [allMembers, setAllMembers] = useState<any[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
-  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'lead' | 'member'>('all');
+  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
   const [selectedMemberActivityId, setSelectedMemberActivityId] = useState<string | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
 
@@ -265,7 +265,7 @@ export const UserDashboard: React.FC = () => {
   const handleUpdateRole = async (
     targetUserId: string,
     targetName: string,
-    newRole: 'admin' | 'lead' | 'member'
+    newRole: 'admin' | 'member'
   ) => {
     try {
       setUpdatingRoleUserId(targetUserId);
@@ -482,6 +482,7 @@ export const UserDashboard: React.FC = () => {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
       await refreshData();
+      await fetchPendingAccounts();
       await fetchAllMembers();
     } else {
       showToast('error', 'Approval Failed', res.error || 'Could not approve account');
@@ -496,6 +497,7 @@ export const UserDashboard: React.FC = () => {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
       await refreshData();
+      await fetchPendingAccounts();
       await fetchAllMembers();
     } else {
       showToast('error', 'Rejection Failed', res.error || 'Could not reject account');
@@ -1722,7 +1724,7 @@ export const UserDashboard: React.FC = () => {
 
                     {/* Role Filter Pills */}
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                      {(['all', 'admin', 'lead', 'member'] as const).map((rKey) => {
+                      {(['all', 'admin', 'member'] as const).map((rKey) => {
                         const count =
                           rKey === 'all'
                             ? allMembers.length
@@ -1894,14 +1896,13 @@ export const UserDashboard: React.FC = () => {
                                       handleUpdateRole(
                                         member.id,
                                         member.full_name || member.email,
-                                        e.target.value as 'admin' | 'lead' | 'member'
+                                        e.target.value as 'admin' | 'member'
                                       )
                                     }
                                     className="px-2 py-1 bg-[#171722] hover:bg-[#202030] text-zinc-300 text-[11px] font-bold rounded-lg border border-zinc-700 outline-none cursor-pointer disabled:opacity-50"
                                     title="Change User Role"
                                   >
                                     <option value="member">Member</option>
-                                    <option value="lead">Lead</option>
                                     <option value="admin">Admin</option>
                                   </select>
 
