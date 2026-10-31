@@ -328,7 +328,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role,
             status: initialStatus,
             avatar_url: avatar_url || undefined,
-            password,
             created_at: new Date().toISOString(),
           }),
         },
@@ -369,7 +368,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       let email = '';
-      let password = '';
       let fullName = '';
       let enrollmentNo = '';
       let phone = '';
@@ -381,7 +379,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
           email = det.email || '';
-          password = det.password || 'Cicr@2026';
           fullName = det.fullName || targetLog.user_name || 'Member';
           enrollmentNo = det.enrollmentNo || det.roll_number || '';
           phone = det.phone || '';
@@ -411,30 +408,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status: 'approved',
           },
         });
-      } else if (email && password) {
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            full_name: fullName,
-            enrollment_no: enrollmentNo,
-            phone,
-            role,
-            status: 'approved',
-            avatar_url: avatarUrl || undefined,
-          },
-        });
-        if (createError) {
-          console.error('Admin create user on approve error:', createError);
-          return {
-            success: false,
-            error: `Supabase Auth creation error: ${createError.message}. (Run "DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;" in Supabase SQL Editor if a trigger is failing).`,
-          };
-        }
-        if (newUser?.user) {
-          userId = newUser.user.id;
-        }
+      } else {
+        return {
+          success: false,
+          error: 'This registration has no existing Auth account. Ask the user to register again.',
+        };
       }
 
       // Ensure profile row in public.profiles table
