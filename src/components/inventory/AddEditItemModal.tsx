@@ -45,7 +45,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
     } else {
       setName('');
       setCategory('Microcontrollers & SBCs');
-      setLocation('Lab 2 - Cabinet A1');
+      setLocation('Lab 2, Cabinet A1');
       setTotalQty(5);
       setAvailableQty(5);
       setMinThreshold(2);
@@ -197,7 +197,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Lab 2 - Cabinet A1, Bin 4"
+                placeholder="e.g. Lab 2, Cabinet A1, Bin 4"
                 className="w-full px-3 py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none"
               />
             </div>

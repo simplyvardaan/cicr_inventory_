@@ -86,7 +86,7 @@ const SIZE_CONFIG = {
 
 export const DragToConfirm: React.FC<DragToConfirmProps> = ({
   label = 'Slide to confirm',
-  confirmedLabel = 'Confirmed ✓',
+  confirmedLabel = 'Confirmed',
   actionType = 'confirm',
   variant,
   size = 'md',

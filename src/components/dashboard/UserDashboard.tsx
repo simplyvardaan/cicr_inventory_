@@ -612,11 +612,11 @@ export const UserDashboard: React.FC = () => {
                 className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] hover:bg-[#1c1c2b] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 transition-all cursor-pointer animate-in fade-in"
                 title="View Hardware Cart"
               >
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center shrink-0">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
                   <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
                 <span className="hidden md:inline">CART</span>
-                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#2ee59d] text-black font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 text-black font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
                   {cart.length}
                 </span>
               </button>
@@ -668,7 +668,7 @@ export const UserDashboard: React.FC = () => {
             {/* Hero Greeting & Live Clock Banner */}
             <div className="p-6 sm:p-8 rounded-3xl bg-[#0f0f15] border border-[#20202c] shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <span className="text-xs font-bold font-mono tracking-widest text-[#2ee59d] uppercase">
+                <span className="text-xs font-bold font-mono tracking-widest text-emerald-400 uppercase">
                   {roleName} DASHBOARD
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
@@ -705,7 +705,7 @@ export const UserDashboard: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <Layers className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
@@ -731,7 +731,7 @@ export const UserDashboard: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <ShoppingBag className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
@@ -831,7 +831,7 @@ export const UserDashboard: React.FC = () => {
                 <IOSSearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
-                  placeholder="Search microcontrollers, sensors, actuators, specs, or racks..."
+                  placeholder="Search components..."
                   className="w-full"
                   collapsedWidth="100%"
                   expandedWidth="100%"
@@ -846,7 +846,7 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('all')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'all'
-                      ? 'bg-emerald-950/80 text-[#2ee59d] border border-emerald-500/50 shadow-sm'
+                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/50 shadow-sm'
                       : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
@@ -960,7 +960,7 @@ export const UserDashboard: React.FC = () => {
                     FILTER
                   </span>
                 </div>
-                <div className="text-2xl font-black text-[#2ee59d]">{totalAvailableCount}</div>
+                <div className="text-2xl font-black text-emerald-400">{totalAvailableCount}</div>
                 <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Ready for checkout</p>
               </div>
 
@@ -1097,8 +1097,8 @@ export const UserDashboard: React.FC = () => {
                               <span>Low Reserve</span>
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#2ee59d]">
-                              <span className="w-2 h-2 rounded-full bg-[#2ee59d]" />
+                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               <span>Available</span>
                             </span>
                           )}
@@ -1171,7 +1171,7 @@ export const UserDashboard: React.FC = () => {
                                 ? 'bg-rose-500'
                                 : isLow
                                 ? 'bg-amber-400'
-                                : 'bg-[#2ee59d]'
+                                : 'bg-emerald-500'
                             }`}
                             style={{ width: `${Math.min(100, Math.max(0, availabilityRatio))}%` }}
                           />
@@ -1320,7 +1320,7 @@ export const UserDashboard: React.FC = () => {
                         type="text"
                         value={requestSearch}
                         onChange={(e) => setRequestSearch(e.target.value)}
-                        placeholder={isLeadOrAdmin ? "Search member, item, project..." : "Search my requests..."}
+                        placeholder="Search requests..."
                         className="w-full pl-9 pr-3 py-1.5 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                       />
                     </div>
@@ -1518,7 +1518,7 @@ export const UserDashboard: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Club member directory, 7-day laboratory activity history, and user registration approvals
+                    Club member directory, laboratory activity history, and user registration approvals
                   </p>
                 </div>
 
@@ -1655,7 +1655,7 @@ export const UserDashboard: React.FC = () => {
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>7-Day Activity Logs</span>
+                    <span>Activity Logs</span>
                     {(() => {
                       const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
                       const count = logs.filter(
@@ -1709,7 +1709,7 @@ export const UserDashboard: React.FC = () => {
                         type="text"
                         value={memberSearch}
                         onChange={(e) => setMemberSearch(e.target.value)}
-                        placeholder="Search member by name, email, roll number, or phone..."
+                        placeholder="Search members..."
                         className="w-full pl-9 pr-8 py-2 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500 transition-colors"
                       />
                       {memberSearch && (
@@ -1987,22 +1987,22 @@ export const UserDashboard: React.FC = () => {
                     const dateRangeStr = `${sevenDaysAgo.toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
-                    })} – Today (${now.toLocaleDateString('en-GB', {
+                    })} to Today (${now.toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })})`;
 
                     return (
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/40 to-indigo-950/30 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="p-3.5 rounded-2xl bg-[#13111c] border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                         <div className="flex items-center gap-2 text-purple-200">
                           <Clock className="w-4 h-4 text-purple-400 shrink-0" />
                           <span>
-                            <strong>7-Day Audit Scope:</strong> Showing real-time member activities logged between{' '}
+                            <strong>Audit Scope:</strong> Showing real time member activities logged between{' '}
                             <code className="text-white font-bold">{dateRangeStr}</code>
                           </span>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-bold text-[10px] self-start sm:self-auto shrink-0">
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 font-mono font-bold text-[10px] self-start sm:self-auto shrink-0">
                           Live Audit Trail
                         </span>
                       </div>
@@ -2017,7 +2017,7 @@ export const UserDashboard: React.FC = () => {
                         <IOSSearchBar
                           value={logSearch}
                           onChange={setLogSearch}
-                          placeholder="Search 7-day logs by user name, component, or action..."
+                          placeholder="Search logs..."
                           className="w-full"
                           collapsedWidth="100%"
                           expandedWidth="100%"

@@ -96,7 +96,7 @@ export const IOSSearchBar: React.FC<IOSSearchBarProps> = ({
           autoFocus={autoFocus}
           placeholder={placeholder}
           aria-label={placeholder}
-          className="w-full bg-transparent text-[16px] text-[#FAFAFA] placeholder-[#6B6B6B] focus:outline-none focus:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden disabled:opacity-40 disabled:cursor-not-allowed"
+          className="min-w-0 flex-1 bg-transparent text-xs sm:text-[13px] text-[#FAFAFA] placeholder-[#6B6B6B] placeholder:text-xs focus:outline-none focus:ring-0 pr-2 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden disabled:opacity-40 disabled:cursor-not-allowed"
         />
 
         {/* Clear Button */}
