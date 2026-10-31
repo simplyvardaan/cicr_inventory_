@@ -155,3 +155,4 @@ Before submitting any code changes or releasing new version tags:
    Ensure build completes with zero errors and outputs to `dist/`.
 3. **No Unhandled Promises**: Ensure all Supabase calls contain appropriate try/catch blocks and user-friendly toast alerts.
 4. **Git Synchronization**: Ensure `main` and `UI-UX-Updates` remain fast-forward merged and synchronized with remote repository tags.
+

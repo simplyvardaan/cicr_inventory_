@@ -123,3 +123,4 @@ If you discover a potential security vulnerability within the CICR Inventory Hub
 - **Alternative Contact**: `cicrinventory@gmail.com`
 
 Please include a detailed description of the vulnerability, steps to reproduce, and any relevant logs. We request that you adhere to responsible disclosure principles.
+
