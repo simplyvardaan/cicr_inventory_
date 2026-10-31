@@ -298,13 +298,6 @@ export const UserDashboard: React.FC = () => {
         activeView={activeView}
         setActiveView={setActiveView}
         isLeadOrAdmin={isLeadOrAdmin}
-        onOpenAddItem={() => {
-          setEditingItem(null);
-          setAddItemModalOpen(true);
-        }}
-        items={items}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         notifications={notifications}
         onMarkNotificationRead={(id) =>
           setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
