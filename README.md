@@ -181,6 +181,13 @@ npm run neon:init
 npm run backup:neon
 ```
 
+The GitHub Actions workflow at
+[`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
+automatically every 15 minutes. Add `VITE_SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
+**Settings → Secrets and variables → Actions**. You can also run it immediately
+from the repository's **Actions** tab.
+
 `neon:init` creates the operational Neon tables from
 [`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
 in the Supabase SQL Editor to create the matching Supabase tables. The schema is
@@ -207,6 +214,17 @@ To populate a safe, repeatable test dataset in Supabase, set
 ```bash
 npm run test-data:seed
 ```
+
+For a fresh Supabase test dataset:
+
+1. Run [`supabase_schema.sql`](./supabase_schema.sql) in the Supabase SQL Editor.
+2. Run [`supabase_test_database.sql`](./supabase_test_database.sql) in the SQL Editor.
+3. Set `TEST_FIXTURE_PASSWORD` in `.env` and run `npm run test-data:seed`.
+
+The SQL fixture resets only rows with `FIX-*` SKUs and fixed fixture IDs. The Node
+command creates the three Supabase Auth users, their profiles, borrow requests,
+and activity logs. Auth users are created by the Node command because passwords
+must not be inserted into a SQL fixture.
 
 This creates or updates three approved fixture users, three inventory items, two
 borrow requests, and activity logs. Fixture rows use the `cicr-fixture` prefix

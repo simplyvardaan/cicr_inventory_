@@ -48,6 +48,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Admin client using service role key (full clearance for administrative logs and user approvals)
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+  global: { fetch: databaseGatewayFetch },
   auth: {
     autoRefreshToken: false,
     persistSession: false,

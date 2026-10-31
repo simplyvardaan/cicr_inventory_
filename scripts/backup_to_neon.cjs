@@ -105,6 +105,67 @@ async function syncRecords(tableName, updatedColumn, records) {
   }
 }
 
+async function syncOperationalTables(tables, authUsers) {
+  const rows = {
+    profiles: tables.profiles,
+    inventory_items: tables.inventory_items,
+    borrow_requests: tables.borrow_requests,
+    activity_logs: tables.activity_logs,
+    auth_users: authUsers,
+  };
+  const definitions = [
+    {
+      name: 'profiles',
+      columns: ['id', 'full_name', 'email', 'roll_number', 'role', 'phone', 'avatar_url', 'created_at', 'updated_at'],
+    },
+    {
+      name: 'inventory_items',
+      columns: ['id', 'name', 'category', 'sku', 'description', 'location', 'total_qty', 'available_qty', 'min_threshold', 'condition', 'status', 'image_url', 'datasheet_url', 'created_at', 'updated_at'],
+    },
+    {
+      name: 'borrow_requests',
+      columns: ['id', 'item_id', 'user_id', 'user_name', 'user_email', 'item_name', 'quantity', 'project_name', 'purpose', 'status', 'borrow_date', 'expected_return_date', 'actual_return_date', 'approved_by', 'admin_notes', 'created_at', 'updated_at'],
+    },
+    {
+      name: 'activity_logs',
+      columns: ['id', 'user_id', 'user_name', 'action', 'details', 'item_id', 'created_at'],
+    },
+    {
+      name: 'auth_users',
+      columns: ['id', 'email', 'created_at', 'updated_at'],
+    },
+  ];
+
+  await neon.query('BEGIN');
+  try {
+    await neon.query('DELETE FROM borrow_requests');
+    await neon.query('DELETE FROM activity_logs');
+    await neon.query('DELETE FROM auth_users');
+    await neon.query('DELETE FROM profiles');
+    await neon.query('DELETE FROM inventory_items');
+
+    for (const definition of definitions) {
+      const sourceRows = rows[definition.name].filter((row) =>
+        definition.name !== 'auth_users' || tables.profiles.some((profile) => profile.id === row.id)
+      );
+      for (const row of sourceRows) {
+        const values = definition.columns.map((column) => row[column] ?? null);
+        const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
+        await neon.query(
+          `INSERT INTO ${definition.name} (${definition.columns.join(', ')})
+           VALUES (${placeholders})`,
+          values
+        );
+      }
+    }
+
+    await neon.query('COMMIT');
+  } catch (error) {
+    await neon.query('ROLLBACK');
+    throw error;
+  }
+}
+
 async function backup() {
   await neon.connect();
   await ensureSchema();
@@ -116,8 +177,10 @@ async function backup() {
   let totalRows = 0;
 
   try {
+    const tableData = {};
     for (const table of sourceTables) {
       const records = await fetchTable(table.name);
+      tableData[table.name] = records;
       await syncRecords(table.name, table.updatedColumn, records);
       totalRows += records.length;
       console.log(`Backed up ${records.length} ${table.name} rows.`);
@@ -127,6 +190,9 @@ async function backup() {
     await syncRecords('auth_users', 'updated_at', authUsers);
     totalRows += authUsers.length;
     console.log(`Backed up ${authUsers.length} auth user records (without passwords).`);
+
+    await syncOperationalTables(tableData, authUsers);
+    console.log('Mirrored records into Neon operational tables.');
 
     await neon.query(
       `UPDATE backup_runs
