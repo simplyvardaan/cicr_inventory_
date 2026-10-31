@@ -730,10 +730,15 @@ export const UserDashboard: React.FC = () => {
               className="flex items-center gap-2 cursor-pointer group shrink-0 focus-visible:outline-none"
               title="CICR Inventory Dashboard"
             >
-              <CicrLogo size={28} className="rounded-full shadow-sm group-hover:scale-105 transition-transform" />
-              <span className="hidden xl:inline text-xs font-black tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
-                CICR Inventory
-              </span>
+              <CicrLogo size={42} className="rounded-2xl shadow-sm group-hover:scale-105 transition-transform shrink-0" />
+              <div className="hidden md:flex flex-col text-left leading-none">
+                <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
+                  CICR Inventory
+                </span>
+                <span className="text-[9px] font-mono font-bold text-slate-500 dark:text-zinc-500 uppercase mt-0.5">
+                  Robotics Lab
+                </span>
+              </div>
             </button>
             <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400">
               <span
