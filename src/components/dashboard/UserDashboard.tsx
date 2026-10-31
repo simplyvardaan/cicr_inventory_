@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
 import { BottomNavbar, ActiveView } from '../layout/BottomNavbar';
@@ -10,6 +10,7 @@ import { MeetTheDevelopers } from './MeetTheDevelopers';
 import { InventoryItem } from '../../types/inventory';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
+import { compressImageToBase64 } from '../../lib/imageUtils';
 import {
   Layers,
   ShoppingBag,
@@ -56,6 +57,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Copy,
+  Camera,
 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
@@ -93,7 +95,13 @@ export const UserDashboard: React.FC = () => {
   const [editName, setEditName] = useState(profile?.full_name || (user?.user_metadata?.full_name as string) || '');
   const [editEnrollment, setEditEnrollment] = useState(profile?.roll_number || (user?.user_metadata?.enrollment_no as string) || '');
   const [editPhone, setEditPhone] = useState(profile?.phone || (user?.user_metadata?.phone as string) || '');
+  const [editAvatarUrl, setEditAvatarUrl] = useState(
+    (profile?.avatar_url && !profile.avatar_url.startsWith('status:'))
+      ? profile.avatar_url
+      : ((user?.user_metadata?.avatar_url as string) || '')
+  );
   const [savingProfile, setSavingProfile] = useState(false);
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   // Admin Logs & Management Hub Tabs ('members' | 'logs-7d' | 'requests')
   const [adminLogsTab, setAdminLogsTab] = useState<'members' | 'logs-7d' | 'requests'>('members');
@@ -122,6 +130,10 @@ export const UserDashboard: React.FC = () => {
       setEditName(profile?.full_name || (user?.user_metadata?.full_name as string) || '');
       setEditEnrollment(profile?.roll_number || (user?.user_metadata?.enrollment_no as string) || '');
       setEditPhone(profile?.phone || (user?.user_metadata?.phone as string) || '');
+      const av = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '';
+      if (av && !av.startsWith('status:')) {
+        setEditAvatarUrl(av);
+      }
     }
   }, [profile, user]);
 
@@ -443,6 +455,26 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
+  const handleProfileAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await compressImageToBase64(file, 256, 0.85);
+      setEditAvatarUrl(base64);
+      showToast('info', 'Avatar Selected', 'Click "Save Profile" to update your photo in the database.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Could not process image';
+      showToast('error', 'Image Error', msg);
+    }
+  };
+
+  const handleRemoveProfileAvatar = () => {
+    setEditAvatarUrl('');
+    if (profileFileInputRef.current) {
+      profileFileInputRef.current.value = '';
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
@@ -450,11 +482,12 @@ export const UserDashboard: React.FC = () => {
       full_name: editName.trim(),
       roll_number: editEnrollment.trim(),
       phone: editPhone.trim(),
+      avatar_url: editAvatarUrl || '',
     });
     setSavingProfile(false);
     if (res.success) {
       await refreshProfile();
-      showToast('success', 'Profile Updated', 'Your profile details have been saved to the database.');
+      showToast('success', 'Profile Updated', 'Your profile details and avatar have been saved to the database.');
     } else {
       showToast('error', 'Update Failed', res.error || 'Could not update profile.');
     }
@@ -1739,8 +1772,12 @@ export const UserDashboard: React.FC = () => {
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                   {/* Avatar Circle */}
-                                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-purple-500/40 shadow-inner">
-                                    {(member.full_name || member.email || 'M').charAt(0).toUpperCase()}
+                                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-purple-500/40 shadow-inner overflow-hidden">
+                                    {member.avatar_url && !member.avatar_url.startsWith('status:') ? (
+                                      <img src={member.avatar_url} alt={member.full_name || 'Member'} className="w-full h-full object-cover" />
+                                    ) : (
+                                      (member.full_name || member.email || 'M').charAt(0).toUpperCase()
+                                    )}
                                   </div>
 
                                   <div className="min-w-0">
@@ -2329,18 +2366,70 @@ export const UserDashboard: React.FC = () => {
               </span>
             </div>
 
-            {/* Avatar Circle Display */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#14141c] border border-zinc-800">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 shrink-0">
-                {(editName || userName || 'U').charAt(0).toUpperCase()}
+            {/* Avatar Circle Display with Photo Upload */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 sm:p-5 rounded-2xl bg-[#14141c] border border-zinc-800">
+              <div className="relative group shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 overflow-hidden">
+                  {editAvatarUrl ? (
+                    <img src={editAvatarUrl} alt={editName || userName} className="w-full h-full object-cover" />
+                  ) : (
+                    (editName || userName || 'U').charAt(0).toUpperCase()
+                  )}
+                </div>
+
+                {/* Hover overlay to change avatar */}
+                <button
+                  type="button"
+                  onClick={() => profileFileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+                  title="Upload profile photo"
+                >
+                  <Camera className="w-5 h-5 mb-0.5" />
+                  <span className="text-[9px] font-bold">Change</span>
+                </button>
               </div>
-              <div>
-                <span className="text-base font-bold text-white block">{editName || userName}</span>
-                <span className="text-xs text-zinc-400 block font-mono">{user?.email}</span>
-                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">
+
+              <div className="flex-1 text-center sm:text-left min-w-0">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span className="text-base sm:text-lg font-bold text-white block truncate">{editName || userName}</span>
+                  <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold uppercase">
+                    {roleName}
+                  </span>
+                </div>
+                <span className="text-xs text-zinc-400 block font-mono mt-0.5 truncate">{user?.email}</span>
+                <span className="text-[10px] text-emerald-400 font-semibold flex items-center justify-center sm:justify-start gap-1 mt-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Verified Club Account</span>
                 </span>
+
+                {/* Upload / Remove Buttons */}
+                <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
+                  <input
+                    ref={profileFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfileAvatarChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => profileFileInputRef.current?.click()}
+                    className="px-2.5 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{editAvatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+                  </button>
+                  {editAvatarUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProfileAvatar}
+                      className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

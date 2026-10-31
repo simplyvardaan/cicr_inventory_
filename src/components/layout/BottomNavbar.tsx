@@ -309,8 +309,12 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
               title="My Profile"
             >
               {/* Avatar Circle */}
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#171722] border border-purple-500/40 text-purple-300 flex items-center justify-center font-bold text-xs shrink-0">
-                {getInitial()}
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#171722] border border-purple-500/40 text-purple-300 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                {profile?.avatar_url && (profile.avatar_url.startsWith('data:image') || profile.avatar_url.startsWith('http')) ? (
+                  <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  getInitial()
+                )}
               </div>
 
               {/* User Name & Role (visible on lg+) */}

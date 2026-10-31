@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   User,
   Mail,
   Hash,
   Phone,
-  Shield,
   Lock,
   ShieldCheck,
   Eye,
   EyeOff,
   LogIn,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
 import { CicrLogo } from '../common/CicrLogo';
+import { compressImageToBase64 } from '../../lib/imageUtils';
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
@@ -28,16 +30,40 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   const [collegeEmail, setCollegeEmail] = useState('');
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [role, setRole] = useState<'member' | 'lead' | 'admin'>('member');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Profile Picture Upload
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const avatarInitial = fullName.trim() ? fullName.trim().charAt(0).toUpperCase() : 'U';
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await compressImageToBase64(file, 256, 0.85);
+      setAvatarUrl(base64);
+      showToast('success', 'Profile Photo Added', 'Photo successfully previewed and ready for registration.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Could not process image.';
+      showToast('error', 'Image Error', msg);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatarUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +85,15 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
     }
 
     setLoading(true);
+    // Role is assigned by admins from the admin portal; signups default strictly to 'member'
     const res = await signUp({
       email: collegeEmail.trim(),
       password,
       full_name: fullName.trim(),
       enrollment_no: enrollmentNo.trim(),
       phone: contactNumber.trim(),
-      role,
+      role: 'member',
+      avatar_url: avatarUrl || undefined,
     });
     setLoading(false);
 
@@ -97,7 +125,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         <button
           type="button"
           onClick={onSwitchToLogin}
-          className="flex items-center justify-center gap-2 py-2 rounded-lg text-zinc-400 hover:text-white font-medium text-xs transition-colors"
+          className="flex items-center justify-center gap-2 py-2 rounded-lg text-zinc-400 hover:text-white font-medium text-xs transition-colors cursor-pointer"
         >
           <LogIn className="w-3.5 h-3.5" />
           <span>Sign In</span>
@@ -120,14 +148,60 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
 
       {/* Register Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-        {/* Avatar Preview */}
-        <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-[#080512] border border-[#241a3d]">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 shrink-0">
-            {avatarInitial}
+        {/* Profile Picture Upload & Preview */}
+        <div className="flex items-center gap-4 p-3 rounded-2xl bg-[#080512] border border-[#241a3d]">
+          <div className="relative group shrink-0">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+              ) : (
+                avatarInitial
+              )}
+            </div>
+
+            {/* Quick Upload Hover Overlay */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+              title="Upload photo"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
           </div>
-          <div>
-            <span className="text-[11px] font-bold text-white block">Avatar Preview</span>
-            <span className="text-[10px] text-zinc-400 block">Generated from your profile name</span>
+
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-bold text-white block">Profile Picture</span>
+            <span className="text-[10px] text-zinc-400 block mb-1.5">
+              Upload your photo or use initial avatar
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-semibold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Camera className="w-3 h-3" />
+                <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Remove</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -141,7 +215,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Vardaan Saxena"
+              placeholder="Enter Your Name"
               className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
             />
           </div>
@@ -157,7 +231,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
               required
               value={collegeEmail}
               onChange={(e) => setCollegeEmail(e.target.value)}
-              placeholder="e.g. 992501030399@mail.jiit.ac.in"
+              placeholder="Enter your College Email"
               className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
             />
           </div>
@@ -173,7 +247,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 type="text"
                 value={enrollmentNo}
                 onChange={(e) => setEnrollmentNo(e.target.value)}
-                placeholder="e.g. 992501030399"
+                placeholder="Enter your Enrollment Number"
                 className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
               />
             </div>
@@ -187,27 +261,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 type="tel"
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="e.g. 7428938113"
+                placeholder="Enter your Contact Number"
                 className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Role Select */}
-        <div>
-          <label className="block text-zinc-300 font-medium mb-1">Requested Role</label>
-          <div className="relative">
-            <Shield className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as 'member' | 'lead' | 'admin')}
-              className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white outline-none cursor-pointer"
-            >
-              <option value="member" className="bg-[#0c0918]">Member (Standard Access)</option>
-              <option value="lead" className="bg-[#0c0918]">Project Lead (Requisition Authority)</option>
-              <option value="admin" className="bg-[#0c0918]">Admin (Club Leadership)</option>
-            </select>
           </div>
         </div>
 
@@ -222,7 +279,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 chars"
+                placeholder="Enter your Password"
                 className="w-full pl-9 pr-9 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
               />
               <button
@@ -244,7 +301,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
+                placeholder="Confirm your Password"
                 className="w-full pl-9 pr-9 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
               />
               <button
@@ -281,7 +338,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-white hover:underline font-semibold underline-offset-2 transition-colors ml-1"
+            className="text-white hover:underline font-semibold underline-offset-2 transition-colors ml-1 cursor-pointer"
           >
             Sign In
           </button>

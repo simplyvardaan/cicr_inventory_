@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           roll_number: data.roll_number || currentUser.user_metadata?.enrollment_no || '',
           role: (data.role as UserRole) || (currentUser.user_metadata?.role as UserRole) || 'member',
           phone: data.phone || currentUser.user_metadata?.phone || '',
+          avatar_url: data.avatar_url && !data.avatar_url.startsWith('status:') ? data.avatar_url : (currentUser.user_metadata?.avatar_url || ''),
           created_at: data.created_at || currentUser.created_at,
           last_sign_in: currentUser.last_sign_in_at,
         });
@@ -81,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       roll_number: meta.enrollment_no || meta.roll_number || '',
       role: (meta.role as UserRole) || 'member',
       phone: meta.phone || '',
+      avatar_url: meta.avatar_url || '',
       created_at: currentUser.created_at,
       last_sign_in: currentUser.last_sign_in_at,
     };
@@ -228,6 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     enrollment_no = '',
     phone = '',
     role = 'member',
+    avatar_url = '',
   }: SignUpData) => {
     try {
       let emailToRegister = email.trim();
@@ -248,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           phone,
           role,
           status: initialStatus,
+          avatar_url: avatar_url || undefined,
         },
       });
 
@@ -256,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (adminUser?.user) {
-        // 2. Insert to profiles table (strictly without department)
+        // 2. Insert to profiles table
         try {
           await supabase.from('profiles').upsert([
             {
@@ -266,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role,
               roll_number: enrollment_no,
               phone,
-              avatar_url: `status:${initialStatus}`,
+              avatar_url: avatar_url || `status:${initialStatus}`,
             },
           ]);
         } catch (profileErr) {
@@ -288,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 phone,
                 role,
                 status: initialStatus,
+                avatar_url: avatar_url || undefined,
                 created_at: new Date().toISOString(),
               }),
             },
@@ -317,8 +322,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user_metadata: { status: 'approved' },
       });
 
-      // Update in Supabase profiles table
-      await supabase.from('profiles').update({ avatar_url: 'status:approved' }).eq('id', userId);
+      // Update in Supabase profiles table (only if avatar_url doesn't contain a real uploaded photo)
+      const { data: currentProf } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!currentProf?.avatar_url || currentProf.avatar_url === 'status:pending') {
+        await supabase.from('profiles').update({ avatar_url: 'status:approved' }).eq('id', userId);
+      }
 
       // Log action
       await supabase.from('activity_logs').insert([
@@ -345,7 +358,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       // Update in Supabase profiles table
-      await supabase.from('profiles').update({ avatar_url: 'status:rejected' }).eq('id', userId);
+      const { data: currentProf } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!currentProf?.avatar_url || currentProf.avatar_url.startsWith('status:')) {
+        await supabase.from('profiles').update({ avatar_url: 'status:rejected' }).eq('id', userId);
+      }
 
       // Log action
       await supabase.from('activity_logs').insert([
@@ -367,14 +388,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return { success: false, error: 'Not authenticated' };
     try {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (updates.full_name !== undefined) updateData.full_name = updates.full_name;
+      if (updates.roll_number !== undefined) updateData.roll_number = updates.roll_number;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
+      if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: updates.full_name,
-          roll_number: updates.roll_number,
-          phone: updates.phone,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) {
@@ -383,9 +407,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       await supabase.auth.updateUser({
         data: {
-          full_name: updates.full_name,
-          enrollment_no: updates.roll_number,
-          phone: updates.phone,
+          ...(updates.full_name !== undefined ? { full_name: updates.full_name } : {}),
+          ...(updates.roll_number !== undefined ? { enrollment_no: updates.roll_number } : {}),
+          ...(updates.phone !== undefined ? { phone: updates.phone } : {}),
+          ...(updates.avatar_url !== undefined ? { avatar_url: updates.avatar_url } : {}),
         },
       });
 
