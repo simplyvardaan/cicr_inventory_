@@ -136,7 +136,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={motionTransitions.springSnappy}
-            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-3rem)] max-w-[340px] sm:max-w-none sm:w-96 rounded-3xl bg-white dark:bg-[#07070a] border-2 border-slate-300 dark:border-zinc-800 shadow-2xl shadow-slate-900/30 dark:shadow-black z-50 overflow-hidden text-slate-900 dark:text-slate-100"
+            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-2rem)] max-w-[340px] sm:max-w-none sm:w-96 rounded-3xl bg-white dark:bg-[#0c0c14] border-2 border-slate-300 dark:border-zinc-800 shadow-2xl shadow-black/40 z-[100] overflow-hidden text-slate-900 dark:text-slate-100 opacity-100"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#101018]">

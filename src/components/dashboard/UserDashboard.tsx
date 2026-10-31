@@ -139,6 +139,7 @@ export const UserDashboard: React.FC = () => {
         type: 'warning',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         read: false,
+        action: () => setActiveView('inventory'),
       });
     });
 
@@ -151,11 +152,30 @@ export const UserDashboard: React.FC = () => {
         type: 'info',
         timestamp: 'Real-time',
         read: false,
+        action: () => setActiveView('review-requests'),
       });
     }
 
+    // Member-specific requisition updates
+    if (user?.email) {
+      const myApproved = requests.filter(
+        (r) => (r.user_email?.toLowerCase() === user.email?.toLowerCase() || r.user_id === user.id) && r.status === 'approved'
+      );
+      if (myApproved.length > 0) {
+        list.push({
+          id: 'my-approved-requisitions',
+          title: `${myApproved.length} Requisition(s) Cleared`,
+          message: 'Admin has authorized your hardware pass. Tap to view and collect hardware.',
+          type: 'success',
+          timestamp: 'Authorized',
+          read: false,
+          action: () => setActiveView('review-requests'),
+        });
+      }
+    }
+
     setNotifications(list);
-  }, [items, requests, isLeadOrAdmin]);
+  }, [items, requests, isLeadOrAdmin, user]);
 
   // Cart operations
   const handleAddToCart = (item: InventoryItem) => {
@@ -298,6 +318,8 @@ export const UserDashboard: React.FC = () => {
         activeView={activeView}
         setActiveView={setActiveView}
         isLeadOrAdmin={isLeadOrAdmin}
+        cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
+        onOpenCart={() => setCartModalOpen(true)}
         notifications={notifications}
         onMarkNotificationRead={(id) =>
           setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
@@ -341,6 +363,8 @@ export const UserDashboard: React.FC = () => {
             }}
             onDeleteItem={handleDeleteItem}
             onSelectItem={(it) => setSelectedItem(it)}
+            cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
+            onOpenCart={() => setCartModalOpen(true)}
           />
         )}
 

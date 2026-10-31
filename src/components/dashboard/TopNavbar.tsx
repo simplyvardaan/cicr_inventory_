@@ -3,13 +3,14 @@ import { CicrLogo } from '../common/CicrLogo';
 import { NotificationBell, Notification } from '../ui/notification-bell';
 import { LiquidToggle } from '../ui/liquid-toggle';
 import { ActiveView } from '../layout/BottomNavbar';
-import { AlertTriangle } from 'lucide-react';
-import { InventoryItem } from '../../types/inventory';
+import { AlertTriangle, ShoppingBag } from 'lucide-react';
 
 interface TopNavbarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
   isLeadOrAdmin: boolean;
+  cartCount: number;
+  onOpenCart: () => void;
   notifications: Notification[];
   onMarkNotificationRead: (id: string) => void;
   onMarkAllNotificationsRead: () => void;
@@ -21,6 +22,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeView,
   setActiveView,
   isLeadOrAdmin,
+  cartCount,
+  onOpenCart,
   notifications,
   onMarkNotificationRead,
   onMarkAllNotificationsRead,
@@ -66,7 +69,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
 
           {/* Breadcrumb Capsule */}
-          <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400">
+          <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400 min-w-0">
             <span
               className="hidden sm:inline text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors"
               onClick={() => setActiveView('dashboard')}
@@ -80,14 +83,14 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </div>
         </div>
 
-        {/* Right: Quick Action Controls (Without search button and without add equipment) */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Right: Quick Action Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Low Reserves Warning Pill (clickable to filter low reserves in vault) */}
           {lowReservesCount > 0 && (
             <button
               type="button"
               onClick={() => setActiveView('inventory')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 text-xs font-bold transition-all cursor-pointer animate-pulse"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 text-xs font-bold transition-all cursor-pointer animate-pulse shrink-0"
               title={`${lowReservesCount} items running low on reserves`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -103,8 +106,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             onClearAll={onClearNotifications}
           />
 
+          {/* Staged Request Cart Quick Button */}
+          <button
+            type="button"
+            onClick={onOpenCart}
+            className="relative p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#151520] dark:hover:bg-[#1f1f2e] border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-200 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+            title={`View Staged Cart (${cartCount} items)`}
+            aria-label="View staged hardware cart"
+          >
+            <ShoppingBag className="w-4 h-4 text-blue-600 dark:text-purple-400" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-mono font-black text-[10px] shadow-sm animate-pulse">
+                {cartCount}
+              </span>
+            )}
+          </button>
+
           {/* Liquid Theme Switcher */}
-          <LiquidToggle className="flex" />
+          <LiquidToggle className="flex shrink-0" />
         </div>
       </header>
     </div>

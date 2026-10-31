@@ -43,19 +43,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <span className="text-xs font-bold font-mono tracking-widest text-blue-600 dark:text-purple-400 uppercase">
               {roleName} DASHBOARD
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Verified Identity</span>
-            </span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
             {getGreeting()}, {userName}
           </h1>
-
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-1 max-w-lg leading-relaxed">
-            Welcome to the Creative &amp; Innovative Cell in Robotics inventory platform. Monitor laboratory components, request hardware requisitions, and track active loans.
-          </p>
         </div>
 
         {/* Airport Matrix Live Departure Clock */}

@@ -33,7 +33,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
           {item.location && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-[#120b24] px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-zinc-800">
               <MapPin className="w-3 h-3 text-blue-600 dark:text-purple-400 shrink-0" />
-              <span className="truncate max-w-[120px]">{item.location}</span>
+              <span className="truncate max-w-[120px]">{item.location.replace(/\s*-\s*/g, ' / ')}</span>
             </span>
           )}
         </div>

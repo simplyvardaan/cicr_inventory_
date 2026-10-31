@@ -167,7 +167,7 @@ export const PaymentStatus: React.FC<PaymentStatusProps> = ({
       onDownloadReceipt();
     } else {
       const receiptText = `===========================================
-CICR ROBOTICS LAB - REQUISITION PASS
+CICR ROBOTICS LAB / REQUISITION PASS
 ===========================================
 Requisition ID : ${transactionId}
 Date & Time    : ${formattedDate}

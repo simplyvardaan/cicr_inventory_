@@ -32,6 +32,8 @@ interface ComponentVaultViewProps {
   onOpenAddItem: () => void;
   onDeleteItem: (id: string, name: string) => void;
   onSelectItem: (item: InventoryItem) => void;
+  cartCount?: number;
+  onOpenCart?: () => void;
 }
 
 const isLowReserveItem = (i: InventoryItem): boolean => {
@@ -57,6 +59,8 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   onOpenAddItem,
   onDeleteItem,
   onSelectItem,
+  cartCount,
+  onOpenCart,
 }) => {
   // Mapping active loans: item_id -> count of loaned units
   const activeLoansByItem = requests
@@ -122,14 +126,47 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          Component Vault
-        </h1>
-        <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
-          Explore laboratory components, inspect real-time capacity, and stage equipment for requisition clearance.
-        </p>
+      {/* Title & Action Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Component Vault
+          </h1>
+          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
+            Explore laboratory components, inspect real-time capacity, and stage equipment for requisition clearance.
+          </p>
+        </div>
+
+        {/* Vault Actions: Request Cart & Add Equipment */}
+        <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+          {onOpenCart && (
+            <button
+              type="button"
+              onClick={onOpenCart}
+              className="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+              title="Open Hardware Cart"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Request Cart</span>
+              {(cartCount ?? 0) > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono font-black">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {isLeadOrAdmin && (
+            <button
+              type="button"
+              onClick={onOpenAddItem}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#141420] dark:hover:bg-[#1e1e2d] border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white font-bold text-xs transition-all active:scale-95 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 text-blue-600 dark:text-purple-400" />
+              <span>Add Equipment</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search Bar & Category Filter Tabs */}
