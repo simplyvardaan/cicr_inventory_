@@ -48,13 +48,13 @@ export function getTransporter() {
       pass: smtpPass,
     },
     pool: false, // Critical in serverless to prevent frozen/dead socket reuse
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 8000,
+    connectionTimeout: 4000,
+    greetingTimeout: 4000,
+    socketTimeout: 4000,
   } as any);
 }
 
-export const mailer = getTransporter();
+
 
 export function getMailFrom(): string {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || DEFAULT_SMTP_FROM;

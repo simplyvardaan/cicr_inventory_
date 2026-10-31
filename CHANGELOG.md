@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.8] : 2026-11-01
+
+### Fixed
+* Serverless Function Invocations & SMTP Timeout Safeguards:
+  - Added race-safe execution timeouts (`Promise.race` with 4.5s/5s bounds) to email transmissions in `api/accounts.ts` and `api/email.ts`, preventing unhandled 500 `FUNCTION_INVOCATION_FAILED` exceptions on Vercel.
+  - Lowered SMTP socket, greeting, and connection timeouts to 4000ms in `api/_mailer.ts` and configured `maxDuration: 15` in `vercel.json` to prevent serverless function terminations.
+  - Eliminated the `Multiple GoTrueClient instances detected in the same browser context` warning by assigning an isolated `storageKey` to `supabaseAdmin`.
+  - Fixed GitHub Actions `backup.yml` pipeline by upgrading the Node.js runner to version 22 and adding a WebSocket fallback shim for `@supabase/supabase-js`.
+
+***
+
 ## [2.18.7] : 2026-11-01
 
 ### Fixed

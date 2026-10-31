@@ -59,7 +59,10 @@ async function sendAccountEmail(
   }
   try {
     const transporter = getTransporter();
-    await transporter.sendMail({ from: getMailFrom(), to, ...renderEmail(event, data) });
+    await Promise.race([
+      transporter.sendMail({ from: getMailFrom(), to, ...renderEmail(event, data) }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP transmission timed out')), 4500))
+    ]);
   } catch (err) {
     console.warn(`SMTP delivery notice for ${event}:`, err);
   }

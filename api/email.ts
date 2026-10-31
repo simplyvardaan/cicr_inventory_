@@ -41,7 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const transporter = getTransporter();
     const message = renderEmail(event, data && typeof data === 'object' ? data : {});
-    await transporter.sendMail({ from: getMailFrom(), to, ...message });
+    await Promise.race([
+      transporter.sendMail({ from: getMailFrom(), to, ...message }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP transmission timed out')), 5000))
+    ]);
     return res.status(202).json({ sent: true });
   } catch (error) {
     console.error('SMTP delivery failed:', error);
