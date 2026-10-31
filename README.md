@@ -27,7 +27,7 @@ Track, reserve, and deploy microcontrollers, sensors, actuators, and power elect
 - [Getting Started & Local Setup](#getting-started--local-setup)
 - [Environment Variables](#environment-variables)
 - [Production Deployment](#production-deployment)
-- [Technical Deep Dive & System Logs](#technical-deep-dive--system-logs)
+- [Documentation & Deep Dive Specifications](#documentation--deep-dive-specifications)
 - [Mentors & Core Team](#mentors--core-team)
 
 ---
@@ -196,11 +196,13 @@ cicr_inventory_/
 ├── scripts/
 │   ├── backup_to_neon.cjs      # Scheduled secondary PostgreSQL backup mirror
 │   └── initialize_neon.cjs     # Neon DB schema initialization
+├── AGENT.md                    # AI agent guidelines, constraints & system protocols
 ├── CHANGELOG.md                # Official Semantic Versioning release notes
-├── DEEPDIVE.md                 # Technical deep dive, audit logs & version registry
+├── DEEPDIVE.md                 # Technical deep dive, telemetry logs & version registry
 ├── LICENSE                     # MIT License (Copyright 2026 CICR)
 ├── package.json                # Project dependencies & npm scripts (v2.13.0)
 ├── README.md                   # System documentation & architectural reference
+├── SECURITY.md                 # Security assessment & penetration test report
 ├── tailwind.config.js          # Tailwind custom palette & animations
 ├── tsconfig.json               # TypeScript compiler configuration
 ├── vercel.json                 # Vercel SPA routing & API proxy rules
@@ -349,11 +351,13 @@ The platform is optimized for **zero-configuration Vercel deployment**:
 
 ---
 
-## Technical Deep Dive & System Logs
+## Documentation & Deep Dive Specifications
 
-For in-depth architectural specifications, complete version release logs from `v1.0.0` through `v2.13.0`, Git tag registry, full PostgreSQL table schemas, 7-day audit telemetry engine, and BOTE capacity analysis, refer to the dedicated deep dive documentation:
+For comprehensive technical documentation, refer to the following repository guides:
 
-- [Technical Deep Dive & System Logs](./DEEPDIVE.md)
+- [Technical Deep Dive & System Logs](./DEEPDIVE.md) — Complete version release logs from `v1.0.0` to `v2.13.0`, Git tag registry, full PostgreSQL table schemas, 7-day audit telemetry engine, and BOTE capacity analysis.
+- [AI Agent Engineering Guidelines](./AGENT.md) — Operational blueprint, design system invariants, role guards, and protocol instructions for AI coding agents.
+- [Security Assessment & Penetration Test Report](./SECURITY.md) — Threat model, vulnerability audit findings, defensive patches, and responsible disclosure policy.
 
 ---
 

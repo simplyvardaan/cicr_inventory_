@@ -354,7 +354,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailToRegister = `${emailToRegister.toLowerCase()}@mail.jiit.ac.in`;
       }
 
-      const initialStatus = 'pending';
+      const isMasterAdminEmail = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(
+        emailToRegister.toLowerCase()
+      );
+      const enforcedRole = isMasterAdminEmail ? 'admin' : 'member';
+      const initialStatus = isMasterAdminEmail ? 'approved' : 'pending';
       const accountResponse = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -391,7 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name,
             enrollment_no,
             phone,
-            role,
+            role: enforcedRole,
             status: initialStatus,
             avatar_url: avatar_url || undefined,
           },
@@ -464,19 +468,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveUserAccount = async (targetId: string) => {
     try {
-      const response = await fetch('/api/accounts', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ action: 'approve', target_id: targetId }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) return { success: false, error: result.error || 'Approval failed.' };
-      return { success: true };
-
-      /*
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
       // Find account request from activity_logs
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
@@ -608,19 +606,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectUserAccount = async (targetId: string) => {
     try {
-      const response = await fetch('/api/accounts', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ action: 'reject', target_id: targetId }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) return { success: false, error: result.error || 'Rejection failed.' };
-      return { success: true };
-
-      /*
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
         .select('*')
