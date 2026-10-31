@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.4] : 2026-11-01
+
+### Fixed
+* Google SMTP Password Fallback & Credentials Sanitization: Corrected the encoded base64 Google App Password fallback in `api/_mailer.ts` (`ezoufqenvifmudgv`) and added automatic whitespace/quote sanitization for 16-character Google App Passwords.
+* Serverless SMTP Connection Stability: Set `pool: false` and added 8-second connection, greeting, and socket timeouts on nodemailer transporters to eliminate stale socket reuse and prevent serverless `FUNCTION_INVOCATION_FAILED` timeouts on Vercel.
+* Fault-Tolerant Account Emails: Wrapped `sendAccountEmail` in `api/accounts.ts` and `api/reminders.ts` in non-blocking try-catch blocks to prevent email delivery hiccups from breaking core user registration, approvals, or cron execution.
+* Serverless JSON Body Parsing: Added resilient body parsing in `api/email.ts` and `api/accounts.ts` to cleanly handle both parsed JSON objects and raw payload strings across edge and node runtimes.
+
+***
+
 ## [2.18.3] : 2026-11-01
 
 ### Fixed

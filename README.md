@@ -200,7 +200,7 @@ cicr_inventory_/
 ├── CHANGELOG.md                # Official Semantic Versioning release notes
 ├── DEEPDIVE.md                 # Technical deep dive, telemetry logs & version registry
 ├── LICENSE                     # MIT License (Copyright 2026 CICR)
-├── package.json                # Project dependencies & npm scripts (v2.18.3)
+├── package.json                # Project dependencies & npm scripts (v2.18.4)
 ├── README.md                   # System documentation & architectural reference
 ├── SECURITY.md                 # Security assessment & penetration test report
 ├── tailwind.config.js          # Tailwind custom palette & animations
@@ -355,7 +355,7 @@ The platform is optimized for **zero-configuration Vercel deployment**:
 
 For comprehensive technical documentation, refer to the following repository guides:
 
-- [Technical Deep Dive & System Logs](./DEEPDIVE.md) — Complete version release logs from `v1.0.0` to `v2.18.3`, Git tag registry, full PostgreSQL table schemas, 7-day audit telemetry engine, and BOTE capacity analysis.
+- [Technical Deep Dive & System Logs](./DEEPDIVE.md) — Complete version release logs from `v1.0.0` to `v2.18.4`, Git tag registry, full PostgreSQL table schemas, 7-day audit telemetry engine, and BOTE capacity analysis.
 - [AI Agent Engineering Guidelines](./AGENT.md) — Operational blueprint, design system invariants, role guards, and protocol instructions for AI coding agents.
 - [Security Assessment & Penetration Test Report](./SECURITY.md) — Threat model, vulnerability audit findings, defensive patches, and responsible disclosure policy.
 - [Codebase Engineering Rules & Architecture Standards](./RULES.md) — Modular architecture rules (no single-file bloat), rich explanatory comments, zero-emoji enforcement, zero-hyphen formatting, debuggability protocol, and MAJOR.MINOR.BUGS semver specification.
