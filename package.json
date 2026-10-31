@@ -8,16 +8,14 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "neon:init": "node scripts/initialize_neon.cjs",
-    "backup:neon": "node scripts/backup_to_neon.cjs",
-    "test-user:create": "node scripts/create_test_user.cjs",
-    "test-data:seed": "node scripts/seed_test_data.cjs"
+    "backup:neon": "node scripts/backup_to_neon.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",
     "framer-motion": "^14.9.0",
     "lucide-react": "^0.477.0",
-    "pg": "^8.13.3",
+    "pg": "^8.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.0.2"
