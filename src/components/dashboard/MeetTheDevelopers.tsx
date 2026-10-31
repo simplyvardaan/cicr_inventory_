@@ -5,13 +5,16 @@ import {
   Globe,
   ChevronLeft,
   ChevronRight,
-
 } from 'lucide-react';
+
+export type TeamRole = 'mentor' | 'developer';
 
 export interface TeamMember {
   id: string;
   name: string;
   role: string;
+  category: TeamRole;
+  filename: string;
   photoUrl: string;
   quote: string;
   linkedin: string;
@@ -20,12 +23,14 @@ export interface TeamMember {
   portfolio?: string;
 }
 
-// Exactly ordered as requested: Gunjan (Mentor) -> Vardaan (Developer) -> Samiksha (Developer) -> Mohammad Arsh (Developer)
+// Exactly ordered as requested: Gunjan (Mentor) | Vardaan - Samiksha - Arsh (Developer)
 const teamMembers: TeamMember[] = [
   {
     id: 'gunjan',
     name: 'Gunjan Pal',
-    role: 'Project Mentor & Technical Advisor',
+    role: 'Mentor',
+    category: 'mentor',
+    filename: 'gunjan_pal.tsx',
     photoUrl: '/images/team/gunjan.jpg',
     quote: 'Guiding technical innovation, hardware architecture, and robotics engineering.',
     linkedin: 'https://www.linkedin.com/in/gunjan-pal-796093284/',
@@ -35,7 +40,9 @@ const teamMembers: TeamMember[] = [
   {
     id: 'vardaan',
     name: 'Vardaan Saxena',
-    role: 'Lead Full-Stack Developer & System Architect',
+    role: 'Developer',
+    category: 'developer',
+    filename: 'vardaan_saxena.tsx',
     photoUrl: '/images/team/vardaan.jpg',
     quote: 'I always build something that I keep wishing someone would make for me.',
     linkedin: 'https://www.linkedin.com/in/simplyvardaan/',
@@ -46,7 +53,9 @@ const teamMembers: TeamMember[] = [
   {
     id: 'samiksha',
     name: 'Samiksha Jhunjhunwala',
-    role: 'Developer & UI Specialist',
+    role: 'Developer',
+    category: 'developer',
+    filename: 'samiksha_jhunjhunwala.tsx',
     photoUrl: '/images/team/samiksha.jpg',
     quote: 'Crafting intuitive, high-performance web dashboards and robotics interfaces.',
     linkedin: 'https://www.linkedin.com/in/samiksha-jhunjhunwala-9343b02b3/',
@@ -56,7 +65,9 @@ const teamMembers: TeamMember[] = [
   {
     id: 'arsh',
     name: 'Mohammad Arsh',
-    role: 'Developer & Hardware Integration',
+    role: 'Developer',
+    category: 'developer',
+    filename: 'mohammad_arsh.tsx',
     photoUrl: '/images/team/arsh.jpg',
     quote: 'Engineering autonomous robotics systems, hardware-software integration, and scalable digital platforms.',
     linkedin: 'https://www.linkedin.com/in/mohammad-arsh-1792008-hd/',
@@ -66,24 +77,39 @@ const teamMembers: TeamMember[] = [
 ];
 
 export const MeetTheDevelopers: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TeamRole>('developer');
   const [selectedMemberId, setSelectedMemberId] = useState<string>('vardaan');
 
+  const activeCategoryMembers = teamMembers.filter((m) => m.category === activeTab);
   const currentMember =
-    teamMembers.find((m) => m.id === selectedMemberId) || teamMembers[1] || teamMembers[0];
+    activeCategoryMembers.find((m) => m.id === selectedMemberId) ||
+    activeCategoryMembers[0] ||
+    teamMembers[0];
+
+  const handleTabChange = (role: TeamRole) => {
+    setActiveTab(role);
+    if (role === 'mentor') {
+      setSelectedMemberId('gunjan');
+    } else {
+      setSelectedMemberId('vardaan');
+    }
+  };
 
   const handlePrevMember = useCallback(() => {
-    const currentIndex = teamMembers.findIndex((m) => m.id === currentMember.id);
-    const prevIndex = (currentIndex - 1 + teamMembers.length) % teamMembers.length;
-    setSelectedMemberId(teamMembers[prevIndex].id);
-  }, [currentMember]);
+    if (activeCategoryMembers.length <= 1) return;
+    const currentIndex = activeCategoryMembers.findIndex((m) => m.id === currentMember.id);
+    const prevIndex = (currentIndex - 1 + activeCategoryMembers.length) % activeCategoryMembers.length;
+    setSelectedMemberId(activeCategoryMembers[prevIndex].id);
+  }, [activeCategoryMembers, currentMember]);
 
   const handleNextMember = useCallback(() => {
-    const currentIndex = teamMembers.findIndex((m) => m.id === currentMember.id);
-    const nextIndex = (currentIndex + 1) % teamMembers.length;
-    setSelectedMemberId(teamMembers[nextIndex].id);
-  }, [currentMember]);
+    if (activeCategoryMembers.length <= 1) return;
+    const currentIndex = activeCategoryMembers.findIndex((m) => m.id === currentMember.id);
+    const nextIndex = (currentIndex + 1) % activeCategoryMembers.length;
+    setSelectedMemberId(activeCategoryMembers[nextIndex].id);
+  }, [activeCategoryMembers, currentMember]);
 
-  // Keyboard arrow navigation support
+  // Keyboard arrow navigation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') handlePrevMember();
@@ -96,7 +122,7 @@ export const MeetTheDevelopers: React.FC = () => {
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 space-y-6 sm:space-y-8 pb-20 select-none animate-in fade-in duration-300">
       
-      {/* Title Header */}
+      {/* Page Title Header */}
       <div className="text-center space-y-1">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
           Meet the Team
@@ -106,112 +132,170 @@ export const MeetTheDevelopers: React.FC = () => {
         </p>
       </div>
 
-      {/* Main Profile Showcase Card - Generous max-w-4xl/5xl box */}
-      <div className="rounded-3xl bg-white dark:bg-[#0f0f16] border-2 border-slate-200 dark:border-[#222232] shadow-xl p-6 sm:p-10 md:p-12 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-10 transition-all">
-        {/* Photo Container (NO role badge below the photo as requested) */}
-        <div className="shrink-0">
-          <div className="w-32 h-32 sm:w-44 sm:h-44 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-blue-500 dark:border-purple-500 shadow-xl shadow-blue-500/20 dark:shadow-purple-500/20 bg-slate-900">
-            <img
-              src={currentMember.photoUrl}
-              alt={currentMember.name}
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            />
+      {/* KPH-style macOS Window Profile Card */}
+      <article
+        className="w-full rounded-3xl bg-white dark:bg-[#0c0918] border-2 border-slate-200 dark:border-[#222232] shadow-2xl shadow-slate-900/10 dark:shadow-black/60 overflow-hidden flex flex-col transition-all duration-300"
+        aria-label={`Profile of ${currentMember.name}`}
+      >
+        {/* macOS Window Title Bar with 3 Colored Dots */}
+        <div className="select-none bg-slate-100/80 dark:bg-[#141026]/90 border-b border-slate-200 dark:border-[#222232] px-5 sm:px-7 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] inline-block shadow-sm" />
+            <span className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] inline-block shadow-sm" />
+            <span className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] inline-block shadow-sm" />
           </div>
+
+          <div className="font-mono text-xs font-semibold text-slate-600 dark:text-zinc-400 flex items-center gap-1.5">
+            <span className="text-blue-600 dark:text-purple-400 font-bold">~</span>
+            <span>{currentMember.filename}</span>
+          </div>
+
+          <div className="w-10" />
         </div>
 
-        {/* Member Details */}
-        <div className="flex-1 text-center md:text-left space-y-3 min-w-0 w-full">
-          <div>
-            <span className="text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider text-blue-600 dark:text-purple-400 block mb-1">
-              {currentMember.role}
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+        {/* Profile Body */}
+        <div className="p-6 sm:p-10 md:p-14 flex flex-col md:flex-row items-center gap-8 md:gap-14">
+          {/* Avatar with Radiant Gradient Glow Ring */}
+          <div className="shrink-0 relative">
+            <div className="w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 rounded-full p-2 sm:p-2.5 bg-gradient-to-br from-white/60 via-white/10 to-emerald-400/30 dark:from-white/20 dark:via-white/5 dark:to-emerald-400/25 shadow-2xl">
+              <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 border-2 border-white/20 dark:border-white/10 shadow-inner">
+                <img
+                  src={currentMember.photoUrl}
+                  alt={currentMember.name}
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Details (NO role badge tag below the name as requested) */}
+          <div className="flex-1 text-center md:text-left space-y-3 min-w-0 w-full">
+            <p className="text-sm sm:text-base font-semibold text-slate-500 dark:text-zinc-400">
+              Hi, my name is
+            </p>
+
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500 dark:from-emerald-400 dark:via-green-400 dark:to-lime-300">
               {currentMember.name}
             </h2>
-          </div>
 
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 italic leading-relaxed max-w-xl mx-auto md:mx-0">
-            &ldquo;{currentMember.quote}&rdquo;
-          </p>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 italic leading-relaxed max-w-xl mx-auto md:mx-0">
+              &ldquo;{currentMember.quote}&rdquo;
+            </p>
 
-          {/* Social Links Row - Fully Interactive on Mobile & Desktop */}
-          <div className="flex items-center justify-center md:justify-start gap-2.5 pt-2 flex-wrap">
-            {/* LinkedIn */}
-            {currentMember.linkedin && (
-              <a
-                href={currentMember.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#161622] dark:hover:bg-[#202030] border border-slate-300 dark:border-zinc-800 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
-                title={`LinkedIn: ${currentMember.name}`}
-              >
-                <Linkedin className="w-3.5 h-3.5 text-[#0077b5] shrink-0" />
-                <span>LinkedIn</span>
-              </a>
-            )}
+            {/* Social Links Row */}
+            <div className="flex items-center justify-center md:justify-start gap-2.5 pt-3 flex-wrap">
+              {/* LinkedIn */}
+              {currentMember.linkedin && (
+                <a
+                  href={currentMember.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#16122a] dark:hover:bg-[#221c3e] border border-slate-300 dark:border-zinc-800 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
+                  title={`${currentMember.name}'s LinkedIn`}
+                >
+                  <Linkedin className="w-3.5 h-3.5 text-[#0077b5] shrink-0" />
+                  <span>{currentMember.name}</span>
+                </a>
+              )}
 
-            {/* Portfolio / Website */}
-            {currentMember.portfolio && (
-              <a
-                href={currentMember.portfolio}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-purple-950/40 dark:hover:bg-purple-950/70 border border-blue-200 dark:border-purple-500/30 text-xs font-bold text-blue-700 dark:text-purple-300 transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
-                title="Personal Portfolio"
-              >
-                <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400 shrink-0" />
-                <span>vardaansaxena.tech</span>
-              </a>
-            )}
+              {/* Portfolio (for Vardaan) */}
+              {currentMember.portfolio && (
+                <a
+                  href={currentMember.portfolio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-purple-950/40 dark:hover:bg-purple-950/70 border border-blue-200 dark:border-purple-500/30 text-xs font-bold text-blue-700 dark:text-purple-300 transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
+                  title="Portfolio Website"
+                >
+                  <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400 shrink-0" />
+                  <span>vardaansaxena.tech</span>
+                </a>
+              )}
 
-            {/* GitHub */}
-            {currentMember.github && (
-              <a
-                href={currentMember.github}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#161622] dark:hover:bg-[#202030] border border-slate-300 dark:border-zinc-800 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
-                title={`GitHub: ${currentMember.githubUser}`}
-              >
-                <Github className="w-3.5 h-3.5 text-slate-800 dark:text-zinc-200 shrink-0" />
-                <span>{currentMember.githubUser}</span>
-              </a>
-            )}
+              {/* GitHub */}
+              {currentMember.github && (
+                <a
+                  href={currentMember.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#16122a] dark:hover:bg-[#221c3e] border border-slate-300 dark:border-zinc-800 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all shadow-sm active:scale-95 touch-manipulation cursor-pointer"
+                  title={`${currentMember.githubUser} on GitHub`}
+                >
+                  <Github className="w-3.5 h-3.5 text-slate-800 dark:text-zinc-200 shrink-0" />
+                  <span>{currentMember.githubUser}</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </article>
 
-      {/* Responsive Carousel Control Bar (Fits cleanly on ALL screen sizes) */}
-      <div className="flex items-center justify-center gap-3 sm:gap-6 pt-2 max-w-sm sm:max-w-md mx-auto px-2">
-        {/* Left Arrow Button */}
+      {/* Role Navigation Tabs: Mentor | Developer */}
+      <nav
+        className="w-full max-w-md mx-auto flex items-center justify-center gap-8 border-b-2 border-slate-200 dark:border-zinc-800/80 pb-2.5 pt-2"
+        aria-label="Role Navigation"
+      >
         <button
           type="button"
-          onClick={handlePrevMember}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#14141f] dark:hover:bg-[#1f1f2e] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 active:scale-90 touch-manipulation"
-          title="Previous Member"
-          aria-label="Previous member"
+          onClick={() => handleTabChange('mentor')}
+          className={`relative pb-2 text-sm sm:text-base font-bold transition-all cursor-pointer ${
+            activeTab === 'mentor'
+              ? 'text-slate-900 dark:text-white after:content-[""] after:absolute after:bottom-[-12px] after:inset-x-0 after:h-[3px] after:rounded-full after:bg-emerald-500 shadow-emerald-500/40'
+              : 'text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300'
+          }`}
         >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          Mentor
         </button>
 
-        {/* Member Avatar Dots / Buttons */}
-        <div className="flex items-center justify-center gap-2.5 sm:gap-4 p-1">
-          {teamMembers.map((member) => {
+        <button
+          type="button"
+          onClick={() => handleTabChange('developer')}
+          className={`relative pb-2 text-sm sm:text-base font-bold transition-all cursor-pointer ${
+            activeTab === 'developer'
+              ? 'text-slate-900 dark:text-white after:content-[""] after:absolute after:bottom-[-12px] after:inset-x-0 after:h-[3px] after:rounded-full after:bg-emerald-500 shadow-emerald-500/40'
+              : 'text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300'
+          }`}
+        >
+          Developer
+        </button>
+      </nav>
+
+      {/* Member Avatar Selection Track with Circular Arrow Buttons */}
+      <div
+        className="flex items-center justify-center gap-3 sm:gap-6 pt-2 max-w-sm sm:max-w-md mx-auto px-2"
+        aria-label="Member selection carousel"
+      >
+        {/* Left Arrow Button */}
+        {activeCategoryMembers.length > 1 && (
+          <button
+            type="button"
+            onClick={handlePrevMember}
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#141026] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 shrink-0 touch-manipulation"
+            title="Previous member"
+            aria-label="Previous member"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
+
+        {/* Circular Avatar Track */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 p-1">
+          {activeCategoryMembers.map((member) => {
             const isSelected = member.id === currentMember.id;
             return (
               <button
                 key={member.id}
                 type="button"
                 onClick={() => setSelectedMemberId(member.id)}
-                className={`relative rounded-full transition-all duration-200 cursor-pointer shrink-0 active:scale-95 touch-manipulation ${
+                className={`relative rounded-full transition-all duration-300 cursor-pointer shrink-0 active:scale-95 touch-manipulation ${
                   isSelected
-                    ? 'p-0.5 sm:p-1 ring-3 sm:ring-4 ring-blue-600 dark:ring-purple-600 shadow-lg shadow-blue-600/30 dark:shadow-purple-600/30 opacity-100 scale-105'
-                    : 'opacity-50 hover:opacity-100 hover:scale-105'
+                    ? 'p-0.5 sm:p-1 ring-3 sm:ring-4 ring-emerald-400 shadow-xl shadow-emerald-400/30 opacity-100 scale-105'
+                    : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:scale-105'
                 }`}
-                title={`${member.name} (${member.role})`}
+                title={member.name}
                 aria-label={`Select ${member.name}`}
               >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-slate-900 border-2 border-slate-300 dark:border-zinc-700">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-slate-900 border-2 border-slate-300 dark:border-zinc-700">
                   <img
                     src={member.photoUrl}
                     alt={member.name}
@@ -224,18 +308,18 @@ export const MeetTheDevelopers: React.FC = () => {
         </div>
 
         {/* Right Arrow Button */}
-        <button
-          type="button"
-          onClick={handleNextMember}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#14141f] dark:hover:bg-[#1f1f2e] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 active:scale-90 touch-manipulation"
-          title="Next Member"
-          aria-label="Next member"
-        >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+        {activeCategoryMembers.length > 1 && (
+          <button
+            type="button"
+            onClick={handleNextMember}
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#141026] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 shrink-0 touch-manipulation"
+            title="Next member"
+            aria-label="Next member"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
       </div>
-
-
 
     </div>
   );

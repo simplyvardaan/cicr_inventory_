@@ -37,13 +37,48 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
+const getInitialAuth = (): { user: User | null; profile: UserProfile | null } => {
+  if (typeof window === 'undefined') return { user: null, profile: null };
+  try {
+    const cachedUser = localStorage.getItem('cicr-active-user');
+    const cachedProfile = localStorage.getItem('cicr-active-profile');
+    if (cachedUser) {
+      return {
+        user: JSON.parse(cachedUser),
+        profile: cachedProfile ? JSON.parse(cachedProfile) : null,
+      };
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const parsed = JSON.parse(item);
+          const u = parsed.user || parsed.currentSession?.user;
+          if (u) return { user: u, profile: null };
+        }
+      }
+    }
+
+    const fallbackUser = localStorage.getItem('neon-fallback-user');
+    if (fallbackUser) {
+      return { user: JSON.parse(fallbackUser), profile: null };
+    }
+  } catch {
+    // ignore
+  }
+  return { user: null, profile: null };
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const initialAuth = getInitialAuth();
+  const [user, setUser] = useState<User | null>(initialAuth.user);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profile, setProfile] = useState<UserProfile | null>(initialAuth.profile);
+  const [loading, setLoading] = useState<boolean>(!initialAuth.user);
 
   const loadProfile = async (currentUser: User) => {
     try {
@@ -54,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (!error && data) {
-        setProfile({
+        const resolvedProfile: UserProfile = {
           id: data.id,
           email: data.email || currentUser.email || '',
           full_name: data.full_name || currentUser.user_metadata?.full_name || 'Member',
@@ -66,7 +101,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar_url: data.avatar_url && !data.avatar_url.startsWith('status:') ? data.avatar_url : (currentUser.user_metadata?.avatar_url || ''),
           created_at: data.created_at || currentUser.created_at,
           last_sign_in: currentUser.last_sign_in_at,
-        });
+        };
+        setProfile(resolvedProfile);
+        try {
+          localStorage.setItem('cicr-active-user', JSON.stringify(currentUser));
+          localStorage.setItem('cicr-active-profile', JSON.stringify(resolvedProfile));
+        } catch {}
         return;
       }
     } catch {
@@ -631,6 +671,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      localStorage.removeItem('cicr-active-user');
+      localStorage.removeItem('cicr-active-profile');
       localStorage.removeItem('neon-fallback-user');
     }
   };

@@ -8,26 +8,31 @@ import { SignupForm } from './components/auth/SignupForm';
 import { UserDashboard } from './components/dashboard/UserDashboard';
 
 const AppContent: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  // If user is not authenticated, show the Login / Signup page directly without preloader!
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#05030a] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-blue-600 selection:text-white relative overflow-hidden">
-        <div className="w-full flex items-center justify-center relative z-10 animate-in fade-in duration-300">
-          {authMode === 'login' ? (
-            <LoginForm onSwitchToSignup={() => setAuthMode('signup')} />
-          ) : (
-            <SignupForm onSwitchToLogin={() => setAuthMode('login')} />
-          )}
-        </div>
-      </div>
-    );
+  // If user is authenticated (including instant sync hydration from localStorage), show dashboard immediately!
+  if (user) {
+    return <UserDashboard />;
   }
 
-  // Once authenticated: Show the customized User Dashboard with Bottom Navbar
-  return <UserDashboard />;
+  // If auth is still checking on cold start without cached user, render empty background without preloader
+  if (loading) {
+    return <div className="min-h-screen bg-slate-50 dark:bg-[#07070a]" />;
+  }
+
+  // Genuinely unauthenticated: Show Login / Signup form
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-[#05030a] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-blue-600 selection:text-white relative overflow-hidden">
+      <div className="w-full flex items-center justify-center relative z-10 animate-in fade-in duration-300">
+        {authMode === 'login' ? (
+          <LoginForm onSwitchToSignup={() => setAuthMode('signup')} />
+        ) : (
+          <SignupForm onSwitchToLogin={() => setAuthMode('login')} />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export function App() {
