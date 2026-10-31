@@ -3,6 +3,7 @@ import { InventoryItem } from '../../types/inventory';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
+import { DragToConfirm } from '../ui/drag-to-confirm';
 import {
   X,
   ShoppingBag,
@@ -56,8 +57,8 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
 
   const totalUnits = cart.reduce((acc, curr) => acc + curr.quantity, 0);
 
-  const handleDispatch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDispatch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg('');
 
     if (cart.length === 0) {
@@ -271,23 +272,37 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                   </strong>
                 </div>
 
-                <div className="pt-2 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 py-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
+                <div className="pt-2 space-y-3">
+                  <div className="w-full">
+                    <DragToConfirm
+                      size="md"
+                      label={isSubmitting ? 'Dispatching Requisition...' : 'Slide to Dispatch Requisition'}
+                      confirmedLabel="Requisition Dispatched!"
+                      actionType="submit"
+                      variant="default"
+                      disabled={isSubmitting || cart.length === 0}
+                      onConfirm={() => {
+                        handleDispatch();
+                      }}
+                    />
+                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || cart.length === 0}
-                    className="btn-auth-primary flex-1 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-40"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{isSubmitting ? 'Dispatching...' : 'Dispatch 1-Go Requisition'}</span>
-                  </button>
+                  <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="hover:text-zinc-300 transition-colors cursor-pointer"
+                    >
+                      Keep Browsing
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || cart.length === 0}
+                      className="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
+                    >
+                      Or click here to submit
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
