@@ -164,15 +164,62 @@ Create a `.env` file in the project root (reference `.env.example`):
 VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
 ```
 
-### 4. Run Development Server
+`NEON_DATABASE_URL` is server-side only. It must not use the `VITE_` prefix or be
+included in frontend deployment variables.
+
+### 4. Configure the Neon backup
+
+Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)
+once in the Neon SQL editor. Then run the backup from a trusted server, CI job, or
+scheduled worker:
+
+```bash
+npm run neon:init
+npm run backup:neon
+```
+
+`neon:init` creates the operational Neon tables from
+[`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
+in the Supabase SQL Editor to create the matching Supabase tables. The schema is
+safe to rerun because existing RLS policies are replaced. The Supabase
+REST API cannot execute schema DDL using an anon or service-role key.
+
+The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and non-secret authentication metadata.
+It replaces each mirrored table's backup snapshot atomically and records each run
+in `backup_runs`. Passwords, access tokens, and session data are never copied.
+
+### Database failover gateway
+
+Browser database requests now pass through `/api/db`. The Vercel function tries
+Supabase first and routes database reads and writes to Neon when Supabase has a
+network or server failure. Configure `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as
+Vercel environment variables
+environment variables. Supabase Auth remains primary, so login and signup are
+not available if Supabase Auth itself is down.
+
+To populate a safe, repeatable test dataset in Supabase, set
+`TEST_FIXTURE_PASSWORD` locally and run:
+
+```bash
+npm run test-data:seed
+```
+
+This creates or updates three approved fixture users, three inventory items, two
+borrow requests, and activity logs. Fixture rows use the `cicr-fixture` prefix
+and are never deleted by the command.
+
+
+### 5. Run Development Server
 ```bash
 npm run dev
 ```
 Open `http://localhost:3000` in your browser.
 
-### 5. Production Build
+### 6. Production Build
 ```bash
 npm run build
 npm run preview
