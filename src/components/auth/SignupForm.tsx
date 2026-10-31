@@ -110,7 +110,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   };
 
   return (
-    <div className="w-full max-w-[500px] bg-[#0c0918] border border-purple-900/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_-10px_rgba(147,51,234,0.35)] relative overflow-hidden text-slate-200">
+    <div className="w-full max-w-[660px] bg-[#0c0918] border border-purple-900/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_-10px_rgba(147,51,234,0.35)] relative overflow-hidden text-slate-200">
       {/* Brand Header */}
       <div className="flex flex-col items-center text-center mb-5">
         <CicrLogo size={56} className="mb-2.5" />
@@ -147,9 +147,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
       )}
 
       {/* Register Form */}
-      <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {/* Profile Picture Upload & Preview */}
-        <div className="flex items-center gap-4 p-3 rounded-2xl bg-[#080512] border border-[#241a3d]">
+        <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#080512] border border-[#241a3d]">
           <div className="relative group shrink-0">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 overflow-hidden">
               {avatarUrl ? (
@@ -205,42 +205,43 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </div>
         </div>
 
-        {/* Name */}
-        <div>
-          <label className="block text-zinc-300 font-medium mb-1">Full Name</label>
-          <div className="relative">
-            <User className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
-            <input
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter Your Name"
-              className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Email ID */}
-        <div>
-          <label className="block text-zinc-300 font-medium mb-1">Email ID</label>
-          <div className="relative">
-            <Mail className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
-            <input
-              type="text"
-              required
-              value={collegeEmail}
-              onChange={(e) => setCollegeEmail(e.target.value)}
-              placeholder="Enter your College Email"
-              className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Row: Enrollment Number & Contact Number */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 2 Boxes Side-by-Side Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+          {/* Box 1 (Row 1 Left): Full Name */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Enrollment Number</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Full Name</label>
+            <div className="relative">
+              <User className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter Your Name"
+                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Box 2 (Row 1 Right): Email ID */}
+          <div>
+            <label className="block text-zinc-300 font-semibold mb-1">Email ID</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <input
+                type="text"
+                required
+                value={collegeEmail}
+                onChange={(e) => setCollegeEmail(e.target.value)}
+                placeholder="Enter your College Email"
+                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Box 3 (Row 2 Left): Enrollment Number */}
+          <div>
+            <label className="block text-zinc-300 font-semibold mb-1">Enrollment Number</label>
             <div className="relative">
               <Hash className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
               <input
@@ -253,8 +254,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
             </div>
           </div>
 
+          {/* Box 4 (Row 2 Right): Contact Number */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Contact Number</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Contact Number</label>
             <div className="relative">
               <Phone className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
               <input
@@ -266,12 +268,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
               />
             </div>
           </div>
-        </div>
 
-        {/* Passwords */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Box 5 (Row 3 Left): Password */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Password</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
               <input
@@ -292,8 +292,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
             </div>
           </div>
 
+          {/* Box 6 (Row 3 Right): Confirm Password */}
           <div>
-            <label className="block text-zinc-300 font-medium mb-1">Confirm Password</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Confirm Password</label>
             <div className="relative">
               <ShieldCheck className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
               <input
@@ -324,7 +325,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
         <button
           type="submit"
           disabled={loading}
-          className="btn-purple-glow w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-50"
+          className="btn-purple-glow w-full py-3.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-50"
         >
           <span className="text-base font-light leading-none">+</span>
           <span>{loading ? 'Submitting Request...' : 'Submit Registration Request'}</span>
