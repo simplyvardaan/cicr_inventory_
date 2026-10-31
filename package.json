@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "backup:neon": "node scripts/backup_to_neon.cjs"
+    "neon:init": "node scripts/initialize_neon.cjs",
+    "backup:neon": "node scripts/backup_to_neon.cjs",
+    "test-user:create": "node scripts/create_test_user.cjs",
+    "test-data:seed": "node scripts/seed_test_data.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
@@ -22,6 +25,7 @@
     "@types/node": "^22.13.9",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@vercel/node": "^29.0.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.3",
