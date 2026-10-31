@@ -167,8 +167,16 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
 ```
 
-`NEON_DATABASE_URL` is server-side only. It must not use the `VITE_` prefix or be
-included in frontend deployment variables.
+`NEON_DATABASE_URL`, `SUPABASE_DB_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are
+server-side only. They must not be included in frontend deployment variables.
+`SUPABASE_DB_URL` is the direct Supabase Postgres connection string used to copy
+the existing `auth.users.encrypted_password` hashes without exposing them.
+
+The browser always sends database requests through `/api/db`. The gateway tries
+Supabase first and automatically uses the mirrored Neon tables when Supabase
+times out or returns a server error. Use the deployed Vercel app (or `vercel dev`)
+to run the gateway; plain `npm run dev` only serves the frontend and cannot run
+the server-side Neon fallback.
 
 ### 4. Configure the Neon backup
 
@@ -181,15 +189,26 @@ npm run neon:init
 npm run backup:neon
 ```
 
+The GitHub Actions workflow at
+[`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
+automatically every 15 minutes. Add `VITE_SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
+**Settings → Secrets and variables → Actions**. You can also run it immediately
+from the repository's **Actions** tab.
+
 `neon:init` creates the operational Neon tables from
 [`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
 in the Supabase SQL Editor to create the matching Supabase tables. The schema is
 safe to rerun because existing RLS policies are replaced. The Supabase
 REST API cannot execute schema DDL using an anon or service-role key.
 
-The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and non-secret authentication metadata.
+The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
 It replaces each mirrored table's backup snapshot atomically and records each run
-in `backup_runs`. Passwords, access tokens, and session data are never copied.
+in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
+The mirror reads `auth.users.encrypted_password` through `SUPABASE_DB_URL` and
+stores it as `password_hash`, allowing the same password to be verified during
+failover. Without `SUPABASE_DB_URL`, the Supabase API cannot provide password
+hashes and users are marked `password_reset_required`.
 
 ### Database failover gateway
 
@@ -200,18 +219,6 @@ network or server failure. Configure `VITE_SUPABASE_URL`,
 Vercel environment variables
 environment variables. Supabase Auth remains primary, so login and signup are
 not available if Supabase Auth itself is down.
-
-To populate a safe, repeatable test dataset in Supabase, set
-`TEST_FIXTURE_PASSWORD` locally and run:
-
-```bash
-npm run test-data:seed
-```
-
-This creates or updates three approved fixture users, three inventory items, two
-borrow requests, and activity logs. Fixture rows use the `cicr-fixture` prefix
-and are never deleted by the command.
-
 
 ### 5. Run Development Server
 ```bash

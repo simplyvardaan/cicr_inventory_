@@ -9,6 +9,8 @@ const tables = new Set([
 ]);
 
 const identifier = /^[a-z_][a-z0-9_]*$/;
+const SUPABASE_TIMEOUT_MS = 8_000;
+const NEON_CONNECTION_TIMEOUT_MS = 8_000;
 
 function quoteIdentifier(value: string) {
   if (!identifier.test(value)) throw new Error('Invalid database identifier.');
@@ -63,11 +65,21 @@ async function supabaseRequest(req: VercelRequest, path: string) {
   if (req.headers['content-type']) headers.set('content-type', String(req.headers['content-type']));
   if (req.headers.prefer) headers.set('prefer', String(req.headers.prefer));
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: req.method,
-    headers,
-    body: ['GET', 'HEAD'].includes(req.method || '') ? undefined : JSON.stringify(req.body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
+  let response: Response;
+
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method: req.method,
+      headers,
+      body: ['GET', 'HEAD'].includes(req.method || '') ? undefined : JSON.stringify(req.body),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
   if (!response.ok && response.status < 500) return response;
   if (response.ok) return response;
   throw new Error(`Supabase returned ${response.status}.`);
@@ -78,10 +90,14 @@ async function neonRequest(req: VercelRequest, path: string) {
   const table = parseTable(path);
   const query = { ...req.query } as Record<string, string | string[] | undefined>;
   delete query.route;
-  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL, ssl: { rejectUnauthorized: true } });
-  await client.connect();
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+    connectionTimeoutMillis: NEON_CONNECTION_TIMEOUT_MS,
+    ssl: { rejectUnauthorized: true },
+  });
 
   try {
+    await client.connect();
     const values: unknown[] = [];
     const filters = parseFilters(query, values);
     const where = filters.length ? ` WHERE ${filters.join(' AND ')}` : '';
@@ -93,8 +109,16 @@ async function neonRequest(req: VercelRequest, path: string) {
         const [column, direction = 'asc'] = query.order.split('.');
         sql += ` ORDER BY ${quoteIdentifier(column)} ${direction.toLowerCase() === 'desc' ? 'DESC' : 'ASC'}`;
       }
-      if (query.limit) sql += ` LIMIT ${Math.max(0, Number(query.limit))}`;
-      if (query.offset) sql += ` OFFSET ${Math.max(0, Number(query.offset))}`;
+      if (query.limit) {
+        const limit = Number(query.limit);
+        if (!Number.isInteger(limit) || limit < 0) throw new Error('Invalid limit.');
+        sql += ` LIMIT ${limit}`;
+      }
+      if (query.offset) {
+        const offset = Number(query.offset);
+        if (!Number.isInteger(offset) || offset < 0) throw new Error('Invalid offset.');
+        sql += ` OFFSET ${offset}`;
+      }
       const result = await client.query(sql, values);
       return { status: 200, body: result.rows };
     }

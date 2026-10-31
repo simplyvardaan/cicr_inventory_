@@ -23,18 +23,38 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.inventory_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
+    sku TEXT UNIQUE,
     category TEXT NOT NULL,
     description TEXT,
     location TEXT NOT NULL,
     total_qty INTEGER NOT NULL DEFAULT 1 CHECK (total_qty >= 0),
     available_qty INTEGER NOT NULL DEFAULT 1 CHECK (available_qty >= 0),
     min_threshold INTEGER DEFAULT 2 CHECK (min_threshold >= 0),
+    condition TEXT DEFAULT 'Good',
     status TEXT DEFAULT 'In Stock' CHECK (status IN ('In Stock', 'Low Stock', 'Out of Stock', 'Maintenance')),
     image_url TEXT,
     datasheet_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.inventory_items
+  ADD COLUMN IF NOT EXISTS sku TEXT,
+  ADD COLUMN IF NOT EXISTS condition TEXT DEFAULT 'Good';
+
+DO $$
+BEGIN
+ IF NOT EXISTS (
+   SELECT 1
+   FROM pg_constraint
+   WHERE conrelid = 'public.inventory_items'::regclass
+     AND conname = 'inventory_items_sku_key'
+ ) THEN
+   ALTER TABLE public.inventory_items
+     ADD CONSTRAINT inventory_items_sku_key UNIQUE (sku);
+ END IF;
+END;
+$$;
 
 -- 4. Create Borrow Requests Table
 CREATE TABLE IF NOT EXISTS public.borrow_requests (
@@ -143,6 +163,9 @@ ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- 9. RLS Policies
 -- Profiles: everyone can view profiles, users can update their own profile
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" 
   ON public.profiles FOR SELECT USING (true);
 
@@ -153,6 +176,10 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Inventory items: readable by anyone, editable by authenticated users
+DROP POLICY IF EXISTS "Inventory is viewable by all users" ON public.inventory_items;
+DROP POLICY IF EXISTS "Authenticated users can insert inventory items" ON public.inventory_items;
+DROP POLICY IF EXISTS "Authenticated users can update inventory items" ON public.inventory_items;
+DROP POLICY IF EXISTS "Authenticated users can delete inventory items" ON public.inventory_items;
 CREATE POLICY "Inventory is viewable by all users" 
   ON public.inventory_items FOR SELECT USING (true);
 
@@ -166,6 +193,9 @@ CREATE POLICY "Authenticated users can delete inventory items"
   ON public.inventory_items FOR DELETE USING (auth.role() = 'authenticated');
 
 -- Borrow requests: all authenticated users can view, users can insert their own requests, authenticated can update
+DROP POLICY IF EXISTS "Borrow requests viewable by authenticated users" ON public.borrow_requests;
+DROP POLICY IF EXISTS "Users can create borrow requests" ON public.borrow_requests;
+DROP POLICY IF EXISTS "Authenticated users can update borrow requests" ON public.borrow_requests;
 CREATE POLICY "Borrow requests viewable by authenticated users" 
   ON public.borrow_requests FOR SELECT USING (auth.role() = 'authenticated');
 
@@ -176,6 +206,8 @@ CREATE POLICY "Authenticated users can update borrow requests"
   ON public.borrow_requests FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Activity logs: viewable and insertable by authenticated users
+DROP POLICY IF EXISTS "Activity logs viewable by authenticated users" ON public.activity_logs;
+DROP POLICY IF EXISTS "Activity logs insertable by authenticated users" ON public.activity_logs;
 CREATE POLICY "Activity logs viewable by authenticated users" 
   ON public.activity_logs FOR SELECT USING (auth.role() = 'authenticated');
 
@@ -209,4 +241,3 @@ VALUES
 
 ('HC-SR04 Ultrasonic Distance Sensor', 'CICR-SEN-003', 'Sensors & Modules', 'Ultrasonic sensor 2cm to 400cm non-contact measurement module for mobile robots.', 'Lab 2 - Bin 5', 30, 26, 6, 'New', 'In Stock', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80', '')
 ON CONFLICT (sku) DO NOTHING;
-
