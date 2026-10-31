@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.6] : 2026-11-01
+
+### Fixed
+* Account Requests Ghost Resurfacing: Fixed an issue where approved or rejected accounts persisted or reappeared in the "Account Requests" tab.
+  - Updated `fetchPendingAccounts` in `UserDashboard.tsx` to maintain a comprehensive set of resolved accounts (`resolvedEmails` and `resolvedUserIds`), filtering out any user marked as approved, rejected, or admin across both `profiles` and `activity_logs`.
+  - Fixed avatar status sync during approvals and rejections (`avatar_url: 'status:approved'` / `avatar_url: 'status:rejected'`), ensuring old `'status:pending'` avatar values do not cause profiles to be miscategorized as pending.
+  - Multi-Log Synchronization: Both `/api/accounts` and client fallback routines now update all related `ACCOUNT_REQUEST` entries in `activity_logs` rather than just the first found record.
+  - Immediate Cache Pruning: `handleApproveAccount` and `handleRejectAccount` now immediately prune the target account by both ID and email from local state before refetching.
+
+***
+
 ## [2.18.5] : 2026-11-01
 
 ### Added

@@ -136,20 +136,53 @@ export const UserDashboard: React.FC = () => {
         .from('profiles')
         .select('*');
 
-      const approvedEmails = new Set(
+      // Resolved accounts: Any account marked approved, rejected, or admin is permanently RESOLVED!
+      const resolvedEmails = new Set(
         (profData || [])
-          .filter((p) => p.status === 'approved' || p.role === 'admin' || p.avatar_url === 'status:approved')
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
           .map((p) => p.email?.toLowerCase())
+      );
+
+      const resolvedUserIds = new Set(
+        (profData || [])
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
+          .map((p) => p.id)
       );
 
       const pendingMap = new Map();
 
       (profData || []).forEach((p) => {
-        if (
-          p.role !== 'admin' &&
-          (p.status === 'pending' || p.avatar_url === 'status:pending' || !p.status)
-        ) {
-          pendingMap.set(p.email?.toLowerCase() || p.id, p);
+        const isResolved =
+          p.role === 'admin' ||
+          p.status === 'approved' ||
+          p.status === 'rejected' ||
+          p.avatar_url === 'status:approved' ||
+          p.avatar_url === 'status:rejected';
+
+        if (!isResolved) {
+          const isPending =
+            p.status === 'pending' ||
+            p.avatar_url === 'status:pending' ||
+            !p.status;
+
+          const emailKey = p.email?.toLowerCase();
+          if (isPending && emailKey && !resolvedEmails.has(emailKey)) {
+            pendingMap.set(emailKey, p);
+          }
         }
       });
 
@@ -168,11 +201,19 @@ export const UserDashboard: React.FC = () => {
             details = {};
           }
           const email = (details?.email || '').toLowerCase();
+          const userId = details?.userId || log.user_id;
           const isPending = !details?.status || details?.status === 'pending';
 
-          if (isPending && email && !approvedEmails.has(email) && !pendingMap.has(email)) {
+          // Strictly filter out any account whose email or user_id is already resolved (approved OR rejected)!
+          if (
+            isPending &&
+            email &&
+            !resolvedEmails.has(email) &&
+            (!userId || !resolvedUserIds.has(userId)) &&
+            !pendingMap.has(email)
+          ) {
             pendingMap.set(email, {
-              id: details?.userId || log.user_id || log.id,
+              id: userId || log.id,
               full_name: details?.fullName || log.user_name || 'New Member',
               email: details?.email,
               roll_number: details?.enrollmentNo || '',
@@ -391,13 +432,15 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleApproveAccount = async (targetUserId: string, targetName: string) => {
+  const handleApproveAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await approveUserAccount(targetUserId);
+    const res = await approveUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!targetEmail || a.email?.toLowerCase() !== targetEmail.toLowerCase()))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();
@@ -406,13 +449,15 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleRejectAccount = async (targetUserId: string, targetName: string) => {
+  const handleRejectAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await rejectUserAccount(targetUserId);
+    const res = await rejectUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!targetEmail || a.email?.toLowerCase() !== targetEmail.toLowerCase()))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();

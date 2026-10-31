@@ -40,8 +40,8 @@ interface AdminHubViewProps {
   pendingAccounts: any[];
   processingUserId: string | null;
   onPromoteRole: (userId: string, newRole: 'admin' | 'member', name: string) => void;
-  onApproveAccount: (userId: string, name: string) => void;
-  onRejectAccount: (userId: string, name: string) => void;
+  onApproveAccount: (userId: string, name: string, email?: string) => void;
+  onRejectAccount: (userId: string, name: string, email?: string) => void;
   onRefresh: () => void;
 }
 
@@ -730,7 +730,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     <button
                       type="button"
                       disabled={processingUserId === account.id}
-                      onClick={() => onRejectAccount(account.id, account.full_name || account.email)}
+                      onClick={() => onRejectAccount(account.id, account.full_name || account.email, account.email)}
                       className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-300 dark:border-red-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 text-center"
                     >
                       Reject
@@ -738,7 +738,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     <button
                       type="button"
                       disabled={processingUserId === account.id}
-                      onClick={() => onApproveAccount(account.id, account.full_name || account.email)}
+                      onClick={() => onApproveAccount(account.id, account.full_name || account.email, account.email)}
                       className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 text-center"
                     >
                       {processingUserId === account.id ? 'Approving...' : 'Approve Account'}

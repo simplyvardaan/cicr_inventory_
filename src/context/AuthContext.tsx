@@ -33,8 +33,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
-  approveUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
-  rejectUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  approveUserAccount: (userId: string, email?: string) => Promise<{ success: boolean; error?: string }>;
+  rejectUserAccount: (userId: string, email?: string) => Promise<{ success: boolean; error?: string }>;
   updateUserRole: (userId: string, newRole: 'admin' | 'member') => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -572,12 +572,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const approveUserAccount = async (targetId: string) => {
+  const approveUserAccount = async (targetId: string, email?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
         user?.user_metadata?.role === 'admin' ||
-        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
       if (!isCallerAdmin) {
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
@@ -590,7 +595,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({ action: 'approve', target_id: targetId }),
+          body: JSON.stringify({ action: 'approve', target_id: targetId, email }),
         });
         if (response.ok) {
           apiSuccess = true;
@@ -599,13 +604,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('API approve notice:', apiErr);
       }
 
-      if (!apiSuccess) {
-        await supabaseAdmin.from('profiles').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', targetId);
-        try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, { user_metadata: { status: 'approved' } });
-        } catch {
-          // Ignore admin auth update error on fallback
+      // Ensure database profile and activity_logs reflect approved status
+      try {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
+          .eq('id', targetId);
+
+        if (email) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
+            .ilike('email', email);
         }
+
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(targetId, {
+            email_confirm: true,
+            user_metadata: { status: 'approved' },
+          });
+        } catch {}
+
+        const { data: logs } = await supabaseAdmin
+          .from('activity_logs')
+          .select('id, details, user_id')
+          .eq('action', 'ACCOUNT_REQUEST');
+
+        for (const log of logs || []) {
+          let details: any = {};
+          try {
+            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          } catch {}
+          const logEmail = (details?.email || '').toLowerCase();
+          if (
+            log.id === targetId ||
+            log.user_id === targetId ||
+            details?.userId === targetId ||
+            (email && logEmail === email.toLowerCase())
+          ) {
+            await supabaseAdmin
+              .from('activity_logs')
+              .update({
+                details: JSON.stringify({ ...details, status: 'approved', approved_at: new Date().toISOString() }),
+              })
+              .eq('id', log.id);
+          }
+        }
+      } catch (fbErr) {
+        console.warn('Fallback approve sync notice:', fbErr);
       }
 
       return { success: true };
@@ -615,12 +661,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const rejectUserAccount = async (targetId: string) => {
+  const rejectUserAccount = async (targetId: string, email?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
         user?.user_metadata?.role === 'admin' ||
-        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
       if (!isCallerAdmin) {
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
@@ -633,7 +684,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({ action: 'reject', target_id: targetId }),
+          body: JSON.stringify({ action: 'reject', target_id: targetId, email }),
         });
         if (response.ok) {
           apiSuccess = true;
@@ -642,13 +693,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('API reject notice:', apiErr);
       }
 
-      if (!apiSuccess) {
-        await supabaseAdmin.from('profiles').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', targetId);
-        try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, { user_metadata: { status: 'rejected' } });
-        } catch {
-          // Ignore admin auth update error on fallback
+      // Ensure database profile and activity_logs reflect rejected status
+      try {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
+          .eq('id', targetId);
+
+        if (email) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
+            .ilike('email', email);
         }
+
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(targetId, {
+            user_metadata: { status: 'rejected' },
+          });
+        } catch {}
+
+        const { data: logs } = await supabaseAdmin
+          .from('activity_logs')
+          .select('id, details, user_id')
+          .eq('action', 'ACCOUNT_REQUEST');
+
+        for (const log of logs || []) {
+          let details: any = {};
+          try {
+            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          } catch {}
+          const logEmail = (details?.email || '').toLowerCase();
+          if (
+            log.id === targetId ||
+            log.user_id === targetId ||
+            details?.userId === targetId ||
+            (email && logEmail === email.toLowerCase())
+          ) {
+            await supabaseAdmin
+              .from('activity_logs')
+              .update({
+                details: JSON.stringify({ ...details, status: 'rejected', rejected_at: new Date().toISOString() }),
+              })
+              .eq('id', log.id);
+          }
+        }
+      } catch (fbErr) {
+        console.warn('Fallback reject sync notice:', fbErr);
       }
 
       return { success: true };

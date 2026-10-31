@@ -197,43 +197,124 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const targetId = typeof body?.target_id === 'string' ? body.target_id : '';
+    const bodyEmail = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
     if (!targetId || !['approve', 'reject'].includes(action)) return response(res, 400, { error: 'Invalid account action.' });
 
     const { data: logs, error: logsError } = await supabase
       .from('activity_logs').select('*').eq('action', 'ACCOUNT_REQUEST').order('created_at', { ascending: false });
     if (logsError) throw logsError;
+
     const targetLog = (logs || []).find((log) => {
-      const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-      return details?.userId === targetId || log.user_id === targetId || log.id === targetId || details?.email === targetId;
+      let details: any = {};
+      try {
+        details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      } catch {
+        details = {};
+      }
+      return (
+        details?.userId === targetId ||
+        log.user_id === targetId ||
+        log.id === targetId ||
+        (details?.email && details.email.toLowerCase() === targetId.toLowerCase()) ||
+        (bodyEmail && details?.email?.toLowerCase() === bodyEmail)
+      );
     });
-    const details = targetLog ? (typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details) : {};
-    const email = typeof details?.email === 'string' ? details.email : '';
+
+    let details: any = {};
+    try {
+      details = targetLog && typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog?.details || {};
+    } catch {
+      details = {};
+    }
+
+    const email = bodyEmail || (typeof details?.email === 'string' ? details.email.toLowerCase() : '');
     const fullName = typeof details?.fullName === 'string' ? details.fullName : targetLog?.user_name || 'Member';
     const status = action === 'approve' ? 'approved' : 'rejected';
+
     const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
     if (usersError) throw usersError;
     const existing = (users.users as Array<{ id: string; email?: string; user_metadata?: Record<string, unknown> }>).find(
-      (user) => user.id === targetId || (!!email && user.email?.toLowerCase() === email.toLowerCase())
+      (user) => user.id === targetId || (!!email && user.email?.toLowerCase() === email)
     );
-    if (!existing) return response(res, 404, { error: 'Auth account not found for this registration.' });
-    const resolvedUserId = existing.id;
+    const resolvedUserId = existing?.id || targetId;
+
+    if (existing) {
+      await supabase.auth.admin.updateUserById(existing.id, {
+        email_confirm: true,
+        user_metadata: { ...existing.user_metadata, status },
+      });
+    }
 
     if (action === 'approve') {
-      await supabase.auth.admin.updateUserById(existing.id, { email_confirm: true, user_metadata: { ...existing.user_metadata, status } });
-      const { error: profileError } = await supabase.from('profiles').upsert([{ id: existing.id, full_name: fullName, email: email || existing.email, role: details?.role || 'member', status, roll_number: details?.enrollmentNo || '', phone: details?.phone || '', avatar_url: 'status:approved', updated_at: new Date().toISOString() }]);
+      const { error: profileError } = await supabase.from('profiles').upsert([{
+        id: resolvedUserId,
+        full_name: fullName,
+        email: email || existing?.email,
+        role: details?.role || 'member',
+        status: 'approved',
+        roll_number: details?.enrollmentNo || '',
+        phone: details?.phone || '',
+        avatar_url: 'status:approved',
+        updated_at: new Date().toISOString(),
+      }]);
       requireDatabaseSuccess(profileError, 'Approved profile update');
     } else {
-      const { error: authError } = await supabase.auth.admin.updateUserById(resolvedUserId, { user_metadata: { ...existing.user_metadata, status } });
-      requireDatabaseSuccess(authError, 'Rejected account update');
-      const { error: profileError } = await supabase.from('profiles').update({ status, avatar_url: 'status:rejected' }).eq('id', resolvedUserId);
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
+        .eq('id', resolvedUserId);
       requireDatabaseSuccess(profileError, 'Rejected profile update');
     }
 
-    if (targetLog) {
-      const { error: targetLogError } = await supabase.from('activity_logs').update({ details: JSON.stringify({ ...details, status, [`${status}_at`]: new Date().toISOString() }) }).eq('id', targetLog.id);
-      requireDatabaseSuccess(targetLogError, 'Account request status update');
+    // Mirror to Neon PostgreSQL if configured
+    if (process.env.NEON_DATABASE_URL) {
+      try {
+        const pgClient = new Client({
+          connectionString: process.env.NEON_DATABASE_URL,
+          ssl: { rejectUnauthorized: true },
+        });
+        await pgClient.connect();
+        await pgClient.query('UPDATE profiles SET status = $1, avatar_url = $2, updated_at = NOW() WHERE id = $3', [
+          status,
+          `status:${status}`,
+          resolvedUserId,
+        ]);
+        await pgClient.end();
+      } catch (neonErr) {
+        console.warn('Neon status sync notice:', neonErr);
+      }
     }
-    const { error: actionLogError } = await supabase.from('activity_logs').insert([{ user_id: resolvedUserId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
+
+    // Update ALL matching ACCOUNT_REQUEST logs so they are permanently marked
+    for (const log of logs || []) {
+      let lDetails: any = {};
+      try {
+        lDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      } catch {
+        lDetails = {};
+      }
+      const logEmail = (lDetails?.email || '').toLowerCase();
+      if (
+        log.id === targetId ||
+        log.user_id === resolvedUserId ||
+        lDetails?.userId === resolvedUserId ||
+        (email && logEmail === email)
+      ) {
+        await supabase
+          .from('activity_logs')
+          .update({
+            details: JSON.stringify({ ...lDetails, status, [`${status}_at`]: new Date().toISOString() }),
+          })
+          .eq('id', log.id);
+      }
+    }
+
+    const { error: actionLogError } = await supabase.from('activity_logs').insert([{
+      user_id: resolvedUserId,
+      user_name: fullName,
+      action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED',
+      details: `Account for ${fullName} was ${status}.`,
+    }]);
     requireDatabaseSuccess(actionLogError, 'Account action logging');
     if (email) await sendAccountEmail(action === 'approve' ? 'account_approved' : 'account_rejected', email, { name: fullName, email, role: details?.role, status });
     return response(res, 200, { success: true });
