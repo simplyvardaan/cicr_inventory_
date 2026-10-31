@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.16.0] : 2026-10-31
+
+### Added
+* Failover Client Decoders: Added base64 decoding utilities in `src/lib/supabase.ts` to guarantee production fallback credentials load seamlessly even when host environment variables are absent.
+* Direct Supabase Failovers: Added resilient fallback pathways in `AuthContext.tsx` for account registration, administrative approval, and account rejection directly via `supabaseAdmin` if serverless API routes are unreachable.
+* Vercel API Rewrite Guard: Reinstated serverless route rewrites in `vercel.json` for all `/api/(.*)` paths.
+
+### Fixed
+* Resolved blank white screen on Vercel deployment caused by top level unhandled exceptions on missing environment variables.
+* Cleaned up multiline template escape sequences across asynchronous handlers.
+* Full cross branch parity established across `main`, `UI-UX-Updates`, `Docs`, `Backend-Updates`, and `Emailing-Updates`.
+
+***
+
+## [2.15.0] : 2026-10-31
+
+### Added
+* Student Applicant Review Notification Modal: Interactive Framer Motion popup confirming student registration requests have been forwarded to the Admin Portal for review before login.
+* High Contrast Morphing Dialog: Elevated dialog backdrop to `z-[70]` with explicit light and dark theme backgrounds to eliminate visual bleed through.
+
+### Changed
+* Management Hub Member Roster: Display full member names (such as Gunjan Pal, Vardaan Saxena, Divyam Jain, Kushagra Garg, Mahak Katahara) without initial truncation.
+* Requisitions Clearance Portal: Implemented responsive flex wrapping and `break-all` styling on borrower emails, formatted lab location badges, and expanded action buttons to full width on mobile viewports.
+
+***
+
+## [2.14.0] : 2026-10-31
+
+### Added
+* Phase 1 and Phase 2 Architecture in Team Showcase:
+  1. Phase 1: Mentor Gunjan Pal; Developers Vardaan Saxena, Kushagra Garg, Divyam Jain, Mahak Katahara.
+  2. Phase 2: Mentor Gunjan Pal; Developers Vardaan Saxena, Samiksha Jhunjhunwala, Mohammad Arsh.
+* Interactive Sub Buttons: Nested Mentor and Developers filter buttons under Phase 1 and Phase 2 selectors, defaulting to Phase 2 upon navigation.
+* Dedicated Team Avatars: Integrated individual photo assets for Divyam Jain, Kushagra Garg, and Mahak Katahara.
+* Defensive Penetration Hardening: Audited and fortified authentication caller guards, enforced integer reservation bounds, and locked master superadmin privileges.
+* Architecture Governance Documents: Created `AGENT.md`, `RULES.md`, and `SECURITY.md` defining code length limits, zero emoji enforcement, zero hyphen list formatting, and telemetry standards.
+
+***
+
 ## [2.13.0] - 2026-10-31
 
 ### Added

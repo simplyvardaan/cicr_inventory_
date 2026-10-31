@@ -34,7 +34,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.12.0** | Released | **Dual Theme Engine & High-Contrast Visual Polish.** High-contrast Cyber Dark (`#07070a`) and Clean Light (`#f8fafc`) theme switch with LiquidToggle; complete elimination of faint text and dark container patches. |
 | **v2.13.0** | Released | **Cyber Calendar Picker, KPH Team Showcase, <50% Low Reserves & UI Perfection.** Interactive cyber calendar picker with preset shortcuts; macOS terminal window team showcase (Gunjan, Vardaan, Samiksha, Arsh); top-navbar cart strictly scoped to inventory; 100% full stock vault restock; admin-only warnings; branded cold-start pulse loader; and official MIT License. |
 | **v2.14.0** | Released | **Defensive Penetration Hardening, Agent Operational Blueprint & Documentation Restructure.** Full defensive security audit and source-level pentest hardening (RBAC caller guards, master superadmin immutability, integer quantity bounds, registration role lock); AGENT.md AI coding protocol; SECURITY.md threat model and audit matrix; zero-emoji README sanitization; and centralized DEEPDIVE.md telemetry registry. |
-| **v2.15.0** | Released (current) | **Mobile Viewport Optimization, Full Name Roster Display, Signup Review Modal & Modal Theme Adaptation.** Fixed email and location text overflow in Requisitions Portal; eliminated name truncation in Member Management Roster; added registration review popup modal notifying applicants of admin review status; and adapted MorphingDialog to dual light/dark themes with elevated z-index. |
+| **v2.15.0** | Released | **Mobile Viewport Optimization, Full Name Roster Display, Signup Review Modal & Modal Theme Adaptation.** Fixed email and location text overflow in Requisitions Portal; eliminated name truncation in Member Management Roster; added registration review popup modal notifying applicants of admin review status; and adapted MorphingDialog to dual light/dark themes with elevated z-index. |
+| **v2.16.0** | Released (current) | **Production Deployment Resiliency & Dual Supabase Failover.** Resolved Vercel deployment crash by restoring safe production credential decoders in `src/lib/supabase.ts`; reinstated `/api/(.*)` rewrites in `vercel.json`; integrated direct client-side Supabase failover for registration, approvals, and rejections; complete cross-branch parity across all active repository branches. |
 
 ---
 
@@ -51,7 +52,9 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.10.0** | `v2.10.0` | Redundancy & Sync | Neon PostgreSQL mirror, 1.5s auto-sync |
 | **v2.12.0** | `v2.12.0` | Theme Engine | Dual theme contrast & LiquidToggle |
 | **v2.13.0** | `v2.13.0`, `v2.13` | Production Release | KPH Team Showcase, Cyber Calendar, Restock, MIT License |
-| **v2.14.0** | 2.14.0, 2.14 | Security & Docs | Pentest hardening, AGENT.md, SECURITY.md, DEEPDIVE.md |
+| **v2.14.0** | `v2.14.0`, `v2.14` | Security & Docs | Pentest hardening, AGENT.md, SECURITY.md, DEEPDIVE.md |
+| **v2.15.0** | `v2.15.0`, `v2.15` | Mobile & Roster | Responsive requisitions, full member roster names, review modal |
+| **v2.16.0** | `v2.16.0`, `v2.16` | Production Resiliency | Deployment crash resolution, base64 decoders, failover authentication |
 
 ---
 
