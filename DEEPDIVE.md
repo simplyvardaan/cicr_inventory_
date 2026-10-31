@@ -32,7 +32,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.7.0** | Released | **Database Purge, Master Whitelist & Tamper-Proof Profiles.** Test data wiped; vault reset to authentic inventory; 2-box side-by-side operator profile with security-locked credentials (email, enrollment number, contact). |
 | **v2.10.0** | Released | **Secondary Database Redundancy & 1.5s Auto-Sync.** Automated backup mirror with Neon PostgreSQL; 1.5-second background auto-synchronization; permanent notification read state persistence in localStorage. |
 | **v2.12.0** | Released | **Dual Theme Engine & High-Contrast Visual Polish.** High-contrast Cyber Dark (`#07070a`) and Clean Light (`#f8fafc`) theme switch with LiquidToggle; complete elimination of faint text and dark container patches. |
-| **v2.13.0** | Released (current) | **Cyber Calendar Picker, KPH Team Showcase, <50% Low Reserves & UI Perfection.** Interactive cyber calendar picker with preset shortcuts; macOS terminal window team showcase (Gunjan, Vardaan, Samiksha, Arsh); top-navbar cart strictly scoped to inventory; 100% full stock vault restock; admin-only warnings; branded cold-start pulse loader; and official MIT License. |
+| **v2.13.0** | Released | **Cyber Calendar Picker, KPH Team Showcase, <50% Low Reserves & UI Perfection.** Interactive cyber calendar picker with preset shortcuts; macOS terminal window team showcase (Gunjan, Vardaan, Samiksha, Arsh); top-navbar cart strictly scoped to inventory; 100% full stock vault restock; admin-only warnings; branded cold-start pulse loader; and official MIT License. |
+| **v2.14.0** | Released (current) | **Defensive Penetration Hardening, Agent Operational Blueprint & Documentation Restructure.** Full defensive security audit and source-level pentest hardening (RBAC caller guards, master superadmin immutability, integer quantity bounds, registration role lock); AGENT.md AI coding protocol; SECURITY.md threat model and audit matrix; zero-emoji README sanitization; and centralized DEEPDIVE.md telemetry registry. |
 
 ---
 
@@ -49,6 +50,7 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.10.0** | `v2.10.0` | Redundancy & Sync | Neon PostgreSQL mirror, 1.5s auto-sync |
 | **v2.12.0** | `v2.12.0` | Theme Engine | Dual theme contrast & LiquidToggle |
 | **v2.13.0** | `v2.13.0`, `v2.13` | Production Release | KPH Team Showcase, Cyber Calendar, Restock, MIT License |
+| **v2.14.0** | 2.14.0, 2.14 | Security & Docs | Pentest hardening, AGENT.md, SECURITY.md, DEEPDIVE.md |
 
 ---
 
