@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT NOT NULL,
     roll_number TEXT,
     role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     phone TEXT,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -42,16 +43,41 @@ ALTER TABLE public.inventory_items
   ADD COLUMN IF NOT EXISTS sku TEXT,
   ADD COLUMN IF NOT EXISTS condition TEXT DEFAULT 'Good';
 
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
+
+UPDATE public.profiles
+SET status = CASE
+  WHEN avatar_url = 'status:pending' THEN 'pending'
+  WHEN avatar_url = 'status:rejected' THEN 'rejected'
+  ELSE COALESCE(status, 'approved')
+END
+WHERE status IS NULL OR avatar_url IN ('status:pending', 'status:rejected');
+
+ALTER TABLE public.profiles
+  ALTER COLUMN status SET DEFAULT 'pending',
+  ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE public.profiles
+  DROP CONSTRAINT IF EXISTS profiles_status_check;
+
+ALTER TABLE public.profiles
+  ADD CONSTRAINT profiles_status_check
+  CHECK (status IN ('pending', 'approved', 'rejected'));
+
 DO $$
 BEGIN
  IF NOT EXISTS (
    SELECT 1
-   FROM pg_constraint
-   WHERE conrelid = 'public.inventory_items'::regclass
-     AND conname = 'inventory_items_sku_key'
+   FROM pg_class AS index_class
+   JOIN pg_namespace AS index_schema
+     ON index_schema.oid = index_class.relnamespace
+   WHERE index_schema.nspname = 'public'
+     AND index_class.relname = 'inventory_items_sku_key'
+     AND index_class.relkind = 'i'
  ) THEN
-   ALTER TABLE public.inventory_items
-     ADD CONSTRAINT inventory_items_sku_key UNIQUE (sku);
+   CREATE UNIQUE INDEX inventory_items_sku_key
+     ON public.inventory_items (sku);
  END IF;
 END;
 $$;
@@ -92,18 +118,20 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, role, roll_number)
+  INSERT INTO public.profiles (id, full_name, email, role, roll_number, status)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'role', 'member'),
-    COALESCE(NEW.raw_user_meta_data->>'roll_number', '')
+    COALESCE(NEW.raw_user_meta_data->>'roll_number', ''),
+    COALESCE(NEW.raw_user_meta_data->>'status', 'pending')
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     email = EXCLUDED.email,
     role = EXCLUDED.role,
+    status = EXCLUDED.status,
     roll_number = EXCLUDED.roll_number,
     updated_at = NOW();
   RETURN NEW;

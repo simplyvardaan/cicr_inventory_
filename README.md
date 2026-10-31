@@ -245,6 +245,88 @@ Create a `.env` file in the project root:
 ```env
 # Supabase Configuration
 VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
+```
+
+`NEON_DATABASE_URL`, `SUPABASE_DB_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are
+server-side only. They must not be included in frontend deployment variables.
+`SUPABASE_DB_URL` is the direct Supabase Postgres connection string used to copy
+the existing `auth.users.encrypted_password` hashes without exposing them.
+
+The browser always sends database requests through `/api/db`. The gateway tries
+Supabase first and automatically uses the mirrored Neon tables when Supabase
+times out or returns a server error. Use the deployed Vercel app (or `vercel dev`)
+to run the gateway; plain `npm run dev` only serves the frontend and cannot run
+the server-side Neon fallback.
+
+### 4. Configure the Neon backup
+
+Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)
+once in the Neon SQL editor. Then run the backup from a trusted server, CI job, or
+scheduled worker:
+
+```bash
+npm run neon:init
+npm run backup:neon
+```
+
+The GitHub Actions workflow at
+[`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
+automatically every 15 minutes. Add `VITE_SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
+**Settings → Secrets and variables → Actions**. You can also run it immediately
+from the repository's **Actions** tab.
+
+`neon:init` creates the operational Neon tables from
+[`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
+in the Supabase SQL Editor to create the matching Supabase tables. The schema is
+safe to rerun because existing RLS policies are replaced. The Supabase
+REST API cannot execute schema DDL using an anon or service-role key.
+If an existing Supabase project reports that `profiles.status` is missing, rerun
+[`supabase_schema.sql`](./supabase_schema.sql) in the SQL Editor and refresh the
+PostgREST schema cache; account approval workflows require this column.
+
+The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
+It replaces each mirrored table's backup snapshot atomically and records each run
+in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
+The mirror reads `auth.users.encrypted_password` through `SUPABASE_DB_URL` and
+stores it as `password_hash`, allowing the same password to be verified during
+failover. Without `SUPABASE_DB_URL`, the Supabase API cannot provide password
+hashes and users are marked `password_reset_required`.
+
+### Database failover gateway
+
+Browser database requests now pass through `/api/db`. The Vercel function tries
+Supabase first and routes database reads and writes to Neon when Supabase has a
+network or server failure. Configure `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as
+Vercel environment variables
+environment variables. Supabase Auth remains primary, so login and signup are
+not available if Supabase Auth itself is down.
+
+### Email notifications
+
+Configure Google SMTP with a Gmail App Password using `SMTP_HOST`, `SMTP_PORT`,
+`SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. The server endpoints
+send notifications for login, logout, account registration and decisions, borrow
+requests, approvals, rejections, returns, and return reminders.
+
+`/api/reminders` is available for an external scheduler or manual invocation.
+Vercel cron is intentionally not configured.
+
+
+### 5. Run Development Server
+```bash
+npm run dev
+```
+Run `npm run dev` for the full local app. It serves the Vite frontend and `/api/*` endpoints natively on `http://localhost:3000`; Vercel is not required for local development.
+
+### 6. Production Build
+```bash
+npm run build
+npm run preview
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
