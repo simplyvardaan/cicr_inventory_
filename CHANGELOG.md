@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.13.0] - 2026-10-31
+
+### Added
+- **Final Official Version Tag v2.13.0 / v2.13**: Official production release with MIT license and comprehensive system architecture documentation.
+- **KPH-Style Complete Team Showcase**: Unified team presentation with all 4 members (Gunjan Pal - Mentor, Vardaan Saxena - Developer, Samiksha Jhunjhunwala - Developer, Mohammad Arsh - Developer) with responsive role filters and dynamic avatar selection.
+- **Resilient Cold-Start & ErrorBoundary Guard**: Branded pulse loading and React ErrorBoundary to eliminate any blank white screens or session hangs.
+- **Strict Local State for Authentication**: Added explicit submitting state to prevent login button from getting stuck on "Authenticating...".
+- **Admin Warning Guard**: Ensured warning pills and low reserve indicators strictly display only for verified administrator accounts.
+- **High-Contrast Light Mode Optimization**: Crisp text and badge styling across Activity Logs, Account Requests, and Requisitions with full light/dark theme fidelity.
+
 ## [2.2.0] - 2026-10-31
 
 ### Added

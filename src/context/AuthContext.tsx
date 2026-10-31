@@ -135,9 +135,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initSession() {
       try {
+        // Safe 1200ms race timeout to prevent any stuck loading or blank screens on cold start
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null } }), 1200)
+        );
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await Promise.race([sessionPromise, timeoutPromise]);
         if (!mounted) return;
         setSession(session);
         const storedFallback = localStorage.getItem('neon-fallback-user');

@@ -1,252 +1,430 @@
-# CICR Robotics Vault & Inventory Management Platform 🤖⚡
-### Creative & Innovative Cell in Robotics | JIIT Noida
+<div align="center">
 
-A modern, high-performance web dashboard and robotics hardware management platform built with **React 18**, **TypeScript**, **Tailwind CSS**, and **Supabase (PostgreSQL)**, deployed on **Vercel**. Designed to manage laboratory components, microcontrollers, sensors, actuators, and student project requisitions with complete audit accountability.
+<img src="./logo.png" width="90" alt="CICR Logo" />
 
-🌐 **Live Production App**: [https://cicr-inventory.vercel.app/](https://cicr-inventory.vercel.app/)  
-📦 **Repository**: [https://github.com/simplyvardaan/cicr_inventory_](https://github.com/simplyvardaan/cicr_inventory_)  
-🏷️ **Current Version**: `v2.2.0`  
-📜 **Release Notes & History**: [CHANGELOG.md](./CHANGELOG.md)
+# CICR Inventory Hub
+
+**Creative & Innovative Cell in Robotics — Hardware Allocation & Laboratory Vault System**
+
+Track, reserve, and deploy microcontrollers, sensors, actuators, and power electronics from JIIT's robotics laboratory vault with a modern full-stack web platform: **React 18 + TypeScript + Vite**, **Tailwind CSS**, **Supabase (PostgreSQL)** real-time engine, **Neon PostgreSQL** secondary backup failover, **Dual Superadmin Security**, and **Real-Time Requisition Telemetry**.
+
+[![Live Demo](https://img.shields.io/badge/LIVE-cicr--inventory.vercel.app-00f0ff?style=for-the-badge&logo=vercel&logoColor=white)](https://cicr-inventory.vercel.app/)
+[![GitHub Repo](https://img.shields.io/badge/GITHUB-cicr__inventory_-bd00ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/simplyvardaan/cicr_inventory_)
+[![Database](https://img.shields.io/badge/DATABASE-Supabase%20PostgreSQL-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Secondary Mirror](https://img.shields.io/badge/SECONDARY-Neon%20PostgreSQL-00e599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
+[![License](https://img.shields.io/badge/LICENSE-MIT-1e2327?style=for-the-badge)](#-license)
+
+</div>
 
 ---
 
-## 🏛️ System Architecture
+## 📑 Table of Contents
 
-The CICR Inventory Platform is architected around a reactive, cloud-native stack with strict security isolation, real-time database synchronizations, and edge delivery:
+- [Version History & Registry](#-version-history--registry)
+- [System Architecture](#-system-architecture)
+- [Core Features & Platform Capabilities](#-core-features--platform-capabilities)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Database Schema & Real-Time Tables](#-database-schema--real-time-tables)
+- [Dual Superadmin & Institutional Auth Guard](#-dual-superadmin--institutional-auth-guard)
+- [Requisition Approval Workflow & Clearance Portal](#-requisition-approval-workflow--clearance-portal)
+- [Component Vault & Hardware Allocation Logic](#-component-vault--hardware-allocation-logic)
+- [Modern UI/UX, Themes & Real-Time Matrix HUD](#-modern-uiux-themes--real-time-matrix-hud)
+- [Getting Started & Local Setup](#-getting-started--local-setup)
+- [Environment Variables](#-environment-variables)
+- [Production Deployment](#-production-deployment)
+- [Project Mentors & Core Engineering Team](#-project-mentors--core-engineering-team)
+- [License](#-license)
+
+---
+
+## 📌 Version History & Registry
+
+| Version | Status | Key Milestones & Innovations |
+|:---|:---:|:---|
+| **v1.0.0** | ✅ Released | Initial prototype, static equipment catalog, and authentication baseline. |
+| **v1.5.0** | ✅ Released | Cloud migration to Supabase PostgreSQL, real-time database schema, and student account creation. |
+| **v2.0.0** | ✅ Released | **Dual Superadmin Security & 172 Authentic Lab Assets.** Master lock for `vardaansaxena096@gmail.com` & `cicrinventory@gmail.com`; institutional email validation (`@mail.jiit.ac.in`); complete 172-item robotics laboratory inventory. |
+| **v2.2.0** | ✅ Released | **React 18 + Vite SPA Transformation.** Modern modular frontend, Airport Matrix live departure clock, dynamic category filtering, real-time toast alerts, and dark-theme aesthetic. |
+| **v2.5.0** | ✅ Released | **Requisition Clearance Portal & Activity Stream.** Requisition workflow requiring administrator clearance before hardware can be collected; live activity audit logs; responsive bottom navigation dock. |
+| **v2.7.0** | ✅ Released | **Database Purge, Master Whitelist & Tamper-Proof Profiles.** Test data wiped; vault reset to authentic inventory; 2-box side-by-side operator profile with security-locked credentials (email, enrollment number, contact). |
+| **v2.10.0** | ✅ Released | **Secondary Database Redundancy & 1.5s Auto-Sync.** Automated backup mirror with Neon PostgreSQL; 1.5-second background auto-synchronization; permanent notification read state persistence in localStorage. |
+| **v2.12.0** | ✅ Released | **Dual Theme Engine & High-Contrast Visual Polish.** High-contrast Cyber Dark (`#07070a`) and Clean Light (`#f8fafc`) theme switch with LiquidToggle; complete elimination of faint text and dark container patches. |
+| **v2.13.0** | ✅ Released (current) | **Cyber Calendar Picker, KPH Team Showcase, <50% Low Reserves & UI Perfection.** Interactive cyber calendar picker with preset shortcuts; macOS terminal window team showcase (Gunjan, Vardaan, Samiksha, Arsh); top-navbar cart strictly scoped to inventory; 100% full stock vault restock; admin-only warnings; branded cold-start pulse loader; and official MIT License. |
+
+> **Current Active Release: v2.13.0** — Verified on production with live database sync across Vercel frontend, Supabase PostgreSQL, and Neon secondary redundancy.
+
+### 🏷️ Official Version Registry (Git Tags)
+
+| Version | Git Tag | Release Milestone | Focus Area |
+|:---|:---|:---:|:---|
+| **v1.0.0** | `v1.0.0` | Baseline MVP | Hardware catalog foundation |
+| **v1.5.0** | `v1.5.0` | Database Evolution | Supabase PostgreSQL migration |
+| **v2.0.0** | `v2.0.0` | Institutional Security | Dual superadmins & 172 lab assets |
+| **v2.2.0** | `v2.2.0` | React SPA & Clocks | Vite + React 18, Airport Matrix HUD |
+| **v2.5.0** | `v2.5.0` | Clearance Workflow | Admin requisition portal & audit ledger |
+| **v2.7.0** | `v2.7.0` | Security Hardening | Locked credentials & database purge |
+| **v2.10.0** | `v2.10.0` | Redundancy & Sync | Neon PostgreSQL mirror, 1.5s auto-sync |
+| **v2.12.0** | `v2.12.0` | Theme Engine | Dual theme contrast & LiquidToggle |
+| **v2.13.0** | `v2.13.0`, `v2.13` | Production Release | KPH Team Showcase, Cyber Calendar, Restock, MIT License |
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client Layer (React 18 + Vite)"]
-        UI["Modern Glassmorphism UI (Tailwind CSS)"]
-        Dock["Floating Centered Dock Navbar"]
-        AuthCtx["AuthContext (Dynamic RBAC)"]
-        InvCtx["InventoryContext (172 Assets Stream)"]
-        Router["Client-Side SPA Routing"]
+    subgraph Client["Frontend Client (Vite + React 18 SPA)"]
+        UI["Modern UI / UX Engine"]
+        TopNav["Floating Top Navbar & Theme Toggle"]
+        Vault["Component Vault & Request Cart"]
+        Clearance["Requisition Clearance Portal"]
+        AdminHub["Admin Control Center & 7-Day Audit"]
+        TeamShowcase["macOS Window Team Showcase"]
+        Profile["2-Box Locked Operator Profile"]
+        ClockHUD["Airport Matrix Live 24h Clock"]
     end
 
-    subgraph CDN ["Edge Delivery (Vercel)"]
-        VercelCDN["Vercel Global Edge Network"]
-        Rewrites["vercel.json SPA Rewrites"]
+    subgraph State["Reactive Context Layer"]
+        AuthCtx["AuthContext (Dual Superadmin Guard)"]
+        InvCtx["InventoryContext (Auto-Sync 1.5s)"]
+        ThemeCtx["ThemeContext (Dark #07070a / Light #f8fafc)"]
+        ToastCtx["ToastContext (Real-Time Feedback)"]
     end
 
-    subgraph Backend ["Cloud Infrastructure (Supabase)"]
-        SupaAuth["Supabase Auth (JWT & GoTrue)"]
-        Postgres["PostgreSQL Database"]
-        RLS["Row Level Security (RLS Policies)"]
-        
-        subgraph Tables ["Database Tables"]
-            T_Profiles["profiles (Members & Roles)"]
-            T_Items["inventory_items (172 Hardware Assets)"]
-            T_Requests["borrow_requests (Requisition State Machine)"]
-            T_Logs["activity_logs (7-Day Immutable Audit)"]
-        end
+    subgraph Cloud["Primary Cloud Database (Supabase)"]
+        AuthService["Supabase Auth Service"]
+        ProfilesTable["profiles (Role & Identity)"]
+        InventoryTable["inventory_items (172+ Lab Assets)"]
+        BorrowTable["borrow_requests (Requisition Flow)"]
+        LogsTable["activity_logs (7-Day Telemetry)"]
     end
 
-    UI --> Dock
-    UI --> AuthCtx
-    UI --> InvCtx
-    CDN --> Router
-    Router --> UI
+    subgraph Secondary["Secondary Database Redundancy (Neon)"]
+        NeonDB["Neon PostgreSQL (Automated 15-min Mirror)"]
+        BackupScripts["Backup & Sync Workflows"]
+    end
 
-    AuthCtx <-->|"JWT Auth & Session"| SupaAuth
-    InvCtx <-->|"PostgREST API & RLS"| Postgres
-    
-    Postgres --> T_Profiles
-    Postgres --> T_Items
-    Postgres --> T_Requests
-    Postgres --> T_Logs
+    subgraph CDN["Production Edge Hosting"]
+        Vercel["Vercel Edge Network (SPA Routing & Proxy)"]
+    end
+
+    Client --> State
+    State --> Cloud
+    Cloud -.-> BackupScripts -.-> Secondary
+    Client --> Vercel
 ```
 
 ---
 
-## ⚡ Core Features
+## ⚡ Core Features & Platform Capabilities
 
-### 1. 🔐 Dynamic Authentication & Admin Approval Pipeline
-- **Student Signups**: College Email (`@mail.jiit.ac.in`), Enrollment Number, Phone Number, and requested laboratory role.
-- **Admin Clearance Queue**: All newly created member accounts start in `status:pending`. Users cannot access the platform until an Administrator approves their registration in the **Management Hub**.
-- **100% Dynamic Roles**: Zero hardcoded credentials or bypasses. Roles (`admin`, `lead`, `member`) are dynamically queried from Supabase `profiles` with Row Level Security enforcement.
+### 1. 🛡️ Dual Superadmin & Institutional Authentication Guard
+- **Master Admin Whitelist**: Master administrative privileges are locked to verified institutional superadmins:
+  - `vardaansaxena096@gmail.com`
+  - `cicrinventory@gmail.com`
+- **Institutional Email Validation**: Student self-registration requires valid institutional emails (`@mail.jiit.ac.in`).
+- **Account Clearance Gate**: New member accounts enter `pending` verification status; members cannot request hardware until an admin authorizes their profile.
+- **Cold-Start Resilient Session Hydration**: Synchronous session hydration from `localStorage` completely eliminates page-refresh authentication blinks.
+- **Zero Stuck Authentication**: Dedicated local form submission state prevents login buttons from hanging on "Authenticating...".
 
-### 2. 🗄️ Component Vault (172 Laboratory Assets)
-- **172 Hardware Assets** categorized into 5 primary robotics domains:
-  - **Microcontrollers & SBCs** (ESP32-WROOM, Arduino Mega 2560, Raspberry Pi 4, STM32 Blue Pill)
-  - **Sensors & Modules** (RPLIDAR A1, MPU-6050, Ultrasonic HC-SR04, PIR Motion Sensor, VL53L0X ToF)
-  - **Motors & Actuators** (NEMA 17 Steppers, MG996R Metal Servos, L298N Motor Drivers)
-  - **Power & Batteries** (3S LiPo Packs, Buck Converters, 18650 Battery Shields)
-  - **Tools & Fabrication** (Soldering Stations, Wire Strippers, RunCam FPV, Multimeters)
-- **Live Metrics**: Total Assets (172), Available Ready for Checkout (172), Active Loans, Low Reserves, and Depleted stock.
-- **Real-Time Stock Adjustment**: Stock is automatically decremented upon approval and restored immediately upon component return.
+### 2. 📋 Multi-Tier Requisition Clearance Portal
+- **Admin Clearance Gate**: Members stage hardware requisitions; components **cannot be issued or collected** without verified administrative approval.
+- **Interactive Action Presets**: Admins can approve with collection instructions (e.g. locker bay, rack number) or reject with explanatory notes.
+- **Hardware Return Workflow**: Borrowers return issued items; returned hardware is inspected and verified by administrators before inventory capacity is restored.
+- **Optimistic 1.5-Second Auto-Sync**: Background polling ensures newly approved or returned hardware reflects across all active devices in 1–2 seconds without page refreshes.
 
-### 3. 👥 Club Members Roster & Management
-- Direct overview of all registered club members with:
-  - Avatar initials, Full Name, Role Badge (`ADMIN`, `LEAD`, `MEMBER`).
-  - College Email, Enrollment Number, Phone Number, and Join Date.
-  - Hardware requisition metrics (total requests submitted, active loans held).
-  - **Activity Trail**: Dedicated drawer displaying every transaction associated with an individual member.
-  - **Dynamic Role Promotions**: Administrators can promote or demote members between `Member`, `Lead`, and `Admin` directly from the dashboard.
+### 3. 📦 Component Vault (172+ Robotics Hardware Assets)
+- **Comprehensive Laboratory Inventory**: 172 real robotics components categorized across 5 distinct hardware bays:
+  - 🧠 **Microcontrollers & SBCs**: Arduino Uno/Mega/Nano, ESP32, ESP8266, Raspberry Pi 4/Zero, STM32 Nucleo, Teensy 4.1.
+  - 📡 **Sensors & Modules**: Ultrasonic HC-SR04, PIR Motion, MPU-6050 Gyro, LiDAR TF-Luna, GPS NEO-6M, Color TCS3200, Load Cells.
+  - ⚙️ **Actuators & Motors**: NEMA 17 Steppers, MG996R Servos, 12V High-Torque DC Motors, TB6600 Drivers, L298N Modules.
+  - ⚡ **Power & Energy**: 3S LiPo 2200mAh, Step-Down Buck Converters (LM2596), 18650 Battery Shields, 12V 5A Industrial Adapters.
+  - 🔧 **Tools & Equipment**: Digital Multimeters, TS100 Soldering Kits, Logic Analyzers, Jumper Bundles, Breadboard Workbenches.
+- **Standardized Reserve Logic**:
+  - 🟢 **In Stock**: Available quantity $\ge 50\%$ of total allocation.
+  - 🟡 **Low Reserves**: Available quantity strictly $< 50\%$ and $> 0$ (triggers pulse alert exclusively for admins).
+  - 🔴 **Depleted**: Available quantity equals $0$.
+- **Removed "Min Threshold"**: Eliminated confusing legacy threshold metrics; stock status is transparently derived from live physical counts.
 
-### 4. 📜 7-Day Immutable Activity History & Audit
-- Scoped multi-day activity history automatically displaying laboratory operations from the **last 7 days**.
-- Quick time filters: **Last 7 Days (Default)**, Today (24 Hours), Last 3 Days, and All Time.
-- Category filters: Borrows & Checkouts, Returns, Account Actions, and Component Updates.
-- Live search across users, components, and action types.
-- Detailed relative timestamps ("10m ago", "Yesterday at 4:15 PM").
+### 4. 🛒 Scoped Request Cart
+- **Inventory-Only Visibility**: The Request Cart button in the top navbar is strictly and exclusively rendered when viewing the Component Vault inventory page.
+- **Real-Time Badge Telemetry**: Displays the current staging count with live badge updates.
+- **Multi-Item Loan Requests**: Stage multiple hardware items and dispatch a unified loan request with project name, purpose, and return timeline.
 
-### 5. 📱 Responsive Floating Dock Navbar
-- Fixed, backdrop-blurred floating bottom dock providing seamless navigation:
-  - `Dashboard` | `Inventory` (with dedicated dropup category selector) | `Requests` | `Logs` (Admin only) | `Team`
-  - Right user capsule displaying initial avatar, full name, role badge, change password trigger, and logout.
-  - Clean responsive shrinking ensuring zero text collisions on mobile, tablet, and widescreen viewports.
+### 5. 🔒 Two-Box Locked Operator Profile
+- **Two Distinct Side-by-Side Modules**:
+  - **Left Box (Operator Identity)**: High-resolution profile avatar, full name, role badge (`ADMIN` / `LEAD` / `MEMBER`), and bio.
+  - **Right Box (Institutional Credentials)**: Security-locked, tamper-proof fields for **Email Address**, **Enrollment Number**, and **Contact Number**.
+- **Security-Locked Notice**: Clear indicators informing operators that verified institutional credentials can only be amended by master superadmins.
 
----
+### 6. 👥 macOS Window Team Showcase (KPH JIIT Style)
+- **Authentic macOS Window Frame**: Window title bar with colored traffic light controls (`#ff5f56`, `#ffbd2e`, `#27c93f`), file moniker (`~/[filename]`), and role tag.
+- **Strict Role Separation**:
+  - **Mentor**: **Gunjan Pal** — Project Mentor & Technical Advisor
+  - **Developers**: **Vardaan Saxena**, **Samiksha Jhunjhunwala**, **Mohammad Arsh**
+- **Dynamic Role Filter Tabs**: Switch seamlessly between `All Members (4)`, `Mentor (1)`, and `Developers (3)`.
+- **Radiant Gradient Glow Ring**: Highlighting the active member with amber (Mentor) or purple/blue (Developer) radial glows.
+- **Verified Social Badges**: Touch-friendly, high-contrast action pills for LinkedIn, GitHub, and personal portfolio.
 
-## 👥 Meet the Team
+### 7. 🕒 Live Airport Matrix Clock HUD
+- **Real-Time 24h Departures Cockpit**: Authentic mechanical split-flap matrix clock displaying New Delhi (IST) local time with live seconds update.
+- **Ambient Greeting**: Dynamic greeting ("Good morning", "Good afternoon", "Good evening") customized to the operator's verified name.
 
-| Role | Member | Links |
-| :--- | :--- | :--- |
-| **Mentor** | **Gunjan Pal** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gunjan-pal-796093284/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Gunjan00001) |
-| **Developer** | **Vardaan Saxena** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/simplyvardaan/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/simplyvardaan) [![Portfolio](https://img.shields.io/badge/Portfolio-22c55e?style=flat&logo=google-chrome&logoColor=white)](https://vardaansaxena.tech) |
-| **Developer** | **Samiksha Jhunjhunwala** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/samiksha-jhunjhunwala-9343b02b3/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Samikshajjw) |
-| **Developer** | **Mohammad Arsh** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohammad-arsh-1792008-hd/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/HybridzDynamics) |
-
----
-
-## 📋 Version History & Changelog
-
-### `v2.0.0` — Production Release (Current)
-- **172 Assets Synchronization**: Fully synchronized all 53 unique component categories totaling 172 units in remote Supabase PostgreSQL.
-- **Team Roster Addition**: Integrated **Mohammad Arsh** with GitHub and LinkedIn credentials into the interactive team carousel.
-- **Comprehensive Management Hub**: Transformed Logs view into a full member directory with dynamic role management, individual activity trails, and 7-day scoped audit timelines.
-- **Admin Approval Queue**: Implemented strict registration authorization where new signups require administrator approval before logging in.
-- **Bottom Navbar Redesign**: Removed redundant standalone admin button and added responsive label shortening to eliminate text overlapping.
-- **Production Edge Deployment**: Added `vercel.json` SPA rewrites and public client credentials fallbacks in `src/lib/supabase.ts` for instant zero-config deployments.
-
-### `v1.2.0`
-- **Dynamic Security Architecture**: Removed all hardcoded credentials and sample admin scripts; unified dynamic role checks against Supabase `profiles`.
-- **Schema Simplification**: Streamlined database models by removing deprecated `department`, `condition`, and `sku` columns across UI and PostgreSQL schemas.
-
-### `v1.1.0`
-- **Supabase Integration**: Connected live PostgreSQL instance `nmwkljtaymujqnmzgyxn` with Row Level Security (RLS) policies.
-- **Requisition State Machine**: Integrated automated quantity deductions upon borrow approval and restorations upon return.
-
-### `v1.0.0`
-- **Initial Release**: Core React + Vite dashboard structure, hardware catalog view, mock data fallback, and authentication modals.
+### 8. 🎨 Dual Theme Engine (LiquidToggle)
+- **Deep Cyber Dark Mode**: `#07070a` deep obsidian background, neon purple accents, emerald stock badges, and crisp white typography.
+- **Crisp Light Mode**: `#f8fafc` soft slate background, royal blue accents, high-contrast black headers, and dark emerald indicators.
+- **Zero Transparency Bleed**: 100% solid notification panels, modals, and tables eliminating visual clipping.
 
 ---
 
-## 🛠️ Technology Stack
+## 💻 Tech Stack
 
 | Layer | Technologies |
-| :--- | :--- |
-| **Frontend Framework** | React 18, TypeScript (TSX) |
-| **Styling & Design** | Tailwind CSS 3.4, PostCSS, Lucide React Icons |
-| **Build & Bundler** | Vite 6 |
-| **Database & Auth** | Supabase (PostgreSQL 15, GoTrue Auth, Row Level Security) |
-| **Hosting & CDN** | Vercel Global Edge Network (`vercel.json`) |
+|:---|:---|
+| **Frontend Framework** | React 18, TypeScript, Vite 6 |
+| **Styling & Design** | Tailwind CSS 3, Custom Cyberpunk CSS Tokens, Lucide React Icons |
+| **Animation & VFX** | Framer Motion, CSS Keyframe Animations |
+| **Primary Database & Auth** | Supabase (PostgreSQL 15), Supabase Auth, Row-Level Security (RLS) |
+| **Secondary Backup Mirror** | Neon Serverless PostgreSQL (Automated 15-min failover scripts) |
+| **Session & State Management** | React Context (Auth, Inventory, Theme, Toast), Synchronous LocalStorage Hydration |
+| **Deployment & Hosting** | Vercel (Edge SPA Routing, API Rewrites, SSL) |
 
 ---
 
-## 🚀 Local Development Setup
+## 📂 Repository Structure
 
-### 1. Prerequisites
-- **Node.js**: v18.0.0 or higher
+```text
+cicr_inventory_/
+├── public/                     # Static production assets
+│   ├── cicr-logo.jpg           # Official CICR crest
+│   ├── logo.png                # Transparent GitHub logo
+│   └── images/team/            # Roster photographs (gunjan, vardaan, samiksha, arsh)
+├── src/
+│   ├── assets/                 # Component assets & icons
+│   ├── components/
+│   │   ├── auth/               # LoginForm, SignupForm, AuthModal
+│   │   ├── common/             # CicrLogo, Toast, Badge
+│   │   ├── dashboard/          # TopNavbar, DashboardOverview, ComponentVaultView,
+│   │   │                       # RequisitionsView, AdminHubView, MeetTheDevelopers,
+│   │   │                       # OperatorProfileView, CategoryDistribution, StatsOverview
+│   │   ├── inventory/          # AddEditItemModal, ItemDetailModal, RequestCartModal
+│   │   ├── layout/             # BottomNavbar, AppSidebar, SchemaNoticeModal
+│   │   ├── profile/            # ChangePasswordModal, UserProfile
+│   │   ├── requests/           # RequestsList (Requisition queues)
+│   │   └── ui/                 # airport-matrix-clock, liquid-toggle, notification-bell
+│   ├── context/
+│   │   ├── AuthContext.tsx     # Institutional auth, superadmin whitelist, session hydration
+│   │   └── InventoryContext.tsx# 1.5s auto-sync, 172-item CRUD, borrow & return dispatches
+│   ├── lib/
+│   │   ├── supabase.ts         # Supabase client + admin service-role key fallbacks
+│   │   ├── sampleData.ts       # 172 authentic robotics hardware components
+│   │   └── theme/              # useTheme hook (dark / light persistence)
+│   ├── types/
+│   │   └── inventory.ts        # TypeScript interfaces (InventoryItem, BorrowRequest, etc.)
+│   ├── App.tsx                 # Root router, ErrorBoundary, branded pulse loader
+│   ├── index.css               # Tailwind directives & theme variables
+│   └── main.tsx                # React DOM mounting
+├── scripts/
+│   ├── backup_to_neon.cjs      # Scheduled secondary PostgreSQL backup mirror
+│   └── initialize_neon.cjs     # Neon DB schema initialization
+├── CHANGELOG.md                # Official Semantic Versioning release notes
+├── LICENSE                     # MIT License (Copyright 2026 CICR)
+├── package.json                # Project dependencies & npm scripts (v2.13.0)
+├── README.md                   # System documentation & architectural reference
+├── tailwind.config.js          # Tailwind custom palette & animations
+├── tsconfig.json               # TypeScript compiler configuration
+├── vercel.json                 # Vercel SPA routing & API proxy rules
+└── vite.config.ts              # Vite bundle configuration
+```
+
+---
+
+## 🗄️ Database Schema & Real-Time Tables
+
+The platform connects to Supabase PostgreSQL with automated failover mirroring to Neon PostgreSQL:
+
+### 1. `public.profiles` (Operator Roster & Role Hierarchy)
+```sql
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT NOT NULL,
+    username TEXT UNIQUE,
+    roll_number TEXT,
+    phone TEXT,
+    role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 2. `public.inventory_items` (172+ Robotics Laboratory Assets)
+```sql
+CREATE TABLE IF NOT EXISTS public.inventory_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('Microcontrollers', 'Sensors', 'Actuators', 'Power', 'Tools')),
+    description TEXT,
+    location TEXT NOT NULL,
+    total_qty INTEGER NOT NULL DEFAULT 1 CHECK (total_qty >= 0),
+    available_qty INTEGER NOT NULL DEFAULT 1 CHECK (available_qty >= 0 AND available_qty <= total_qty),
+    status TEXT NOT NULL DEFAULT 'In Stock' CHECK (status IN ('In Stock', 'Low Reserves', 'Depleted')),
+    image_url TEXT,
+    datasheet_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 3. `public.borrow_requests` (Requisition Clearance Pipeline)
+```sql
+CREATE TABLE IF NOT EXISTS public.borrow_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    user_name TEXT NOT NULL,
+    user_email TEXT NOT NULL,
+    enrollment_no TEXT,
+    item_id UUID REFERENCES public.inventory_items(id) ON DELETE CASCADE,
+    item_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 1),
+    project_name TEXT NOT NULL,
+    purpose TEXT,
+    expected_return_date DATE NOT NULL,
+    actual_return_date DATE,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned')),
+    admin_notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 4. `public.activity_logs` (7-Day Centralized Audit Ledger)
+```sql
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    user_name TEXT NOT NULL,
+    user_email TEXT NOT NULL,
+    action TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('auth', 'inventory', 'hardware', 'loans', 'system')),
+    details TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_inventory_category ON public.inventory_items (category);
+CREATE INDEX IF NOT EXISTS idx_borrow_status ON public.borrow_requests (status);
+CREATE INDEX IF NOT EXISTS idx_borrow_user ON public.borrow_requests (user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_created ON public.activity_logs (created_at DESC);
+```
+
+---
+
+## 🚀 Getting Started & Local Setup
+
+### Prerequisites
+- **Node.js**: `>= 18.0.0`
 - **npm** or **pnpm**
 - **Git**
 
-### 2. Clone & Install
+### Installation
 ```bash
+# 1. Clone repository
 git clone https://github.com/simplyvardaan/cicr_inventory_.git
 cd cicr_inventory_
+
+# 2. Install dependencies
 npm install
-```
 
-### 3. Environment Configuration
-Create a `.env` file in the project root (reference `.env.example`):
-```env
-VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
-```
+# 3. Configure environment variables
+cp .env.example .env
 
-`NEON_DATABASE_URL`, `SUPABASE_DB_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are
-server-side only. They must not be included in frontend deployment variables.
-`SUPABASE_DB_URL` is the direct Supabase Postgres connection string used to copy
-the existing `auth.users.encrypted_password` hashes without exposing them.
-
-The browser always sends database requests through `/api/db`. The gateway tries
-Supabase first and automatically uses the mirrored Neon tables when Supabase
-times out or returns a server error. Use the deployed Vercel app (or `vercel dev`)
-to run the gateway; plain `npm run dev` only serves the frontend and cannot run
-the server-side Neon fallback.
-
-### 4. Configure the Neon backup
-
-Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)
-once in the Neon SQL editor. Then run the backup from a trusted server, CI job, or
-scheduled worker:
-
-```bash
-npm run neon:init
-npm run backup:neon
-```
-
-The GitHub Actions workflow at
-[`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
-automatically every 15 minutes. Add `VITE_SUPABASE_URL`,
-`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
-**Settings → Secrets and variables → Actions**. You can also run it immediately
-from the repository's **Actions** tab.
-
-`neon:init` creates the operational Neon tables from
-[`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
-in the Supabase SQL Editor to create the matching Supabase tables. The schema is
-safe to rerun because existing RLS policies are replaced. The Supabase
-REST API cannot execute schema DDL using an anon or service-role key.
-
-The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
-It replaces each mirrored table's backup snapshot atomically and records each run
-in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
-The mirror reads `auth.users.encrypted_password` through `SUPABASE_DB_URL` and
-stores it as `password_hash`, allowing the same password to be verified during
-failover. Without `SUPABASE_DB_URL`, the Supabase API cannot provide password
-hashes and users are marked `password_reset_required`.
-
-### Database failover gateway
-
-Browser database requests now pass through `/api/db`. The Vercel function tries
-Supabase first and routes database reads and writes to Neon when Supabase has a
-network or server failure. Configure `VITE_SUPABASE_URL`,
-`VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as
-Vercel environment variables
-environment variables. Supabase Auth remains primary, so login and signup are
-not available if Supabase Auth itself is down.
-
-### 5. Run Development Server
-```bash
+# 4. Start local development server
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
 
-### 6. Production Build
-```bash
-npm run build
-npm run preview
+Visit `http://localhost:3000` (or `http://localhost:5173`) in your browser.
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Secondary Redundancy (Neon PostgreSQL)
+NEON_DATABASE_URL=postgresql://neondb_owner:...@ep-odd-dawn-b5go8elm-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
 ```
 
 ---
 
-## 🏷️ Version History & Releases
+## 🚢 Production Deployment
 
-| Version | Release Date | Key Highlights |
-| :--- | :--- | :--- |
-| **`v2.2.0`** | Oct 31, 2026 | macOS-inspired team window showcase (KPH style), persistent session hydration on refresh, scoped inventory cart button, removed role badges, zero preloader delays |
-| **`v2.1.0`** | Oct 31, 2026 | Dual-theme system (high-contrast light & dark modes), solid notifications drawer, secondary Neon database mirror |
-| **`v2.0.0`** | Oct 31, 2026 | Production launch: 172 synchronized robotics hardware assets, digital issue pass generator, dynamic RBAC |
-| **`v1.0.0`** | Sep 15, 2026 | Initial prototype release and laboratory inventory tracking foundation |
+The platform is optimized for **zero-configuration Vercel deployment**:
 
-For the complete release history, see [CHANGELOG.md](./CHANGELOG.md).
+1. Push your changes to the `main` branch.
+2. Connect your repository to **Vercel**.
+3. Vercel automatically detects the Vite configuration:
+   - **Framework Preset**: `Vite`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the Vercel project settings.
+5. Deployments run on `https://cicr-inventory.vercel.app`.
 
 ---
 
-## 📄 License
-Maintained by the **Creative & Innovative Cell in Robotics (CICR)**, Jaypee Institute of Information Technology (JIIT), Noida.
+## 👥 Project Mentors & Core Engineering Team
+
+### Project Mentor & Technical Advisor
+- **Gunjan Pal** — Project Mentor & Technical Advisor, CICR
+
+### Core Engineering Team
+- **Vardaan Saxena** — Lead Full-Stack Developer & System Architect
+- **Samiksha Jhunjhunwala** — Frontend & UI Specialist
+- **Mohammad Arsh** — Hardware Systems & Robotics Developer
+
+---
+
+## 📜 License
+
+Distributed under the **MIT License**.
+
+```text
+MIT License
+
+Copyright (c) 2026 Creative & Innovative Cell in Robotics (CICR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+<div align="center">
+
+**© 2026 CICR Inventory Hub — Creative & Innovative Cell in Robotics • JIIT Noida**
+
+[![Visit Live Platform](https://img.shields.io/badge/VISIT-VAULT-00f0ff?style=for-the-badge)](https://cicr-inventory.vercel.app/)
+
+</div>

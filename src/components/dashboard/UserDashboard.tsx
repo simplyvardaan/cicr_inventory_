@@ -358,6 +358,7 @@ export const UserDashboard: React.FC = () => {
       <TopNavbar
         activeView={activeView}
         setActiveView={setActiveView}
+        isAdmin={isAdmin}
         isLeadOrAdmin={isLeadOrAdmin}
         cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
         onOpenCart={() => setCartModalOpen(true)}
@@ -388,6 +389,7 @@ export const UserDashboard: React.FC = () => {
           <ComponentVaultView
             items={items}
             requests={requests}
+            isAdmin={isAdmin}
             isLeadOrAdmin={isLeadOrAdmin}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
