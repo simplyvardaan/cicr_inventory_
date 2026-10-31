@@ -276,6 +276,7 @@ For comprehensive technical documentation, refer to the following repository gui
 - [Technical Deep Dive & System Logs](./DEEPDIVE.md) — Complete version release logs from `v1.0.0` to `v2.13.0`, Git tag registry, full PostgreSQL table schemas, 7-day audit telemetry engine, and BOTE capacity analysis.
 - [AI Agent Engineering Guidelines](./AGENT.md) — Operational blueprint, design system invariants, role guards, and protocol instructions for AI coding agents.
 - [Security Assessment & Penetration Test Report](./SECURITY.md) — Threat model, vulnerability audit findings, defensive patches, and responsible disclosure policy.
+- [Codebase Engineering Rules & Architecture Standards](./RULES.md) — Modular architecture rules (no single-file bloat), rich explanatory comments, zero-emoji enforcement, zero-hyphen formatting, debuggability protocol, and MAJOR.MINOR.BUGS semver specification.
 
 ---
 
