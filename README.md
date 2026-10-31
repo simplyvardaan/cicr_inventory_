@@ -200,7 +200,7 @@ cicr_inventory_/
 ├── CHANGELOG.md                # Official Semantic Versioning release notes
 ├── DEEPDIVE.md                 # Technical deep dive, telemetry logs & version registry
 ├── LICENSE                     # MIT License (Copyright 2026 CICR)
-├── package.json                # Project dependencies & npm scripts (v2.13.0)
+├── package.json                # Project dependencies & npm scripts (v2.15.0)
 ├── README.md                   # System documentation & architectural reference
 ├── SECURITY.md                 # Security assessment & penetration test report
 ├── tailwind.config.js          # Tailwind custom palette & animations

@@ -315,19 +315,19 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                 return (
                   <div
                     key={member.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500 transition-all flex items-center justify-between gap-3 shadow-sm"
+                    className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-300 font-bold flex items-center justify-center shrink-0">
                         {(member.full_name || member.email || 'M').charAt(0).toUpperCase()}
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                             {member.full_name || 'Member'}
                           </h4>
                           <span
-                            className={`px-2 py-0.2 rounded-md text-[9px] font-black uppercase font-mono border ${
+                            className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase font-mono border ${
                               isAdminMember
                                 ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-500/40'
                                 : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'
@@ -336,11 +336,11 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                             {member.role || 'member'}
                           </span>
                         </div>
-                        <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-mono truncate">
+                        <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-mono break-all mt-0.5">
                           {member.email}
                         </span>
                         {member.roll_number && (
-                          <span className="text-[10px] text-slate-400 dark:text-zinc-500 block font-mono">
+                          <span className="text-[10px] text-slate-400 dark:text-zinc-500 block font-mono mt-0.5">
                             Roll: {member.roll_number}
                           </span>
                         )}
@@ -348,7 +348,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     </div>
 
                     {/* Role Promotion / Demotion Action */}
-                    <div className="shrink-0">
+                    <div className="sm:shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-zinc-800/80 flex sm:block justify-end">
                       <button
                         type="button"
                         onClick={() =>
@@ -358,7 +358,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                             member.full_name || member.email
                           )
                         }
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors cursor-pointer ${
+                        className={`w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-center ${
                           isAdminMember
                             ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-slate-300 dark:border-zinc-700'
                             : 'bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600'
@@ -700,33 +700,33 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
               {pendingAccounts.map((account) => (
                 <div
                   key={account.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
+                  className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/40 font-bold flex items-center justify-center shrink-0">
                       {(account.full_name || account.email || 'U').charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                         {account.full_name || 'New Member'}
                       </h4>
-                      <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-mono">
+                      <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-mono break-all mt-0.5">
                         {account.email}
                       </span>
                       {account.roll_number && (
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 block font-mono">
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 block font-mono mt-0.5">
                           Roll: {account.roll_number}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 sm:shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-zinc-800/80">
                     <button
                       type="button"
                       disabled={processingUserId === account.id}
                       onClick={() => onRejectAccount(account.id, account.full_name || account.email)}
-                      className="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-300 dark:border-red-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-300 dark:border-red-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 text-center"
                     >
                       Reject
                     </button>
@@ -734,7 +734,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                       type="button"
                       disabled={processingUserId === account.id}
                       onClick={() => onApproveAccount(account.id, account.full_name || account.email)}
-                      className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                      className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 text-center"
                     >
                       {processingUserId === account.id ? 'Approving...' : 'Approve Account'}
                     </button>

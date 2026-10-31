@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
 import { User, Mail, Lock, Phone, Hash, ShieldCheck, Eye, EyeOff, LogIn, Camera, AlertCircle, Info, X } from 'lucide-react';
@@ -40,6 +41,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{
+    fullName: string;
+    email: string;
+    enrollmentNo?: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const avatarInitial = fullName.trim() ? fullName.trim().charAt(0).toUpperCase() : 'U';
@@ -95,12 +102,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
     });
 
     if (res.success) {
+      setSubmittedData({
+        fullName: fullName.trim(),
+        email: emailTrimmed,
+        enrollmentNo: enrollmentNo.trim() || undefined,
+      });
+      setShowReviewPopup(true);
       showToast(
         'success',
         'Registration Submitted',
         'Your registration request was sent to the Admin Portal for approval.'
       );
-      onSwitchToLogin();
     } else {
       setErrorMsg(res.error || 'Registration failed.');
     }
@@ -356,6 +368,83 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </button>
         </p>
       </div>
+
+      {/* Registration Review Popup Modal */}
+      <AnimatePresence>
+        {showReviewPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowReviewPopup(false);
+                onSwitchToLogin();
+              }}
+              className="fixed inset-0 bg-slate-900/50 dark:bg-black/80 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md rounded-3xl bg-white dark:bg-[#0c0918] border-2 border-slate-200 dark:border-zinc-800 p-6 sm:p-8 shadow-2xl text-slate-900 dark:text-slate-100 z-10 space-y-5"
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-purple-950/60 border-2 border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-400 flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-extrabold uppercase tracking-wider">
+                  Pending Admin Review
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  Registration Sent to Admin Portal
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                  Your account request has been successfully submitted and forwarded to the Admin Portal for review and clearance.
+                </p>
+              </div>
+
+              {submittedData && (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#14141c] border border-slate-200 dark:border-zinc-800 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium">Applicant</span>
+                    <strong className="text-slate-900 dark:text-white font-bold">{submittedData.fullName}</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium">Email</span>
+                    <strong className="text-slate-900 dark:text-white font-mono text-[11px] break-all">{submittedData.email}</strong>
+                  </div>
+                  {submittedData.enrollmentNo && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-zinc-400 font-medium">Enrollment No</span>
+                      <strong className="text-slate-900 dark:text-white font-mono">{submittedData.enrollmentNo}</strong>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-zinc-800/80">
+                    <span className="text-slate-500 dark:text-zinc-400 font-medium">Review Status</span>
+                    <span className="font-extrabold text-amber-600 dark:text-amber-400 text-[10px] uppercase">Awaiting Admin Approval</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReviewPopup(false);
+                  onSwitchToLogin();
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs shadow-lg shadow-blue-600/25 dark:shadow-purple-950/50 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Acknowledge &amp; Return to Sign In</span>
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

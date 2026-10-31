@@ -212,11 +212,15 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
 
                     {/* Borrower Info (prominent for Admins) */}
                     {isLeadOrAdmin && (
-                      <div className="flex items-center gap-2 text-slate-700 dark:text-zinc-400 text-xs font-medium">
-                        <User className="w-3.5 h-3.5 text-zinc-500" />
-                        <span>Borrower:</span>
-                        <strong className="text-slate-900 dark:text-white font-semibold">{req.user_name}</strong>
-                        <span className="text-slate-600 dark:text-zinc-400 font-mono text-[11px]">({req.user_email})</span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-700 dark:text-zinc-400 text-xs font-medium">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <User className="w-3.5 h-3.5 text-zinc-500" />
+                          <span className="text-slate-500 dark:text-zinc-400">Borrower:</span>
+                          <strong className="text-slate-900 dark:text-white font-bold">{req.user_name}</strong>
+                        </div>
+                        <span className="text-slate-600 dark:text-zinc-400 font-mono text-[11px] break-all">
+                          ({req.user_email})
+                        </span>
                       </div>
                     )}
 
@@ -249,7 +253,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                         <strong className="text-amber-700 dark:text-amber-300 font-bold">{req.expected_return_date}</strong>
                       </span>
                       {matchedItem?.location && (
-                        <span className="text-slate-700 dark:text-zinc-300 font-mono">
+                        <span className="text-slate-700 dark:text-zinc-300 font-mono break-words">
                           <span className="text-slate-600 dark:text-zinc-400 font-semibold">Lab Location: </span><strong className="text-slate-900 dark:text-zinc-200 font-bold">{matchedItem.location}</strong>
                         </span>
                       )}
@@ -313,7 +317,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onBorrowAction(req.id, 'returned')}
-                            className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-colors flex items-center gap-1.5"
+                            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-colors flex items-center justify-center gap-1.5"
                           >
                             <RotateCcw className="w-3.5 h-3.5 text-white" />
                             <span>Mark Returned &amp; Restock</span>
