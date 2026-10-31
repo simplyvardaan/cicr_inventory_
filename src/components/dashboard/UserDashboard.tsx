@@ -318,9 +318,7 @@ export const UserDashboard: React.FC = () => {
         activeView={activeView}
         setActiveView={setActiveView}
         isLeadOrAdmin={isLeadOrAdmin}
-        cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
-        onOpenCart={() => setCartModalOpen(true)}
-        notifications={notifications}
+                notifications={notifications}
         onMarkNotificationRead={(id) =>
           setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
         }
@@ -338,9 +336,7 @@ export const UserDashboard: React.FC = () => {
           <DashboardOverview
             userName={userName}
             roleName={roleName}
-            cart={cart}
             setActiveView={setActiveView}
-            onOpenCartModal={() => setCartModalOpen(true)}
           />
         )}
 

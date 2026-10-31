@@ -1,31 +1,24 @@
 import React from 'react';
 import { AirportMatrixClock } from '../ui/airport-matrix-clock';
 import { ActiveView } from '../layout/BottomNavbar';
-import { CartItem } from '../inventory/RequestCartModal';
 import {
   Layers,
-  ShoppingBag,
+  Bell,
   Code2,
   User,
   ArrowRight,
-  Sparkles,
-  ShieldCheck,
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
   userName: string;
   roleName: string;
-  cart: CartItem[];
   setActiveView: (view: ActiveView) => void;
-  onOpenCartModal: () => void;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   userName,
   roleName,
-  cart,
   setActiveView,
-  onOpenCartModal,
 }) => {
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -73,7 +66,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         >
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-purple-950/70 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-400 flex items-center justify-center">
                 <Layers className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-mono">
@@ -87,39 +80,34 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               Browse and search the repository of microcontrollers, sensors, actuators, and hardware components.
             </p>
           </div>
-          <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-emerald-400 transition-colors">
+          <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
-        {/* Card 2: Request Cart */}
+        {/* Card 2: Hardware Requisitions */}
         <div
-          onClick={onOpenCartModal}
+          onClick={() => setActiveView('review-requests')}
           className="group p-6 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 dark:hover:border-purple-500 hover:shadow-lg hover:bg-slate-50/50 dark:hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-sm flex flex-col justify-between space-y-6"
         >
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-purple-950/70 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-400 flex items-center justify-center">
+                <Bell className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-mono">
-                HARDWARE CART
+                REQUISITIONS
               </span>
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
-              Request Cart
+              Hardware Clearances
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
-              Review staged components, inspect loan allocations, and dispatch 1-go consolidated hardware requisitions.
+              Track requisition authorizations, pending admin approvals, and active laboratory hardware loans.
             </p>
           </div>
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs font-semibold text-emerald-400 font-mono">
-              {cart.length} items loaded
-            </span>
-            <div className="text-zinc-500 group-hover:text-emerald-400 transition-colors">
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </div>
+          <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
@@ -164,10 +152,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </span>
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
-              My Profile
+              Operator Profile
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
-              Inspect credentials, verified student tier, active hardware checkouts, and security controls.
+              Review credential identity, system permissions, account security, and report platform issues.
             </p>
           </div>
           <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">

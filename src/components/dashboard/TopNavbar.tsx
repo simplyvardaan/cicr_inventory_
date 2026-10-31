@@ -3,14 +3,12 @@ import { CicrLogo } from '../common/CicrLogo';
 import { NotificationBell, Notification } from '../ui/notification-bell';
 import { LiquidToggle } from '../ui/liquid-toggle';
 import { ActiveView } from '../layout/BottomNavbar';
-import { AlertTriangle, ShoppingBag } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface TopNavbarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
   isLeadOrAdmin: boolean;
-  cartCount: number;
-  onOpenCart: () => void;
   notifications: Notification[];
   onMarkNotificationRead: (id: string) => void;
   onMarkAllNotificationsRead: () => void;
@@ -22,8 +20,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeView,
   setActiveView,
   isLeadOrAdmin,
-  cartCount,
-  onOpenCart,
   notifications,
   onMarkNotificationRead,
   onMarkAllNotificationsRead,
@@ -105,22 +101,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             onMarkAllAsRead={onMarkAllNotificationsRead}
             onClearAll={onClearNotifications}
           />
-
-          {/* Staged Request Cart Quick Button */}
-          <button
-            type="button"
-            onClick={onOpenCart}
-            className="relative p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#151520] dark:hover:bg-[#1f1f2e] border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-200 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
-            title={`View Staged Cart (${cartCount} items)`}
-            aria-label="View staged hardware cart"
-          >
-            <ShoppingBag className="w-4 h-4 text-blue-600 dark:text-purple-400" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-mono font-black text-[10px] shadow-sm animate-pulse">
-                {cartCount}
-              </span>
-            )}
-          </button>
 
           {/* Liquid Theme Switcher */}
           <LiquidToggle className="flex shrink-0" />
