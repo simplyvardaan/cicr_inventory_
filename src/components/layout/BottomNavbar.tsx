@@ -10,7 +10,6 @@ import {
   Bell,
   ScrollText,
   Code2,
-  Key,
   LogOut,
   Cpu,
   Radar,
@@ -330,25 +329,14 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                   getInitial()
                 )}
               </div>
-              <div className="text-left hidden lg:block">
-                <span className="block text-xs font-bold text-white leading-tight truncate max-w-[85px]">
+              <div className="text-left hidden sm:block">
+                <span className="block text-xs font-bold text-white leading-tight whitespace-nowrap">
                   {displayName}
                 </span>
-                <span className="text-[9px] font-extrabold text-purple-400 uppercase tracking-wider block truncate max-w-[85px]">
+                <span className="text-[9px] font-extrabold text-purple-400 uppercase tracking-wider block whitespace-nowrap">
                   {roleName}
                 </span>
               </div>
-            </motion.button>
-
-            {/* Change Password Key Button */}
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={onOpenChangePassword}
-              className="w-7 h-7 rounded-full bg-[#151520] hover:bg-[#20202e] border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              title="Change Password"
-            >
-              <Key className="w-3.5 h-3.5" />
             </motion.button>
 
             {/* Sign Out Button */}
