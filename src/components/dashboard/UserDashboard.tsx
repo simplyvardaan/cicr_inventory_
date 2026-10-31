@@ -73,6 +73,8 @@ import {
 
 const isLowReserveItem = (i: InventoryItem): boolean => {
   if (i.available_qty <= 0) return false;
+  // If no units have been borrowed (item is at full lab capacity), it is NOT in low reserve
+  if (i.available_qty >= i.total_qty) return false;
   const threshold = i.min_threshold ?? 2;
   const isBelowThreshold = i.available_qty <= threshold;
   const isHalfOrLess = i.total_qty > 0 && i.available_qty / i.total_qty <= 0.5;

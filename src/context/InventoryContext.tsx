@@ -264,7 +264,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const statusLabel =
               newAvail <= 0
                 ? 'Out of Stock'
-                : newAvail <= (targetItem.min_threshold ?? 2)
+                : newAvail < targetItem.total_qty && (newAvail <= (targetItem.min_threshold ?? 2) || (targetItem.total_qty > 0 && newAvail / targetItem.total_qty <= 0.5))
                 ? 'Low Stock'
                 : 'In Stock';
 
@@ -298,7 +298,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const statusLabel =
               newAvail <= 0
                 ? 'Out of Stock'
-                : newAvail <= (targetItem.min_threshold ?? 2)
+                : newAvail < targetItem.total_qty && (newAvail <= (targetItem.min_threshold ?? 2) || (targetItem.total_qty > 0 && newAvail / targetItem.total_qty <= 0.5))
                 ? 'Low Stock'
                 : 'In Stock';
 
