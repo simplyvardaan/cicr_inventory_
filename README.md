@@ -365,18 +365,18 @@ For comprehensive technical documentation, refer to the following repository gui
 ## Mentors & Core Team
 
 ### Project Mentor & Technical Advisor
-- **Gunjan Pal** — Project Mentor & Technical Advisor, CICR
+- **Gunjan Pal** - Project Mentor
 
 ### Core Engineering Team
-- **Vardaan Saxena** — Lead Full-Stack Developer & System Architect
-- **Samiksha Jhunjhunwala** — Frontend & UI Specialist
-- **Mohammad Arsh** — Hardware Systems & Robotics Developer
+- **Vardaan Saxena**
+- **Samiksha Jhunjhunwala**
+- **Mohammad Arsh**
 
 ---
 
 <div align="center">
 
-**Copyright 2026 CICR Inventory Hub — Creative & Innovative Cell in Robotics, JIIT Noida**
+**Copyright 2026 CICR Inventory Hub- Creative & Innovative Cell in Robotics, JIIT Noida**
 
 [![Visit Live Platform](https://img.shields.io/badge/VISIT-VAULT-00f0ff?style=for-the-badge)](https://cicr-inventory.vercel.app/)
 
