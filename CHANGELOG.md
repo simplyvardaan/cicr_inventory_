@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.2] : 2026-10-31
+
+### Fixed
+* Responsive Notification Panel Positioning: Fixed horizontal overflow on mobile viewports by anchoring panel with `fixed top-[4.5rem] inset-x-2.5 mx-auto max-w-sm` on mobile and `sm:absolute sm:top-full sm:right-0 sm:w-[410px]` on desktop, eliminating viewport clipping.
+* Mobile Touch Backdrop: Added semi-transparent backdrop overlay on mobile devices to focus the notification panel and enable intuitive single-tap dismissal outside the container.
+* Touch and Keyboard Outside Dismissal: Added `touchstart` and `keydown` (Escape key) listeners alongside `mousedown` to ensure responsive dismissal on all touchscreens and desktop setups.
+* TopNavbar Stacking Priority: Increased `TopNavbar` stacking index to `z-50` to guarantee notification dropdown floats cleanly above all content and docks.
+
+### Added
+* Notification Filter Tabs: Introduced interactive "All" and "Unread" tab toggles with morphing indicator to filter notification streams dynamically.
+* Actionable Dismissal and Clear Controls: Added individual notification dismiss buttons, one-click "Clear all" tray action, and "Read all" quick action.
+* Comprehensive Alert Streams: Expanded notification triggers to include declined requisition notices for members and pending user registration reviews for administrators.
+
+***
+
 ## [2.18.1] : 2026-10-31
 
 ### Fixed

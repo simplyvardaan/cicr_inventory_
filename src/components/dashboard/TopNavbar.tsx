@@ -16,6 +16,7 @@ interface TopNavbarProps {
   onMarkNotificationRead: (id: string) => void;
   onMarkAllNotificationsRead: () => void;
   onClearNotifications: () => void;
+  onDismissNotification?: (id: string) => void;
   lowReservesCount: number;
 }
 
@@ -30,6 +31,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onMarkNotificationRead,
   onMarkAllNotificationsRead,
   onClearNotifications,
+  onDismissNotification,
   lowReservesCount,
 }) => {
   const getBreadcrumbLabel = () => {
@@ -52,7 +54,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   };
 
   return (
-    <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
+    <div className="fixed top-2 sm:top-3 inset-x-0 z-50 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
       <header className="pointer-events-auto rounded-full bg-white/95 dark:bg-[#0f0f16]/95 backdrop-blur-2xl border-2 border-slate-200 dark:border-[#222230] px-3 sm:px-6 py-2 flex items-center justify-between shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/80 gap-2">
         {/* Left: CICR Logo + Breadcrumbs Capsule */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -125,6 +127,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             onMarkAsRead={onMarkNotificationRead}
             onMarkAllAsRead={onMarkAllNotificationsRead}
             onClearAll={onClearNotifications}
+            onDismiss={onDismissNotification}
           />
 
           {/* Liquid Theme Switcher */}
