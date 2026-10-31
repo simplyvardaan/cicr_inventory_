@@ -3,22 +3,22 @@ import { ItemStatus, BorrowStatus, UserRole } from '../../types/inventory';
 
 export const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const styles: Record<ItemStatus, string> = {
-    'In Stock': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    'Low Stock': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-    'Out of Stock': 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-    'Maintenance': 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    'In Stock': 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+    'Low Stock': 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+    'Out of Stock': 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
+    'Maintenance': 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
   };
 
   const dots: Record<ItemStatus, string> = {
-    'In Stock': 'bg-emerald-400',
-    'Low Stock': 'bg-amber-400',
-    'Out of Stock': 'bg-rose-400',
-    'Maintenance': 'bg-purple-400',
+    'In Stock': 'bg-blue-600',
+    'Low Stock': 'bg-amber-500',
+    'Out of Stock': 'bg-red-600',
+    'Maintenance': 'bg-slate-500',
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
         styles[status] || styles['In Stock']
       }`}
     >
@@ -31,16 +31,16 @@ export const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
 export const ConditionBadge: React.FC<{ condition?: string }> = ({ condition }) => {
   if (!condition) return null;
   const styles: Record<string, string> = {
-    New: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-    Good: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-    Fair: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-    'Needs Maintenance': 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-    Damaged: 'bg-red-500/10 text-red-400 border-red-500/30',
+    New: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+    Good: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+    Fair: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+    'Needs Maintenance': 'bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300',
+    Damaged: 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${
         styles[condition] || styles['Good']
       }`}
     >
@@ -51,16 +51,16 @@ export const ConditionBadge: React.FC<{ condition?: string }> = ({ condition }) 
 
 export const BorrowStatusBadge: React.FC<{ status: BorrowStatus }> = ({ status }) => {
   const styles: Record<BorrowStatus, string> = {
-    pending: 'bg-amber-500/10 text-amber-300 border-amber-500/30 animate-pulse',
-    approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    rejected: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-    returned: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-    overdue: 'bg-red-500/10 text-red-400 border-red-500/30',
+    pending: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse',
+    approved: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+    rejected: 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
+    returned: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+    overdue: 'bg-red-50 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
   };
 
   return (
     <span
-      className={`inline-flex items-center capitalize px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+      className={`inline-flex items-center capitalize px-2.5 py-0.5 rounded-full text-xs font-bold border ${
         styles[status] || styles['pending']
       }`}
     >
@@ -71,14 +71,14 @@ export const BorrowStatusBadge: React.FC<{ status: BorrowStatus }> = ({ status }
 
 export const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
   const styles: Record<UserRole, string> = {
-    admin: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-    lead: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
-    member: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+    admin: 'bg-red-50 text-red-700 border-2 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
+    lead: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+    member: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
   };
 
   return (
     <span
-      className={`inline-flex items-center uppercase tracking-wider px-2 py-0.5 rounded text-[10px] font-semibold border ${
+      className={`inline-flex items-center uppercase tracking-wider px-2 py-0.5 rounded text-[10px] font-black border ${
         styles[role] || styles['member']
       }`}
     >
@@ -86,4 +86,3 @@ export const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
     </span>
   );
 };
-

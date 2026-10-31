@@ -34,6 +34,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   approveUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
   rejectUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -614,6 +615,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) await loadProfile(user);
   };
 
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Password update failed';
+      return { success: false, error: msg };
+    }
+  };
+
   const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
   const isLeadOrAdmin = isAdmin || profile?.role === 'lead';
 
@@ -633,6 +647,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         approveUserAccount,
         rejectUserAccount,
+        updatePassword,
       }}
     >
       {children}
