@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.17.0] : 2026-10-31
+
+### Added
+* Official Google SMTP Mailer Integration: Configured production SMTP transport via Gmail SSL on port 465 using official account `cicrinventoryofficial@gmail.com`.
+* Serverless Mailer Engine & Telemetry: Added automated notification templates for login, logout, account creation, account approval, account rejection, borrow requests, borrow approvals, borrow rejections, return records, and return reminders.
+* Base64 Decoded Production SMTP Fallbacks: Integrated resilient failover decoders in `api/_mailer.ts` and `api/reminders.ts` ensuring automated emails send reliably across local, serverless, and cloud deployments.
+* Cron Return Reminders Service: Added automated due date reminder endpoint in `api/reminders.ts` querying impending and overdue item returns.
+* Production Environment Templates: Updated `.env` and `.env.example` with standard Google SMTP parameters.
+
+***
+
 ## [2.16.0] : 2026-10-31
 
 ### Added

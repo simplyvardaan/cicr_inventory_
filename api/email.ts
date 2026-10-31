@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getMailFrom, mailer, renderEmail } from './_mailer';
+import { getMailFrom, isSmtpConfigured, mailer, renderEmail } from './_mailer';
 
 const allowedEvents = new Set([
   'login',
@@ -16,7 +16,7 @@ const allowedEvents = new Set([
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !getMailFrom()) {
+  if (!isSmtpConfigured()) {
     return res.status(503).json({ error: 'SMTP is not configured.' });
   }
 

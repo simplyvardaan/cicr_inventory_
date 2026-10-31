@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getMailFrom, mailer, renderEmail } from './_mailer';
+import { getMailFrom, isSmtpConfigured, mailer, renderEmail } from './_mailer';
 
 function response(res: VercelResponse, status: number, body: unknown) {
   return res.status(status).json(body);
@@ -34,7 +34,7 @@ async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getA
 }
 
 async function sendAccountEmail(event: 'account_created' | 'account_approved' | 'account_rejected', to: string, data: Record<string, unknown>) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !getMailFrom()) {
+  if (!isSmtpConfigured()) {
     console.warn(`SMTP is not configured; skipped ${event} email.`);
     return;
   }
