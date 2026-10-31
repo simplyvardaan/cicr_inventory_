@@ -11,6 +11,10 @@ import { InventoryItem } from '../../types/inventory';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { compressImageToBase64 } from '../../lib/imageUtils';
+import { AirportMatrixClock } from '../ui/airport-matrix-clock';
+import { IOSSearchBar } from '../ui/ios-search-bar';
+import { NotificationBell, Notification } from '../ui/notification-bell';
+import { LiquidToggle } from '../ui/liquid-toggle';
 import {
   Layers,
   ShoppingBag,
@@ -123,6 +127,40 @@ export const UserDashboard: React.FC = () => {
   const [logDaysFilter, setLogDaysFilter] = useState<'7d' | '24h' | '3d' | 'all'>('7d');
   const [logCategoryFilter, setLogCategoryFilter] = useState<'all' | 'borrow' | 'return' | 'account' | 'inventory'>('all');
   const [logSearch, setLogSearch] = useState('');
+
+  // EasyUI Liquid Toggle Theme Switcher State
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  // EasyUI Notification Bell items list
+  const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const list: Notification[] = [];
+    requests
+      .filter((r) => r.status === 'pending')
+      .slice(0, 10)
+      .forEach((r) => {
+        list.push({
+          id: `req-${r.id}`,
+          message: `${r.user_name || 'Member'} requested ${r.item_name || 'Component'} (${r.project_name || 'Project'})`,
+          timestamp: r.created_at || new Date().toISOString(),
+          read: false,
+          action: () => setActiveView('review-requests'),
+        });
+      });
+    pendingAccounts
+      .slice(0, 5)
+      .forEach((acc) => {
+        list.push({
+          id: `acc-${acc.id}`,
+          message: `New Member Registration: ${acc.full_name || acc.email} awaiting Approval`,
+          timestamp: acc.created_at || new Date().toISOString(),
+          read: false,
+          action: () => setActiveView('logs'),
+        });
+      });
+    setNotificationsList(list);
+  }, [requests, pendingAccounts]);
 
   // Admin note for requests
   const [adminNote, setAdminNote] = useState<Record<string, string>>({});
@@ -582,30 +620,36 @@ export const UserDashboard: React.FC = () => {
               </button>
             )}
 
-            {/* Notifications Pill with circular bell & count badge */}
-            <button
-              type="button"
-              onClick={() => setActiveView('review-requests')}
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] hover:bg-[#1c1c2b] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 transition-all cursor-pointer shrink-0"
-              title="Notifications"
-            >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-950/80 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
-                <Bell className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              </div>
-              <span className="hidden md:inline font-bold">NOTIFICATIONS</span>
-              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-600 text-white font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
-                {pendingRequests.length}
-              </span>
-            </button>
+            {/* EasyUI Micro-Animated Notification Bell */}
+            <div className="shrink-0 flex items-center">
+              <NotificationBell
+                notifications={notificationsList}
+                onMarkAsRead={(id) => {
+                  setNotificationsList((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+                  );
+                }}
+                onMarkAllAsRead={() => {
+                  setNotificationsList((prev) => prev.map((n) => ({ ...n, read: true })));
+                }}
+              />
+            </div>
 
-            {/* Theme Dropdown Pill */}
+            {/* EasyUI Liquid Toggle Theme Switcher */}
             <div
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 shrink-0"
-              title="Current Theme: Robosoccer"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-[#151520] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 shrink-0"
+              title="Toggle Robosoccer Cyber Theme"
             >
               <Palette className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              <span className="hidden md:inline font-semibold">Robosoccer</span>
-              <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
+              <span className="hidden md:inline font-semibold">Theme</span>
+              <LiquidToggle
+                value={isDarkTheme}
+                onChange={(val) => setIsDarkTheme(val)}
+                width={48}
+                height={26}
+                showLabels={false}
+                accentColor="#9333ea"
+              />
             </div>
           </div>
         </header>
@@ -632,14 +676,16 @@ export const UserDashboard: React.FC = () => {
                 </p>
               </div>
 
-              {/* Live Clock & Date */}
-              <div className="text-left md:text-right shrink-0">
-                <span className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase font-mono">
-                  {formattedDate}
-                </span>
-                <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight mt-0.5">
-                  {formattedTime}
-                </div>
+              {/* EasyUI Airport Matrix Departure Board Clock */}
+              <div className="shrink-0 w-full md:w-auto max-w-full">
+                <AirportMatrixClock
+                  cities={['new-delhi']}
+                  format="24h"
+                  showSeconds={true}
+                  updateInterval={1000}
+                  showCountry={true}
+                  className="w-full md:min-w-[320px]"
+                />
               </div>
             </div>
 
@@ -777,25 +823,16 @@ export const UserDashboard: React.FC = () => {
 
             {/* Search Bar & Vault Category Tabs (Screenshot 2) */}
             <div className="p-4 sm:p-5 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-4 shadow-xl">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-4 top-3.5 text-zinc-500" />
-                <input
-                  type="text"
+              {/* EasyUI iOS Micro-Interactive Search Bar */}
+              <div className="w-full">
+                <IOSSearchBar
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={setSearchQuery}
                   placeholder="Search microcontrollers, sensors, actuators, specs, or racks..."
-                  className="w-full pl-11 pr-10 py-3 bg-[#14141c] border border-zinc-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-600 rounded-2xl text-xs sm:text-sm text-white placeholder-zinc-500 outline-none transition-all"
+                  className="w-full"
+                  collapsedWidth="100%"
+                  expandedWidth="100%"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-3.5 text-zinc-500 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
               </div>
 
               {/* Vault Category Filter Tabs */}
@@ -1973,25 +2010,16 @@ export const UserDashboard: React.FC = () => {
                   {/* Filter Controls: Time Range Selector, Category Selector, and Search Bar */}
                   <div className="space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      {/* Search in 7-day logs */}
-                      <div className="relative flex-1 max-w-md">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-500" />
-                        <input
-                          type="text"
+                      {/* EasyUI iOS Search Bar in 7-day logs */}
+                      <div className="flex-1 max-w-md">
+                        <IOSSearchBar
                           value={logSearch}
-                          onChange={(e) => setLogSearch(e.target.value)}
+                          onChange={setLogSearch}
                           placeholder="Search 7-day logs by user name, component, or action..."
-                          className="w-full pl-9 pr-8 py-2 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500 transition-colors"
+                          className="w-full"
+                          collapsedWidth="100%"
+                          expandedWidth="100%"
                         />
-                        {logSearch && (
-                          <button
-                            type="button"
-                            onClick={() => setLogSearch('')}
-                            className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-white"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
                       </div>
 
                       {/* Timeframe Selector Pills */}
