@@ -55,7 +55,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-600 dark:text-zinc-400 font-medium">Available Stock:</span>
           <span className="font-bold text-slate-900 dark:text-white">
-            <span className={item.available_qty <= item.min_threshold ? 'text-amber-500 font-black' : 'text-blue-600 dark:text-purple-400 font-black'}>
+            <span className={item.available_qty > 0 && item.total_qty > 0 && (item.available_qty / item.total_qty) < 0.5 ? 'text-amber-500 font-black' : 'text-blue-600 dark:text-purple-400 font-black'}>
               {item.available_qty}
             </span>{' '}
             / {item.total_qty}

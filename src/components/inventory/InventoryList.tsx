@@ -184,7 +184,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                       <span className="font-bold text-white">
                         <span
                           className={
-                            item.available_qty <= item.min_threshold
+                            item.available_qty > 0 && item.total_qty > 0 && (item.available_qty / item.total_qty) < 0.5
                               ? 'text-amber-400'
                               : 'text-emerald-400'
                           }

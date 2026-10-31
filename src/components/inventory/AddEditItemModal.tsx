@@ -79,7 +79,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
     setLoading(true);
 
     const calculatedStatus: InventoryItem['status'] =
-      availableQty <= 0 ? 'Out of Stock' : availableQty <= minThreshold ? 'Low Stock' : 'In Stock';
+      availableQty <= 0 ? 'Out of Stock' : (totalQty > 0 && (availableQty / totalQty) < 0.5) ? 'Low Stock' : 'In Stock';
 
     if (isEditing && initialItem) {
       const res = await updateItem(initialItem.id, {
@@ -210,7 +210,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
           </div>
 
           {/* Quantities */}
-          <div className="grid grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
+          <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
             <div>
               <label className="block text-slate-600 dark:text-zinc-400 font-bold mb-1">Total Qty</label>
               <input
@@ -232,17 +232,6 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
                 value={availableQty}
                 onChange={(e) => setAvailableQty(parseInt(e.target.value) || 0)}
                 className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 rounded-lg text-blue-600 dark:text-purple-400 font-black outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-zinc-400 font-bold mb-1">Min Alert Qty</label>
-              <input
-                type="number"
-                min="0"
-                value={minThreshold}
-                onChange={(e) => setMinThreshold(parseInt(e.target.value) || 0)}
-                className="w-full px-2.5 py-2 bg-white dark:bg-[#120d24] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 rounded-lg text-amber-600 dark:text-amber-400 font-black outline-none"
               />
             </div>
           </div>

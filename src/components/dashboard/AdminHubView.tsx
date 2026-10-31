@@ -187,7 +187,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-200 dark:border-zinc-800 pb-3">
         <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 max-w-full overflow-x-auto no-scrollbar">
           {/* Members */}
           <button
@@ -204,7 +204,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
           >
             <Users className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400" />
             <span>Club Members</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-extrabold">
+            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-800 dark:bg-zinc-800 dark:text-zinc-300 text-[10px] font-extrabold border border-slate-300 dark:border-zinc-700">
               {allMembers.length}
             </span>
           </button>
@@ -222,9 +222,9 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Activity Logs</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 text-[10px] font-extrabold border border-emerald-300/40 dark:border-transparent">
               {sevenDayLogsCount}
             </span>
           </button>
@@ -242,12 +242,12 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
             }`}
           >
-            <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+            <UserCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>Account Requests</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
               pendingAccounts.length > 0
-                ? 'bg-amber-500 text-black animate-pulse'
-                : 'bg-zinc-800 text-zinc-400'
+                ? 'bg-amber-500 text-black animate-pulse border-amber-600'
+                : 'bg-slate-200 text-slate-800 dark:bg-zinc-800 dark:text-zinc-400 border-slate-300 dark:border-zinc-700'
             }`}>
               {pendingAccounts.length}
             </span>

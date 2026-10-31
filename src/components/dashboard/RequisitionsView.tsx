@@ -212,18 +212,18 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
 
                     {/* Borrower Info (prominent for Admins) */}
                     {isLeadOrAdmin && (
-                      <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-zinc-400 text-xs font-medium">
                         <User className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Borrower:</span>
                         <strong className="text-slate-900 dark:text-white font-semibold">{req.user_name}</strong>
-                        <span className="text-zinc-500 font-mono text-[11px]">({req.user_email})</span>
+                        <span className="text-slate-600 dark:text-zinc-400 font-mono text-[11px]">({req.user_email})</span>
                       </div>
                     )}
 
                     {/* Project & Purpose */}
-                    <div className="text-zinc-400 space-y-1">
+                    <div className="text-slate-700 dark:text-zinc-300 space-y-1">
                       <div>
-                        <span className="text-zinc-500">Project: </span>
+                        <span className="text-slate-600 dark:text-zinc-400 font-semibold">Project: </span>
                         <span className="text-blue-600 dark:text-purple-400 font-semibold">{req.project_name}</span>
                         {req.purpose && (
                           <>
@@ -235,22 +235,22 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                     </div>
 
                     {/* Dates Timeline & Storage Location */}
-                    <div className="flex items-center gap-4 text-[11px] text-zinc-400 pt-1 flex-wrap">
+                    <div className="flex items-center gap-4 text-[11px] text-slate-700 dark:text-zinc-300 pt-1 flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-zinc-500" />
-                        <span>Requested: </span>
+                        <span className="text-slate-600 dark:text-zinc-400 font-semibold">Requested: </span>
                         <strong className="text-slate-800 dark:text-zinc-300 font-medium">
                           {req.created_at ? req.created_at.split('T')[0] : 'Recently'}
                         </strong>
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-amber-400/80" />
-                        <span>Expected Return: </span>
-                        <strong className="text-amber-300 font-medium">{req.expected_return_date}</strong>
+                        <span className="text-slate-600 dark:text-zinc-400 font-semibold">Expected Return: </span>
+                        <strong className="text-amber-700 dark:text-amber-300 font-bold">{req.expected_return_date}</strong>
                       </span>
                       {matchedItem?.location && (
-                        <span className="text-zinc-400 font-mono">
-                          Lab Location: <strong className="text-slate-800 dark:text-zinc-200">{matchedItem.location}</strong>
+                        <span className="text-slate-700 dark:text-zinc-300 font-mono">
+                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">Lab Location: </span><strong className="text-slate-900 dark:text-zinc-200 font-bold">{matchedItem.location}</strong>
                         </span>
                       )}
                       {req.actual_return_date && (

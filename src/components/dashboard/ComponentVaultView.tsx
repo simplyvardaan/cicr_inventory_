@@ -21,6 +21,7 @@ import {
 interface ComponentVaultViewProps {
   items: InventoryItem[];
   requests: BorrowRequest[];
+  isAdmin?: boolean;
   isLeadOrAdmin: boolean;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -38,16 +39,14 @@ interface ComponentVaultViewProps {
 
 const isLowReserveItem = (i: InventoryItem): boolean => {
   if (i.available_qty <= 0) return false;
-  if (i.available_qty >= i.total_qty) return false;
-  const threshold = i.min_threshold ?? 2;
-  const isBelowThreshold = i.available_qty <= threshold;
-  const isBelowHalf = i.total_qty > 0 && i.available_qty / i.total_qty <= 0.5;
-  return isBelowThreshold || isBelowHalf;
+  if (i.total_qty <= 0) return false;
+  return (i.available_qty / i.total_qty) < 0.5;
 };
 
 export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   items,
   requests,
+  isAdmin,
   isLeadOrAdmin,
   searchQuery,
   setSearchQuery,
@@ -339,7 +338,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
                         <span className="w-2 h-2 rounded-full bg-red-600 dark:bg-rose-500" />
                         <span>Depleted</span>
                       </span>
-                    ) : isLow ? (
+                    ) : (isAdmin && isLow) ? (
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500">
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                         <span>Low Reserve</span>

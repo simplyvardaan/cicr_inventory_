@@ -42,7 +42,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -50,8 +50,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {/* Quick Metrics (2-column layout without Min Threshold) */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-bold">Available Units</span>
               <span className="text-2xl font-black text-blue-600 dark:text-purple-400">{item.available_qty}</span>
@@ -59,10 +59,6 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-bold">Total Stock</span>
               <span className="text-2xl font-black text-slate-900 dark:text-white">{item.total_qty}</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800 col-span-2 sm:col-span-1">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-bold">Min Threshold</span>
-              <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{item.min_threshold}</span>
             </div>
           </div>
 

@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { requests, items, isLiveDatabase } = useInventory();
 
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
-  const lowStockCount = items.filter((i) => i.available_qty <= i.min_threshold).length;
+  const lowStockCount = items.filter((i) => i.available_qty > 0 && i.total_qty > 0 && (i.available_qty / i.total_qty) < 0.5).length;
 
   const navItems = [
     {
