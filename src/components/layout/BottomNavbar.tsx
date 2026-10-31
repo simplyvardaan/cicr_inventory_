@@ -60,16 +60,20 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length;
 
-  // Auto-close dropdown when clicking outside
+  // Auto-close dropdown when clicking or tapping outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (navContainerRef.current && !navContainerRef.current.contains(event.target as Node)) {
         setSubmenuOpen(false);
         setProfileMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const getInitial = () => {
@@ -87,17 +91,59 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
 
   const categoryItems = [
     { key: 'all', label: 'All Catalog', icon: Boxes },
-    { key: 'microcontrollers', label: 'Microcontrollers', icon: Cpu },
+    { key: 'mcu', label: 'Microcontrollers', icon: Cpu },
     { key: 'sensors', label: 'Sensors', icon: Radio },
     { key: 'actuators', label: 'Actuators', icon: Compass },
-    { key: 'power', label: 'Power', icon: PowerIcon },
+    { key: 'power', label: 'Power', icon: Zap },
     { key: 'tools', label: 'Tools', icon: Wrench },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none select-none">
       {/* Docked Centered Floating Navbar with Cool Aesthetic Glassmorphism */}
-      <nav className="relative flex justify-center px-2 py-2 sm:p-3 pointer-events-none" ref={navContainerRef}>
+      <nav className="relative flex flex-col items-center px-2 py-2 sm:p-3 pointer-events-none" ref={navContainerRef}>
+        {/* Fluid Morphing Submenu Bar (Centered directly above the navbar dock) */}
+        <AnimatePresence>
+          {activeView === 'inventory' && submenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={motionTransitions.springGentle}
+              className="pointer-events-auto mb-2 sm:mb-2.5 flex items-center gap-1 sm:gap-1.5 rounded-full border-2 border-slate-200 dark:border-[#252538] bg-white/95 dark:bg-[#0c0c14]/95 backdrop-blur-2xl p-1 sm:p-1.5 shadow-2xl shadow-slate-900/15 dark:shadow-black z-50 whitespace-nowrap overflow-x-auto max-w-[calc(100vw-1.5rem)] sm:max-w-max no-scrollbar"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {categoryItems.map((cat) => {
+                const isSelected = activeCategory === cat.key || (cat.key === 'mcu' && activeCategory === 'microcontrollers');
+                const Icon = cat.icon;
+                return (
+                  <motion.button
+                    key={cat.key}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSelectCategory(cat.key)}
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                      isSelected
+                        ? 'text-white font-bold'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
+                    }`}
+                  >
+                    {isSelected && (
+                      <motion.span
+                        layoutId="easyui-pill-cat-indicator"
+                        transition={motionTransitions.springMorph}
+                        className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-sm"
+                      />
+                    )}
+                    <Icon className={`relative z-10 w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
+                    <span className="relative z-10">{cat.label}</span>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="pointer-events-auto relative inline-flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white/90 dark:bg-[#0c0c14]/90 backdrop-blur-2xl border-2 border-slate-200/90 dark:border-[#252538] shadow-[0_12px_36px_-6px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_35px_-5px_rgba(0,0,0,0.85)] max-w-fit w-auto transition-all">
           
           {/* Main Segmented Pill Tabs */}
@@ -131,83 +177,40 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
             </motion.button>
 
             {/* 2. Inventory Tab with Submenu Indicator */}
-            <div className="relative flex items-center">
-              <motion.button
-                type="button"
-                role="tab"
-                aria-selected={activeView === 'inventory'}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  if (activeView === 'inventory') {
-                    setSubmenuOpen((prev) => !prev);
-                  } else {
-                    setActiveView('inventory');
-                    setSubmenuOpen(true);
-                  }
-                }}
-                className={`relative flex items-center gap-1.5 sm:gap-2 pl-3 sm:pl-3.5 pr-2 sm:pr-2.5 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                  activeView === 'inventory'
-                    ? 'text-white'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white'
-                }`}
-              >
-                {activeView === 'inventory' && (
-                  <motion.span
-                    layoutId="easyui-pill-active-dock"
-                    transition={motionTransitions.springMorph}
-                    className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
-                  />
-                )}
-                <Boxes className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${activeView === 'inventory' ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
-                <span className="relative z-10 hidden sm:inline">Inventory</span>
-                <ChevronDown
-                  className={`relative z-10 w-3 h-3 transition-transform duration-200 ${
-                    submenuOpen && activeView === 'inventory' ? 'rotate-180 text-white' : 'text-slate-400 dark:text-zinc-500'
-                  }`}
+            <motion.button
+              type="button"
+              role="tab"
+              aria-selected={activeView === 'inventory'}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => {
+                if (activeView === 'inventory') {
+                  setSubmenuOpen((prev) => !prev);
+                } else {
+                  setActiveView('inventory');
+                  setSubmenuOpen(true);
+                }
+              }}
+              className={`relative flex items-center gap-1.5 sm:gap-2 pl-3 sm:pl-3.5 pr-2 sm:pr-2.5 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                activeView === 'inventory'
+                  ? 'text-white'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white'
+              }`}
+            >
+              {activeView === 'inventory' && (
+                <motion.span
+                  layoutId="easyui-pill-active-dock"
+                  transition={motionTransitions.springMorph}
+                  className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                 />
-              </motion.button>
-
-              {/* Fluid Morphing Submenu Bar (Floats right above Inventory) */}
-              <AnimatePresence>
-                {activeView === 'inventory' && submenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={motionTransitions.springGentle}
-                    className="absolute bottom-full mb-3 left-0 sm:left-1/2 sm:-translate-x-1/2 flex items-center gap-1 rounded-full border-2 border-slate-200 dark:border-[#252538] bg-white/95 dark:bg-[#0c0c14]/95 backdrop-blur-2xl p-1.5 shadow-2xl shadow-slate-900/10 dark:shadow-black z-50 whitespace-nowrap overflow-x-auto max-w-[90vw]"
-                  >
-                    {categoryItems.map((cat) => {
-                      const isSelected = activeCategory === cat.key;
-                      const Icon = cat.icon;
-                      return (
-                        <motion.button
-                          key={cat.key}
-                          type="button"
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleSelectCategory(cat.key)}
-                          className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                            isSelected
-                              ? 'text-white font-bold'
-                              : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white'
-                          }`}
-                        >
-                          {isSelected && (
-                            <motion.span
-                              layoutId="easyui-pill-cat-indicator"
-                              transition={motionTransitions.springMorph}
-                              className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-sm"
-                            />
-                          )}
-                          <Icon className={`relative z-10 w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
-                          <span className="relative z-10">{cat.label}</span>
-                        </motion.button>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              )}
+              <Boxes className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${activeView === 'inventory' ? 'text-white' : 'text-blue-600 dark:text-purple-400'}`} />
+              <span className="relative z-10 hidden sm:inline">Inventory</span>
+              <ChevronDown
+                className={`relative z-10 w-3 h-3 transition-transform duration-200 ${
+                  submenuOpen && activeView === 'inventory' ? 'rotate-180 text-white' : 'text-slate-400 dark:text-zinc-500'
+                }`}
+              />
+            </motion.button>
 
             {/* 3. Requests Tab */}
             <motion.button
