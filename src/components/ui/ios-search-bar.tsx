@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Command } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motionTransitions } from '../../lib/motion-tokens';
 
@@ -86,7 +86,7 @@ export const IOSSearchBar: React.FC<IOSSearchBarProps> = ({
 
         <input
           ref={inputRef}
-          type="search"
+          type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -117,13 +117,6 @@ export const IOSSearchBar: React.FC<IOSSearchBarProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Keyboard shortcut indicator when idle */}
-        {!isExpanded && value.length === 0 && (
-          <div className="hidden sm:flex items-center gap-0.5 text-[9px] font-mono text-slate-500 dark:text-[#6B6B6B] bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-1.5 py-0.5 rounded shrink-0 ml-1">
-            <Command className="w-2.5 h-2.5" />
-            <span>K</span>
-          </div>
-        )}
       </div>
     </motion.div>
   );

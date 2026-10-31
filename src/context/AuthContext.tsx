@@ -354,7 +354,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailToRegister = `${emailToRegister.toLowerCase()}@mail.jiit.ac.in`;
       }
 
-      const initialStatus = 'pending';
+      const isMasterAdminEmail = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(
+        emailToRegister.toLowerCase()
+      );
+      const enforcedRole = isMasterAdminEmail ? 'admin' : 'member';
+      const initialStatus = isMasterAdminEmail ? 'approved' : 'pending';
       const accountResponse = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -379,11 +383,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       /*
-      const isMasterAdminEmail = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(
-        emailToRegister.toLowerCase()
-      );
-      const enforcedRole = isMasterAdminEmail ? 'admin' : 'member';
-      const initialStatus = isMasterAdminEmail ? 'approved' : 'pending';
       let createdUserId: string | null = null;
 
       // 1. Attempt to create user in Supabase Auth via supabaseAdmin
@@ -469,6 +468,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
+
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: {
@@ -480,131 +487,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await response.json().catch(() => ({}));
       if (!response.ok) return { success: false, error: result.error || 'Approval failed.' };
       return { success: true };
-
-      /*
-      // Find account request from activity_logs
-      const { data: logMatches } = await supabaseAdmin
-        .from('activity_logs')
-        .select('*')
-        .eq('action', 'ACCOUNT_REQUEST')
-        .order('created_at', { ascending: false });
-
-      let targetLog = logMatches?.find((l) => {
-        try {
-          const det = typeof l.details === 'string' ? JSON.parse(l.details) : l.details;
-          return (
-            det.userId === targetId ||
-            l.user_id === targetId ||
-            l.id === targetId ||
-            det.email === targetId
-          );
-        } catch {
-          return false;
-        }
-      });
-
-      let email = '';
-      let fullName = '';
-      let enrollmentNo = '';
-      let phone = '';
-      let role = 'member';
-      let avatarUrl = '';
-      let userId = targetId;
-
-      if (targetLog) {
-        try {
-          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
-          email = det.email || '';
-          fullName = det.fullName || targetLog.user_name || 'Member';
-          enrollmentNo = det.enrollmentNo || det.roll_number || '';
-          phone = det.phone || '';
-          role = det.role || 'member';
-          avatarUrl = det.avatarUrl || det.avatar_url || '';
-          if (det.userId) userId = det.userId;
-        } catch {
-          // ignore
-        }
-      }
-
-      // Check if user already exists in auth.users
-      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-      const existingUser = usersData?.users?.find(
-        (u) => (email && u.email?.toLowerCase() === email.toLowerCase()) || u.id === userId
-      );
-
-      if (existingUser) {
-        userId = existingUser.id;
-        email = email || existingUser.email || '';
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          email_confirm: true,
-          user_metadata: {
-            full_name: fullName || existingUser.user_metadata?.full_name,
-            enrollment_no: enrollmentNo || existingUser.user_metadata?.enrollment_no,
-            phone: phone || existingUser.user_metadata?.phone,
-            role,
-            status: 'approved',
-          },
-        });
-      } else {
-        return {
-          success: false,
-          error: 'This registration has no existing Auth account. Ask the user to register again.',
-        };
-      }
-
-      // Ensure profile row in public.profiles table
-      if (userId && userId.length > 20) {
-        const { error: profileErr } = await supabaseAdmin.from('profiles').upsert([
-          {
-            id: userId,
-            full_name: fullName || 'Member',
-            email: email || '',
-            role,
-            roll_number: enrollmentNo,
-            phone,
-            avatar_url: avatarUrl || 'status:approved',
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-        if (profileErr) {
-          console.error('Profile upsert error on approve:', profileErr);
-          return { success: false, error: `Profile database sync failed: ${profileErr.message}` };
-        }
-      }
-
-      // Mark request as approved in activity_logs
-      if (targetLog) {
-        try {
-          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
-          await supabaseAdmin
-            .from('activity_logs')
-            .update({
-              details: JSON.stringify({ ...det, status: 'approved', approved_at: new Date().toISOString() }),
-            })
-            .eq('id', targetLog.id);
-        } catch (updateErr) {
-          console.warn('Log update warning:', updateErr);
-        }
-      }
-
-      // Log action
-      await supabaseAdmin.from('activity_logs').insert([
-        {
-          user_id: userId || null,
-          user_name: profile?.full_name || 'Admin',
-          action: 'ACCOUNT_APPROVED',
-          details: `Account for ${fullName || email || targetId} was approved by ${profile?.full_name || 'Admin'}`,
-        },
-      ]);
-      await notifyEmail('account_approved', email, {
-        name: fullName,
-        email,
-        role,
-        status: 'approved',
-      });
-
-      return { success: true };
-      */
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Approval failed';
       return { success: false, error: msg };
@@ -613,6 +495,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
+
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: {
@@ -624,83 +514,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await response.json().catch(() => ({}));
       if (!response.ok) return { success: false, error: result.error || 'Rejection failed.' };
       return { success: true };
-
-      /*
-      const { data: logMatches } = await supabaseAdmin
-        .from('activity_logs')
-        .select('*')
-        .eq('action', 'ACCOUNT_REQUEST')
-        .order('created_at', { ascending: false });
-
-      let targetLog = logMatches?.find((l) => {
-        try {
-          const det = typeof l.details === 'string' ? JSON.parse(l.details) : l.details;
-          return (
-            det.userId === targetId ||
-            l.user_id === targetId ||
-            l.id === targetId ||
-            det.email === targetId
-          );
-        } catch {
-          return false;
-        }
-      });
-
-      let fullName = targetLog?.user_name || 'User';
-      if (targetLog) {
-        try {
-          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
-          fullName = det.fullName || targetLog.user_name || 'User';
-          await supabaseAdmin
-            .from('activity_logs')
-            .update({
-              details: JSON.stringify({ ...det, status: 'rejected', rejected_at: new Date().toISOString() }),
-            })
-            .eq('id', targetLog.id);
-        } catch (e) {
-          console.warn('Reject log update warning:', e);
-        }
-      }
-
-      // If user exists in auth.users, update metadata
-      try {
-        await supabaseAdmin.auth.admin.updateUserById(targetId, {
-          user_metadata: { status: 'rejected' },
-        });
-      } catch {
-        // ignore
-      }
-
-      // Log action
-      await supabaseAdmin.from('activity_logs').insert([
-        {
-          user_id: targetId || null,
-          user_name: profile?.full_name || 'Admin',
-          action: 'ACCOUNT_REJECTED',
-          details: `Account registration for ${fullName} was rejected by ${profile?.full_name || 'Admin'}`,
-        },
-      ]);
-      const rejectedDetails = targetLog
-        ? typeof targetLog.details === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(targetLog.details) as Record<string, unknown>;
-              } catch {
-                return {};
-              }
-            })()
-          : (targetLog.details as Record<string, unknown>)
-        : {};
-      const rejectedEmail =
-        typeof rejectedDetails.email === 'string' ? rejectedDetails.email : undefined;
-      await notifyEmail('account_rejected', rejectedEmail, {
-        name: fullName,
-        email: rejectedEmail,
-        status: 'rejected',
-      });
-
-      return { success: true };
-      */
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Rejection failed';
       return { success: false, error: msg };
