@@ -343,7 +343,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailToRegister = `${emailToRegister.toLowerCase()}@mail.jiit.ac.in`;
       }
 
-      const initialStatus = 'pending';
+      const isMasterAdminEmail = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(
+        emailToRegister.toLowerCase()
+      );
+      const enforcedRole = isMasterAdminEmail ? 'admin' : 'member';
+      const initialStatus = isMasterAdminEmail ? 'approved' : 'pending';
       let createdUserId: string | null = null;
 
       // 1. Attempt to create user in Supabase Auth via supabaseAdmin
@@ -356,7 +360,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name,
             enrollment_no,
             phone,
-            role,
+            role: enforcedRole,
             status: initialStatus,
             avatar_url: avatar_url || undefined,
           },
@@ -422,6 +426,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
       // Find account request from activity_logs
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
@@ -545,6 +556,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
         .select('*')

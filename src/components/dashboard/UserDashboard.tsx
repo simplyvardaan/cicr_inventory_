@@ -276,6 +276,18 @@ export const UserDashboard: React.FC = () => {
   // Member Management
   const handlePromoteRole = async (targetUserId: string, newRole: 'admin' | 'member', name: string) => {
     try {
+      if (!isAdmin) {
+        showToast('error', 'Unauthorized', 'Administrative privileges required.');
+        return;
+      }
+      const targetMember = allMembers.find((m) => m.id === targetUserId);
+      if (
+        targetMember?.email &&
+        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(targetMember.email.toLowerCase())
+      ) {
+        showToast('error', 'Action Restricted', 'Master superadmin roles cannot be modified.');
+        return;
+      }
       const { error } = await supabaseAdmin
         .from('profiles')
         .update({ role: newRole, updated_at: new Date().toISOString() })

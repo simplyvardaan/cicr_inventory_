@@ -108,6 +108,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Real Add Item in Supabase
   const addItem = async (newItemData: Omit<InventoryItem, 'id'>) => {
     try {
+      const isAuthorized =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Administrative role required to register equipment.' };
+      }
       const { data, error } = await supabase
         .from('inventory_items')
         .insert([newItemData])
@@ -160,6 +168,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Real Delete Item in Supabase
   const deleteItem = async (id: string) => {
     try {
+      const isAuthorized =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Administrative role required to delete equipment.' };
+      }
       const targetItem = items.find((i) => i.id === id);
       const { error } = await supabase.from('inventory_items').delete().eq('id', id);
       if (error) return { success: false, error: error.message };
@@ -192,6 +208,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     purpose: string;
     expectedReturnDate: string;
   }) => {
+    if (!user) {
+      return { success: false, error: 'Authentication required to submit requisition.' };
+    }
+    if (!data.quantity || data.quantity < 1 || !Number.isInteger(data.quantity)) {
+      return { success: false, error: 'Invalid quantity: Must be a positive integer.' };
+    }
+    if (!data.expectedReturnDate) {
+      return { success: false, error: 'Expected return date is required.' };
+    }
     const item = items.find((i) => i.id === data.itemId);
     if (!item) return { success: false, error: 'Item not found' };
     if (item.available_qty < data.quantity) {
@@ -248,6 +273,16 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminNotes?: string
   ) => {
     try {
+      if (newStatus === 'approved' || newStatus === 'rejected') {
+        const isAuthorized =
+          profile?.role === 'admin' ||
+          profile?.role === 'lead' ||
+          user?.user_metadata?.role === 'admin' ||
+          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+        if (!isAuthorized) {
+          return { success: false, error: 'Unauthorized: Administrative clearance required to approve or reject requisitions.' };
+        }
+      }
       const targetReq = requests.find((r) => r.id === requestId);
 
       const updatePayload: Record<string, unknown> = {
