@@ -468,6 +468,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
+
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: {
@@ -487,6 +495,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectUserAccount = async (targetId: string) => {
     try {
+      const isCallerAdmin =
+        profile?.role === 'admin' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+      if (!isCallerAdmin) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required.' };
+      }
+
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: {

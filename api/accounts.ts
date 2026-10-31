@@ -128,21 +128,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const email = typeof details?.email === 'string' ? details.email : '';
     const fullName = typeof details?.fullName === 'string' ? details.fullName : targetLog?.user_name || 'Member';
     const status = action === 'approve' ? 'approved' : 'rejected';
+    const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
+    if (usersError) throw usersError;
+    const existing = (users.users as Array<{ id: string; email?: string; user_metadata?: Record<string, unknown> }>).find(
+      (user) => user.id === targetId || (!!email && user.email?.toLowerCase() === email.toLowerCase())
+    );
+    if (!existing) return response(res, 404, { error: 'Auth account not found for this registration.' });
+    const resolvedUserId = existing.id;
 
     if (action === 'approve') {
-      const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
-      if (usersError) throw usersError;
-      const existing = (users.users as Array<{ id: string; email?: string; user_metadata?: Record<string, unknown> }>).find(
-        (user) => user.id === targetId || (!!email && user.email?.toLowerCase() === email.toLowerCase())
-      );
-      if (!existing) return response(res, 404, { error: 'Auth account not found for this registration.' });
       await supabase.auth.admin.updateUserById(existing.id, { email_confirm: true, user_metadata: { ...existing.user_metadata, status } });
       const { error: profileError } = await supabase.from('profiles').upsert([{ id: existing.id, full_name: fullName, email: email || existing.email, role: details?.role || 'member', status, roll_number: details?.enrollmentNo || '', phone: details?.phone || '', avatar_url: 'status:approved', updated_at: new Date().toISOString() }]);
       requireDatabaseSuccess(profileError, 'Approved profile update');
     } else {
-      const { error: authError } = await supabase.auth.admin.updateUserById(targetId, { user_metadata: { status } });
+      const { error: authError } = await supabase.auth.admin.updateUserById(resolvedUserId, { user_metadata: { ...existing.user_metadata, status } });
       requireDatabaseSuccess(authError, 'Rejected account update');
-      const { error: profileError } = await supabase.from('profiles').update({ status, avatar_url: 'status:rejected' }).eq('id', targetId);
+      const { error: profileError } = await supabase.from('profiles').update({ status, avatar_url: 'status:rejected' }).eq('id', resolvedUserId);
       requireDatabaseSuccess(profileError, 'Rejected profile update');
     }
 
@@ -150,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { error: targetLogError } = await supabase.from('activity_logs').update({ details: JSON.stringify({ ...details, status, [`${status}_at`]: new Date().toISOString() }) }).eq('id', targetLog.id);
       requireDatabaseSuccess(targetLogError, 'Account request status update');
     }
-    const { error: actionLogError } = await supabase.from('activity_logs').insert([{ user_id: targetId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
+    const { error: actionLogError } = await supabase.from('activity_logs').insert([{ user_id: resolvedUserId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
     requireDatabaseSuccess(actionLogError, 'Account action logging');
     if (email) await sendAccountEmail(action === 'approve' ? 'account_approved' : 'account_rejected', email, { name: fullName, email, role: details?.role, status });
     return response(res, 200, { success: true });
