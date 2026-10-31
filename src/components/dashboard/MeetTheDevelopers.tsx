@@ -119,15 +119,15 @@ export const MeetTheDevelopers: React.FC = () => {
 
       {/* Tabs: Mentor button FIRST, then Developer button */}
       <div className="flex items-center justify-center">
-        <div className="inline-flex items-center p-1.5 rounded-full bg-[#0e0e16] border border-[#232332] shadow-xl">
+        <div className="inline-flex items-center p-1.5 rounded-full bg-slate-100 dark:bg-[#0e0e16] border-2 border-slate-200 dark:border-[#232332] shadow-sm">
           {/* Tab 1: Mentor (FIRST) */}
           <button
             type="button"
             onClick={() => handleTabChange('mentor')}
             className={`flex items-center gap-2 px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'mentor'
-                ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-lg shadow-purple-950/50'
-                : 'text-zinc-400 hover:text-white border border-transparent'
+                ? 'bg-blue-600 text-white shadow-md font-bold'
+                : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-transparent font-medium'
             }`}
           >
             <GraduationCap className="w-4 h-4 text-amber-400" />
@@ -140,18 +140,18 @@ export const MeetTheDevelopers: React.FC = () => {
             onClick={() => handleTabChange('developer')}
             className={`flex items-center gap-2 px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'developer'
-                ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-lg shadow-purple-950/50'
-                : 'text-zinc-400 hover:text-white border border-transparent'
+                ? 'bg-blue-600 text-white shadow-md font-bold'
+                : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-transparent font-medium'
             }`}
           >
-            <Code2 className="w-4 h-4 text-purple-400" />
+            <Code2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Developer</span>
           </button>
         </div>
       </div>
 
       {/* Main Profile Card (Matching Screenshot 5 exactly with our theme) */}
-      <div className="p-7 sm:p-12 rounded-3xl bg-[#121217] border border-[#242436] shadow-2xl shadow-black/80 flex flex-col sm:flex-row items-center sm:items-center gap-8 sm:gap-12 transition-all">
+      <div className="p-7 sm:p-12 rounded-3xl bg-white dark:bg-[#121217] border-2 border-slate-200 dark:border-[#242436] shadow-xl shadow-slate-900/5 dark:shadow-black/80 flex flex-col sm:flex-row items-center sm:items-center gap-8 sm:gap-12 transition-all text-slate-900 dark:text-white">
         
         {/* Left: Circular Avatar Photo with Emerald Rim */}
         <div className="shrink-0">
@@ -219,7 +219,7 @@ export const MeetTheDevelopers: React.FC = () => {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#09090d] hover:bg-[#151520] border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-200 hover:text-white transition-all shadow-md"
               >
-                <Github className="w-4 h-4 text-purple-300 shrink-0" />
+                <Github className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                 <span>{currentMember.githubUser}</span>
               </a>
             )}
@@ -253,7 +253,7 @@ export const MeetTheDevelopers: React.FC = () => {
                 onClick={() => setSelectedMemberId(member.id)}
                 className={`relative rounded-full transition-all duration-300 cursor-pointer shrink-0 ${
                   isSelected
-                    ? 'p-1.5 ring-4 ring-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.75)] opacity-100 scale-105'
+                    ? 'p-1.5 ring-4 ring-blue-600 shadow-xl shadow-blue-600/30 opacity-100 scale-105'
                     : 'opacity-40 grayscale hover:opacity-90 hover:grayscale-0 hover:scale-105'
                 }`}
                 title={`${member.name} (${member.role})`}

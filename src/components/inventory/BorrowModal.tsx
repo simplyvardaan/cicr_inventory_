@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
 import { InventoryItem } from '../../types/inventory';
 import { useInventory } from '../../context/InventoryContext';
-import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
-import { X, Send, Calendar, AlertCircle, LogIn, Sparkles } from 'lucide-react';
+import { X, Send, AlertCircle, ShoppingBag } from 'lucide-react';
 
 interface BorrowModalProps {
   item: InventoryItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onOpenAuth: () => void;
 }
 
 export const BorrowModal: React.FC<BorrowModalProps> = ({
   item,
   isOpen,
   onClose,
-  onOpenAuth,
 }) => {
-  const { user, profile } = useAuth();
   const { submitBorrowRequest } = useInventory();
   const { showToast } = useToast();
 
@@ -26,11 +22,13 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   const [projectName, setProjectName] = useState('');
   const [purpose, setPurpose] = useState('');
   
-  const defaultDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
-    .toISOString()
-    .split('T')[0];
-  const [expectedReturnDate, setExpectedReturnDate] = useState(defaultDate);
-
+  // Default expected return date: 7 days from now
+  const defaultDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() + 7);
+  const [expectedReturnDate, setExpectedReturnDate] = useState(
+    defaultDate.toISOString().split('T')[0]
+  );
+  
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -40,18 +38,13 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (!projectName.trim() || !purpose.trim()) {
-      setErrorMsg('Please specify the Project Name and Purpose.');
-      return;
-    }
-
     if (quantity < 1 || quantity > item.available_qty) {
       setErrorMsg(`Quantity must be between 1 and ${item.available_qty}`);
       return;
     }
 
-    if (!expectedReturnDate) {
-      setErrorMsg('Please select an expected return date.');
+    if (!projectName.trim() || !purpose.trim() || !expectedReturnDate) {
+      setErrorMsg('Please fill in all required fields.');
       return;
     }
 
@@ -63,13 +56,14 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
       purpose: purpose.trim(),
       expectedReturnDate,
     });
+
     setLoading(false);
 
     if (res.success) {
       showToast(
         'success',
-        'Request Submitted!',
-        `Your request for ${quantity}x "${item.name}" has been logged for lab admin approval.`
+        'Request Submitted',
+        `Requisition for ${quantity}x ${item.name} sent to Lab Leads.`
       );
       onClose();
     } else {
@@ -78,156 +72,129 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-lg bg-[#0c0918] border border-purple-900/40 rounded-3xl p-6 shadow-[0_0_50px_-10px_rgba(147,51,234,0.35)] overflow-hidden">
-        {/* Top ambient highlight */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-16 bg-purple-600/15 blur-3xl pointer-events-none rounded-full" />
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/85 backdrop-blur-md animate-in fade-in">
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#0c0918] border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-slate-900/15 overflow-hidden text-slate-900 dark:text-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-purple-900/30">
-          <div>
-            <h3 className="text-base font-bold text-white">Borrow Equipment Request</h3>
-            <p className="text-xs text-zinc-400">
-              Submit component requisition to CICR Lab Inventory
-            </p>
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Borrow Equipment Request</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                Submit component requisition to CICR Lab Inventory
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-xl text-zinc-400 hover:text-white hover:bg-purple-950/40 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Selected Component Card */}
-        <div className="my-4 p-3.5 rounded-2xl bg-[#080512] border border-purple-900/30 flex items-center justify-between">
+        <div className="my-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#080512] border-2 border-slate-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono text-purple-300 block">{item.category}</span>
-            <h4 className="text-sm font-bold text-white">{item.name}</h4>
-            <span className="text-xs text-zinc-400">{item.location}</span>
+            <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-bold block">{item.category}</span>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h4>
+            <span className="text-xs text-slate-500 dark:text-zinc-400">{item.location}</span>
           </div>
           <div className="text-right">
-            <span className="text-xs text-zinc-400 block">Available</span>
-            <span className="text-lg font-black text-purple-200">{item.available_qty}</span>
-            <span className="text-[10px] text-zinc-500 block">units</span>
+            <span className="text-xs text-slate-500 dark:text-zinc-400 block font-semibold">Available</span>
+            <span className="text-xl font-black text-blue-600 dark:text-blue-400">{item.available_qty}</span>
+            <span className="text-[10px] text-slate-400 block font-medium">units</span>
           </div>
         </div>
 
-        {!user ? (
-          <div className="p-5 rounded-2xl bg-[#120d24] border border-purple-800/40 text-center space-y-3">
-            <Sparkles className="w-6 h-6 text-purple-400 mx-auto" />
-            <h4 className="text-sm font-semibold text-white">Sign In Required</h4>
-            <p className="text-xs text-zinc-300">
-              Please sign in with your college credentials before requesting equipment.
-            </p>
-            <button
-              onClick={() => {
-                onClose();
-                onOpenAuth();
-              }}
-              className="btn-purple-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Sign In to Borrow</span>
-            </button>
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border-2 border-red-500 text-red-900 dark:text-red-200 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+            <span>{errorMsg}</span>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+        )}
 
-            <div className="p-3 rounded-xl bg-[#080512] border border-purple-900/30 text-zinc-300 flex items-center justify-between">
-              <div>
-                <span className="text-zinc-500 text-[10px] uppercase font-semibold block">Borrower Profile</span>
-                <span className="font-semibold text-white">{profile?.full_name || user.email}</span>
-              </div>
-              <span className="text-[11px] text-purple-300 font-mono">
-                {profile?.roll_number || ''}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-medium text-zinc-300 mb-1">
-                  Quantity Required (Max {item.available_qty})
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max={item.available_qty}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white font-bold outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium text-zinc-300 mb-1">
-                  Expected Return Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={expectedReturnDate}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setExpectedReturnDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white outline-none"
-                />
-              </div>
-            </div>
-
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-zinc-300 mb-1">
-                Project / Hackathon Name *
+              <label className="block font-bold text-slate-900 dark:text-zinc-200 mb-1">
+                Requested Qty <span className="text-red-600 font-bold">*</span>
               </label>
               <input
-                type="text"
+                type="number"
+                min="1"
+                max={item.available_qty}
                 required
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="e.g. Autonomous Maze Rover, Drone Swarm"
-                className="w-full px-3 py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-medium text-zinc-300 mb-1">
-                Purpose & Brief Usage Description *
+              <label className="block font-bold text-slate-900 dark:text-zinc-200 mb-1">
+                Return Date <span className="text-red-600 font-bold">*</span>
               </label>
-              <textarea
-                rows={2}
+              <input
+                type="date"
                 required
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="Describe how the component will be integrated in your project..."
-                className="w-full px-3 py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none resize-none"
+                value={expectedReturnDate}
+                onChange={(e) => setExpectedReturnDate(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
               />
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="pt-3 border-t border-purple-900/30 flex justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-[#140f26] hover:bg-[#1f173b] text-zinc-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-purple-glow flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold transition-all shadow-md disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-                <span>{loading ? 'Submitting...' : 'Confirm Borrow Request'}</span>
-              </button>
-            </div>
-          </form>
-        )}
+          <div>
+            <label className="block font-bold text-slate-900 dark:text-zinc-200 mb-1">
+              Project Name <span className="text-red-600 font-bold">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="e.g. Autonomous Maze Rover"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-900 dark:text-zinc-200 mb-1">
+              Purpose &amp; Technical Scope <span className="text-red-600 font-bold">*</span>
+            </label>
+            <textarea
+              rows={3}
+              required
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              placeholder="Describe how the component will be integrated in your project..."
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none resize-none transition-all"
+            />
+          </div>
+
+          {/* Footer Actions */}
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-300 dark:border-zinc-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>{loading ? 'Submitting...' : 'Dispatch Request'}</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

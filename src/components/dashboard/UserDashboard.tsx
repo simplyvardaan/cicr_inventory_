@@ -15,6 +15,7 @@ import { AirportMatrixClock } from '../ui/airport-matrix-clock';
 import { IOSSearchBar } from '../ui/ios-search-bar';
 import { NotificationBell, Notification } from '../ui/notification-bell';
 import { LiquidToggle } from '../ui/liquid-toggle';
+import { useTheme } from '../../lib/theme/useTheme';
 import {
   Layers,
   ShoppingBag,
@@ -129,7 +130,8 @@ export const UserDashboard: React.FC = () => {
   const [logSearch, setLogSearch] = useState('');
 
   // EasyUI Liquid Toggle Theme Switcher State
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const { theme, setTheme, toggleTheme } = useTheme();
+  const isDarkTheme = theme === 'dark';
 
   // EasyUI Notification Bell items list
   const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
@@ -575,14 +577,14 @@ export const UserDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07070a] text-slate-100 flex flex-col relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07070a] text-slate-900 dark:text-slate-100 flex flex-col relative overflow-x-hidden selection:bg-blue-600 selection:text-white">
       
       {/* Top Floating Island Header Bar (Permanently Fixed on All Mobile & Desktop Screens on Scroll) */}
       <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
-        <header className="pointer-events-auto rounded-full bg-[#0f0f16]/95 backdrop-blur-2xl border border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-2xl shadow-black/80 gap-2">
+        <header className="pointer-events-auto rounded-full bg-white/95 dark:bg-[#0f0f16]/95 backdrop-blur-2xl border-2 border-slate-200 dark:border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/80 gap-2">
           {/* Left: Breadcrumbs Capsule */}
           <div className="flex items-center min-w-0">
-            <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#151520] border border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-zinc-400">
+            <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400">
               <span
                 className="hidden sm:inline text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors"
                 onClick={() => setActiveView('dashboard')}
@@ -591,7 +593,7 @@ export const UserDashboard: React.FC = () => {
               </span>
               <span className="hidden sm:inline text-zinc-600">/</span>
               <span
-                className="text-white uppercase tracking-wider font-extrabold cursor-pointer truncate max-w-[120px] sm:max-w-none"
+                className="text-slate-900 dark:text-white uppercase tracking-wider font-extrabold cursor-pointer truncate max-w-[120px] sm:max-w-none"
                 onClick={() => {
                   setCategoryFilter('all');
                   setActiveView('inventory');
@@ -609,14 +611,14 @@ export const UserDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCartModalOpen(true)}
-                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] hover:bg-[#1c1c2b] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 transition-all cursor-pointer animate-in fade-in"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] hover:bg-slate-200 dark:hover:bg-[#1c1c2b] border border-slate-200 dark:border-zinc-800 text-[11px] sm:text-xs font-bold text-slate-800 dark:text-zinc-300 transition-all cursor-pointer animate-in fade-in"
                 title="View Hardware Cart"
               >
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
                 <span className="hidden md:inline">CART</span>
-                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 text-black font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 text-white font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
                   {cart.length}
                 </span>
               </button>
@@ -639,18 +641,18 @@ export const UserDashboard: React.FC = () => {
 
             {/* EasyUI Liquid Toggle Theme Switcher */}
             <div
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-[#151520] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 shrink-0"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-zinc-300 shrink-0"
               title="Toggle Robosoccer Cyber Theme"
             >
-              <Palette className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <Palette className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
               <span className="hidden md:inline font-semibold">Theme</span>
               <LiquidToggle
                 value={isDarkTheme}
-                onChange={(val) => setIsDarkTheme(val)}
+                onChange={(val) => setTheme(val ? "dark" : "light")}
                 width={48}
                 height={26}
                 showLabels={false}
-                accentColor="#9333ea"
+                accentColor="#2563eb"
               />
             </div>
           </div>
@@ -666,12 +668,12 @@ export const UserDashboard: React.FC = () => {
         {activeView === 'dashboard' && (
           <div className="space-y-6">
             {/* Hero Greeting & Live Clock Banner */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#0f0f15] border border-[#20202c] shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <span className="text-xs font-bold font-mono tracking-widest text-emerald-400 uppercase">
+                <span className="text-xs font-bold font-mono tracking-widest text-blue-600 dark:text-blue-400 uppercase">
                   {roleName} DASHBOARD
                 </span>
-                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
+                <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
                   {getGreeting()}, {userName}
                 </h1>
                 <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -701,21 +703,21 @@ export const UserDashboard: React.FC = () => {
                   setCategoryFilter('all');
                   setActiveView('inventory');
                 }}
-                className="group p-6 rounded-3xl bg-[#0f0f15] border border-[#20202c] hover:border-emerald-500/50 hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-xl flex flex-col justify-between space-y-6"
+                className="group p-6 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 hover:shadow-lg hover:bg-slate-50/50 dark:hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-sm flex flex-col justify-between space-y-6"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <Layers className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-bold font-mono">
                       CATALOG
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                     Component Vault
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
                     Browse and search the repository of microcontrollers, sensors, actuators, and hardware components.
                   </p>
                 </div>
@@ -727,21 +729,21 @@ export const UserDashboard: React.FC = () => {
               {/* Card 2: Request Cart */}
               <div
                 onClick={() => setCartModalOpen(true)}
-                className="group p-6 rounded-3xl bg-[#0f0f15] border border-[#20202c] hover:border-emerald-500/50 hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-xl flex flex-col justify-between space-y-6"
+                className="group p-6 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 hover:shadow-lg hover:bg-slate-50/50 dark:hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-sm flex flex-col justify-between space-y-6"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <ShoppingBag className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-bold font-mono">
                       HARDWARE CART
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                     Request Cart
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
                     Review staged components, inspect loan allocations, and dispatch 1-go consolidated hardware requisitions.
                   </p>
                 </div>
@@ -758,25 +760,25 @@ export const UserDashboard: React.FC = () => {
               {/* Card 3: Meet The Developers */}
               <div
                 onClick={() => setActiveView('developers')}
-                className="group p-6 rounded-3xl bg-[#0f0f15] border border-[#20202c] hover:border-purple-500/50 hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-xl flex flex-col justify-between space-y-6"
+                className="group p-6 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 hover:shadow-lg hover:bg-slate-50/50 dark:hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-sm flex flex-col justify-between space-y-6"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-purple-950/70 border border-purple-500/40 text-purple-400 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                       <Code2 className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-bold font-mono">
                       THE CREATORS
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                     Meet The Developers
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
                     Meet the engineering minds and mentors behind the CICR Robotics Vault.
                   </p>
                 </div>
-                <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-purple-400 transition-colors">
+                <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -784,25 +786,25 @@ export const UserDashboard: React.FC = () => {
               {/* Card 4: My Profile */}
               <div
                 onClick={() => setActiveView('profile')}
-                className="group p-6 rounded-3xl bg-[#0f0f15] border border-[#20202c] hover:border-purple-500/50 hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-xl flex flex-col justify-between space-y-6"
+                className="group p-6 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 hover:shadow-lg hover:bg-slate-50/50 dark:hover:bg-[#13131c] cursor-pointer transition-all duration-200 shadow-sm flex flex-col justify-between space-y-6"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-purple-950/70 border border-purple-500/40 text-purple-400 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                       <User className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                    <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-bold font-mono">
                       OPERATOR HUD
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                     My Profile
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-2 leading-relaxed">
                     Inspect credentials, verified student tier, active hardware checkouts, and security controls.
                   </p>
                 </div>
-                <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-purple-400 transition-colors">
+                <div className="flex items-center justify-end pt-2 text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -819,13 +821,13 @@ export const UserDashboard: React.FC = () => {
             
             {/* Title */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 Component Vault
               </h1>
             </div>
 
             {/* Search Bar & Vault Category Tabs (Screenshot 2) */}
-            <div className="p-4 sm:p-5 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-4 shadow-xl">
+            <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-4 shadow-sm">
               {/* EasyUI iOS Micro-Interactive Search Bar */}
               <div className="w-full">
                 <IOSSearchBar
@@ -846,8 +848,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('all')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'all'
-                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5" />
@@ -860,8 +862,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('mcu')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'mcu'
-                      ? 'bg-purple-950/80 text-purple-300 border border-purple-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Cpu className="w-3.5 h-3.5" />
@@ -874,8 +876,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('sensors')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'sensors'
-                      ? 'bg-purple-950/80 text-purple-300 border border-purple-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Radar className="w-3.5 h-3.5" />
@@ -888,8 +890,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('actuators')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'actuators'
-                      ? 'bg-purple-950/80 text-purple-300 border border-purple-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Compass className="w-3.5 h-3.5" />
@@ -902,8 +904,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('power')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'power'
-                      ? 'bg-purple-950/80 text-purple-300 border border-purple-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Zap className="w-3.5 h-3.5" />
@@ -916,8 +918,8 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('tools')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'tools'
-                      ? 'bg-purple-950/80 text-purple-300 border border-purple-500/50 shadow-sm'
-                      : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800 font-bold'
                   }`}
                 >
                   <Wrench className="w-3.5 h-3.5" />
@@ -931,8 +933,8 @@ export const UserDashboard: React.FC = () => {
               {/* Total Assets ALL */}
               <div
                 onClick={() => setStatusFilter(statusFilter === 'all' ? 'all' : 'all')}
-                className={`p-4 rounded-2xl bg-[#0f0f15] border cursor-pointer transition-all ${
-                  statusFilter === 'all' ? 'border-zinc-700' : 'border-[#20202c] hover:border-zinc-700'
+                className={`p-4 rounded-2xl bg-white dark:bg-[#0f0f15] border-2 cursor-pointer transition-all shadow-sm ${
+                  statusFilter === 'all' ? 'border-zinc-700' : 'border-slate-200 dark:border-[#20202c] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-zinc-400 mb-1 text-[11px] font-bold uppercase tracking-wider">
@@ -941,17 +943,17 @@ export const UserDashboard: React.FC = () => {
                     ALL
                   </span>
                 </div>
-                <div className="text-2xl font-black text-white">{totalAssetsCount}</div>
+                <div className="text-2xl font-black text-slate-900 dark:text-white">{totalAssetsCount}</div>
                 <p className="text-[10px] text-zinc-500 mt-0.5 truncate">In laboratory inventory</p>
               </div>
 
               {/* Available FILTER */}
               <div
                 onClick={() => setStatusFilter(statusFilter === 'available' ? 'all' : 'available')}
-                className={`p-4 rounded-2xl bg-[#0f0f15] border cursor-pointer transition-all ${
+                className={`p-4 rounded-2xl bg-white dark:bg-[#0f0f15] border-2 cursor-pointer transition-all shadow-sm ${
                   statusFilter === 'available'
-                    ? 'border-emerald-500/60 bg-emerald-950/20'
-                    : 'border-[#20202c] hover:border-zinc-700'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/30 text-blue-900'
+                    : 'border-slate-200 dark:border-[#20202c] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-zinc-400 mb-1 text-[11px] font-bold uppercase tracking-wider">
@@ -967,10 +969,10 @@ export const UserDashboard: React.FC = () => {
               {/* Active Loans FILTER */}
               <div
                 onClick={() => setStatusFilter(statusFilter === 'loans' ? 'all' : 'loans')}
-                className={`p-4 rounded-2xl bg-[#0f0f15] border cursor-pointer transition-all ${
+                className={`p-4 rounded-2xl bg-white dark:bg-[#0f0f15] border-2 cursor-pointer transition-all shadow-sm ${
                   statusFilter === 'loans'
-                    ? 'border-cyan-500/60 bg-cyan-950/20'
-                    : 'border-[#20202c] hover:border-zinc-700'
+                    ? 'border-slate-800 bg-slate-100 dark:bg-slate-900'
+                    : 'border-slate-200 dark:border-[#20202c] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-zinc-400 mb-1 text-[11px] font-bold uppercase tracking-wider">
@@ -986,10 +988,10 @@ export const UserDashboard: React.FC = () => {
               {/* Low Reserves FILTER */}
               <div
                 onClick={() => setStatusFilter(statusFilter === 'low' ? 'all' : 'low')}
-                className={`p-4 rounded-2xl bg-[#0f0f15] border cursor-pointer transition-all ${
+                className={`p-4 rounded-2xl bg-white dark:bg-[#0f0f15] border-2 cursor-pointer transition-all shadow-sm ${
                   statusFilter === 'low'
                     ? 'border-amber-500/60 bg-amber-950/20'
-                    : 'border-[#20202c] hover:border-zinc-700'
+                    : 'border-slate-200 dark:border-[#20202c] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-zinc-400 mb-1 text-[11px] font-bold uppercase tracking-wider">
@@ -1005,10 +1007,10 @@ export const UserDashboard: React.FC = () => {
               {/* Depleted FILTER */}
               <div
                 onClick={() => setStatusFilter(statusFilter === 'depleted' ? 'all' : 'depleted')}
-                className={`p-4 rounded-2xl bg-[#0f0f15] border cursor-pointer transition-all col-span-2 sm:col-span-1 ${
+                className={`p-4 rounded-2xl bg-white dark:bg-[#0f0f15] border-2 cursor-pointer transition-all col-span-2 sm:col-span-1 ${
                   statusFilter === 'depleted'
-                    ? 'border-rose-500/60 bg-rose-950/20'
-                    : 'border-[#20202c] hover:border-zinc-700'
+                    ? 'border-red-600 bg-red-50 dark:bg-red-950/30 text-red-900'
+                    : 'border-slate-200 dark:border-[#20202c] hover:border-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between text-zinc-400 mb-1 text-[11px] font-bold uppercase tracking-wider">
@@ -1026,14 +1028,14 @@ export const UserDashboard: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                     Catalog Components
                   </h2>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
                     Showing {filteredItems.length} components
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">
                   Click any component to inspect specifications or add to your request cart
                 </p>
               </div>
@@ -1077,12 +1079,12 @@ export const UserDashboard: React.FC = () => {
                   return (
                     <div
                       key={item.id}
-                      className="p-5 rounded-3xl bg-[#0f0f15] border border-[#20202c] hover:border-zinc-700 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-lg group"
+                      className="p-5 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] hover:border-blue-500 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
                     >
                       {/* Top Row: Category Pill & Availability Status */}
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 font-bold font-mono">
                             {categoryTag}
                           </span>
 
@@ -1107,14 +1109,14 @@ export const UserDashboard: React.FC = () => {
                         {/* Item Name */}
                         <h3
                           onClick={() => setSelectedItem(item)}
-                          className="font-bold text-white text-base group-hover:text-purple-300 transition-colors cursor-pointer truncate"
+                          className="font-bold text-slate-900 dark:text-white text-base group-hover:text-blue-600 transition-colors cursor-pointer truncate"
                           title={item.name}
                         >
                           {item.name}
                         </h3>
 
                         {/* Description */}
-                        <p className="text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
                           {item.description || 'Verified lab hardware component.'}
                         </p>
 
@@ -1123,7 +1125,7 @@ export const UserDashboard: React.FC = () => {
                           {tags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="text-[10px] px-2 py-0.5 rounded-md bg-[#161622] text-zinc-400 border border-zinc-800/80 font-mono"
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#161622] text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800/80 font-medium"
                             >
                               {tag}
                             </span>
@@ -1133,14 +1135,14 @@ export const UserDashboard: React.FC = () => {
 
                       {/* Active Loan Banner (from Screenshot 3) */}
                       {activeLoanCount > 0 && (
-                        <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between text-[11px] text-purple-300 font-semibold">
+                        <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-500/30 flex items-center justify-between text-[11px] text-blue-700 dark:text-blue-300 font-semibold">
                           <div className="flex items-center gap-1.5 truncate">
-                            <Clock className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+                            <Clock className="w-3.5 h-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
                             <span>{activeLoanCount} unit on active loan</span>
                           </div>
                           <span
                             onClick={() => setActiveView('review-requests')}
-                            className="text-[10px] text-purple-300 hover:text-white font-bold cursor-pointer shrink-0 ml-1"
+                            className="text-[10px] text-blue-600 dark:text-blue-300 hover:underline font-bold cursor-pointer shrink-0 ml-1"
                           >
                             Inspect →
                           </span>
@@ -1214,12 +1216,12 @@ export const UserDashboard: React.FC = () => {
         {/* VIEW 3: REVIEW REQUESTS (PERSONALIZED FOR MEMBERS / ADMIN QUEUE FOR ADMINS) */}
         {/* ============================================================== */}
         {activeView === 'review-requests' && (
-          <div className="p-5 sm:p-7 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-6 shadow-2xl">
+          <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
             {/* Header */}
             <div className="border-b border-zinc-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5 tracking-tight">
-                  <Bell className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5 tracking-tight">
+                  <Bell className="w-5 h-5 text-blue-600" />
                   {isLeadOrAdmin
                     ? 'Review Requests (All User Requisitions)'
                     : 'My Requisitions & Checkouts'}
@@ -1235,7 +1237,7 @@ export const UserDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveView('inventory')}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-lg shadow-purple-900/40"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-md shadow-blue-600/25"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Borrow Hardware</span>
@@ -1294,15 +1296,15 @@ export const UserDashboard: React.FC = () => {
                             onClick={() => setRequestStatusTab(tab.key as any)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                               isTabActive
-                                ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-md shadow-purple-950/50'
-                                : 'bg-[#151520] text-zinc-400 hover:text-white hover:bg-zinc-800/80 border border-zinc-800'
+                                ? 'bg-blue-600 text-white shadow-sm font-bold'
+                                : 'bg-slate-100 dark:bg-[#151520] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800'
                             }`}
                           >
                             <span>{tab.label}</span>
                             <span
                               className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                                 isTabActive
-                                  ? 'bg-purple-500 text-white'
+                                  ? 'bg-white text-blue-600'
                                   : 'bg-zinc-800 text-zinc-400'
                               }`}
                             >
@@ -1321,7 +1323,7 @@ export const UserDashboard: React.FC = () => {
                         value={requestSearch}
                         onChange={(e) => setRequestSearch(e.target.value)}
                         placeholder="Search requests..."
-                        className="w-full pl-9 pr-3 py-1.5 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -1329,7 +1331,7 @@ export const UserDashboard: React.FC = () => {
                   {/* List of Requests */}
                   {filteredList.length === 0 ? (
                     <div className="py-16 text-center rounded-2xl bg-[#121219] border border-zinc-800/70 p-6 space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-purple-950/40 border border-purple-500/30 text-purple-400 flex items-center justify-center mx-auto">
+                      <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
                         <Inbox className="w-6 h-6" />
                       </div>
                       <h3 className="text-sm font-bold text-white">
@@ -1346,7 +1348,7 @@ export const UserDashboard: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveView('inventory')}
-                          className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-300 border border-purple-500/50 font-bold text-xs transition-colors cursor-pointer"
+                          className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-blue-600/25"
                         >
                           <Boxes className="w-4 h-4" />
                           <span>Browse Component Vault</span>
@@ -1358,16 +1360,16 @@ export const UserDashboard: React.FC = () => {
                       {filteredList.map((req) => (
                         <div
                           key={req.id}
-                          className="p-4 sm:p-5 rounded-2xl bg-[#14141c] border border-zinc-800/90 hover:border-zinc-700/80 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs"
+                          className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs shadow-sm"
                         >
                           {/* Info Column */}
                           <div className="space-y-2 min-w-0 flex-1">
                             {/* Title & Quantity & Status Pill */}
                             <div className="flex items-center gap-2.5 flex-wrap">
-                              <span className="font-bold text-white text-sm tracking-tight">
+                              <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">
                                 {req.item_name}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/40 text-purple-300 font-mono text-[11px] font-bold">
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-500/40 text-blue-700 dark:text-blue-300 font-mono text-[11px] font-bold">
                                 x{req.quantity}
                               </span>
                               <span
@@ -1384,7 +1386,7 @@ export const UserDashboard: React.FC = () => {
                                 {req.status === 'approved' && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
                                 {req.status === 'pending' && <Clock className="w-3 h-3 text-amber-400" />}
                                 {req.status === 'rejected' && <XCircle className="w-3 h-3 text-rose-400" />}
-                                {req.status === 'returned' && <RotateCcw className="w-3 h-3 text-purple-400" />}
+                                {req.status === 'returned' && <RotateCcw className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
                                 {req.status === 'approved' ? 'Approved / Active' : req.status}
                               </span>
                             </div>
@@ -1403,7 +1405,7 @@ export const UserDashboard: React.FC = () => {
                             <div className="text-zinc-400 space-y-1">
                               <div>
                                 <span className="text-zinc-500">Project: </span>
-                                <span className="text-purple-300 font-semibold">{req.project_name}</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold">{req.project_name}</span>
                                 {req.purpose && (
                                   <>
                                     <span className="text-zinc-600 mx-1.5">•</span>
@@ -1428,7 +1430,7 @@ export const UserDashboard: React.FC = () => {
                                 <strong className="text-amber-300 font-medium">{req.expected_return_date}</strong>
                               </span>
                               {req.actual_return_date && (
-                                <span className="text-purple-300">
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold">
                                   Returned on: {req.actual_return_date}
                                 </span>
                               )}
@@ -1436,7 +1438,7 @@ export const UserDashboard: React.FC = () => {
 
                             {/* Admin Note / Instructions (if any) */}
                             {req.admin_notes && (
-                              <div className="mt-2 p-2 rounded-xl bg-[#1b1b26] border border-purple-500/20 text-xs text-purple-300">
+                              <div className="mt-2 p-2 rounded-xl bg-slate-50 dark:bg-[#1b1b26] border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300">
                                 <span className="font-bold text-white">Admin Note: </span>
                                 {req.admin_notes}
                               </div>
@@ -1456,7 +1458,7 @@ export const UserDashboard: React.FC = () => {
                                       setAdminNote((prev) => ({ ...prev, [req.id]: e.target.value }))
                                     }
                                     placeholder="Optional note / locker..."
-                                    className="w-full sm:w-48 px-2.5 py-1 text-[11px] bg-[#0c0c12] border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500"
+                                    className="w-full sm:w-48 px-2.5 py-1 text-[11px] bg-[#0c0c12] border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500"
                                   />
                                   <div className="flex items-center gap-2">
                                     <button
@@ -1481,9 +1483,9 @@ export const UserDashboard: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleBorrowAction(req.id, 'returned')}
-                                  className="px-4 py-1.5 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-700 text-purple-200 font-bold text-xs cursor-pointer shadow-md transition-colors flex items-center gap-1.5"
+                                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-blue-600/25 transition-colors flex items-center gap-1.5"
                                 >
-                                  <RotateCcw className="w-3.5 h-3.5 text-purple-400" />
+                                  <RotateCcw className="w-3.5 h-3.5 text-white" />
                                   <span>Mark Returned & Restock</span>
                                 </button>
                               )}
@@ -1504,16 +1506,16 @@ export const UserDashboard: React.FC = () => {
         {/* ============================================================== */}
         {activeView === 'logs' && (
           isAdmin ? (
-            <div className="p-5 sm:p-7 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-6 shadow-2xl">
+            <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
               {/* Header with Title and Quick Admin Action Controls */}
               <div className="border-b border-zinc-800 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5 tracking-tight">
-                      <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+                      <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                       CICR Management Hub & Activity Logs
                     </h2>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono font-bold uppercase tracking-wider">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 font-mono font-bold uppercase tracking-wider">
                       Admin Authorized
                     </span>
                   </div>
@@ -1530,7 +1532,7 @@ export const UserDashboard: React.FC = () => {
                       setEditingItem(null);
                       setAddItemModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-purple-950/40"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-blue-600/25"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Component</span>
@@ -1542,7 +1544,7 @@ export const UserDashboard: React.FC = () => {
                       fetchAllMembers();
                       fetchPendingAccounts();
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#171722] hover:bg-[#202030] text-zinc-300 hover:text-white border border-zinc-800 text-xs font-bold transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#171722] dark:hover:bg-[#202030] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800 text-xs font-bold transition-colors cursor-pointer"
                     title="Refresh Data from Supabase"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -1566,7 +1568,7 @@ export const UserDashboard: React.FC = () => {
                     <div className="p-4 rounded-2xl bg-[#14141c] border border-zinc-800/90 space-y-1 shadow-lg">
                       <div className="flex items-center justify-between text-zinc-400">
                         <span className="text-[11px] font-bold uppercase tracking-wider">Club Members</span>
-                        <Users className="w-4 h-4 text-purple-400" />
+                        <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-white">
                         {loadingMembers ? '...' : allMembers.length}
@@ -1620,7 +1622,7 @@ export const UserDashboard: React.FC = () => {
 
               {/* Management Tabs: Members Roster vs 7-Day History vs Pending Requests */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-3">
-                <div className="inline-flex items-center p-1 rounded-2xl bg-[#14141c] border border-zinc-800 max-w-full overflow-x-auto no-scrollbar">
+                <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 max-w-full overflow-x-auto no-scrollbar">
                   {/* Tab 1: Members Roster & Activity */}
                   <button
                     type="button"
@@ -1630,11 +1632,11 @@ export const UserDashboard: React.FC = () => {
                     }}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       adminLogsTab === 'members'
-                        ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md font-bold'
                         : 'text-zinc-400 hover:text-white border border-transparent'
                     }`}
                   >
-                    <Users className="w-3.5 h-3.5 text-purple-400" />
+                    <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     <span>Club Members</span>
                     <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-extrabold">
                       {allMembers.length}
@@ -1650,7 +1652,7 @@ export const UserDashboard: React.FC = () => {
                     }}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       adminLogsTab === 'logs-7d'
-                        ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md font-bold'
                         : 'text-zinc-400 hover:text-white border border-transparent'
                     }`}
                   >
@@ -1678,7 +1680,7 @@ export const UserDashboard: React.FC = () => {
                     }}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       adminLogsTab === 'requests'
-                        ? 'bg-purple-600/30 text-white border border-purple-500/60 shadow-md'
+                        ? 'bg-blue-600 text-white shadow-md font-bold'
                         : 'text-zinc-400 hover:text-white border border-transparent'
                     }`}
                   >
@@ -1710,7 +1712,7 @@ export const UserDashboard: React.FC = () => {
                         value={memberSearch}
                         onChange={(e) => setMemberSearch(e.target.value)}
                         placeholder="Search members..."
-                        className="w-full pl-9 pr-8 py-2 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500 transition-colors"
+                        className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 transition-colors"
                       />
                       {memberSearch && (
                         <button
@@ -1737,8 +1739,8 @@ export const UserDashboard: React.FC = () => {
                             onClick={() => setMemberRoleFilter(rKey)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap capitalize ${
                               memberRoleFilter === rKey
-                                ? 'bg-purple-600/30 text-white border border-purple-500/60 font-black shadow-sm'
-                                : 'bg-[#14141c] text-zinc-400 hover:text-white border border-zinc-800'
+                                ? 'bg-blue-600 text-white font-black shadow-sm'
+                                : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800'
                             }`}
                           >
                             {rKey === 'all' ? 'All Roles' : `${rKey}s`} ({count})
@@ -1766,7 +1768,7 @@ export const UserDashboard: React.FC = () => {
                     if (loadingMembers) {
                       return (
                         <div className="py-16 text-center text-xs text-zinc-400 space-y-2">
-                          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-purple-400" />
+                          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
                           <p>Loading member directory from database...</p>
                         </div>
                       );
@@ -1813,15 +1815,15 @@ export const UserDashboard: React.FC = () => {
                               key={member.id}
                               className={`p-4 sm:p-5 rounded-2xl bg-[#14141c] border transition-all space-y-3.5 shadow-lg ${
                                 isExpanded
-                                  ? 'border-purple-500/60 ring-1 ring-purple-500/30'
-                                  : 'border-zinc-800/90 hover:border-zinc-700'
+                                  ? 'border-blue-600 ring-2 ring-blue-500/30'
+                                  : 'border-slate-200 dark:border-zinc-800 hover:border-blue-500'
                               }`}
                             >
                               {/* Top Bar: Avatar, Full Name, Role Badge, Status */}
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                   {/* Avatar Circle */}
-                                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-purple-500/40 shadow-inner overflow-hidden">
+                                  <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-blue-500/30 shadow-md overflow-hidden">
                                     {member.avatar_url && !member.avatar_url.startsWith('status:') ? (
                                       <img src={member.avatar_url} alt={member.full_name || 'Member'} className="w-full h-full object-cover" />
                                     ) : (
@@ -1837,7 +1839,7 @@ export const UserDashboard: React.FC = () => {
                                       <span
                                         className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border ${
                                           member.role === 'admin'
-                                            ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                                            ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/40'
                                             : member.role === 'lead'
                                             ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
                                             : 'bg-zinc-800 text-zinc-300 border-zinc-700'
@@ -1915,7 +1917,7 @@ export const UserDashboard: React.FC = () => {
                                     }
                                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                                       isExpanded
-                                        ? 'bg-purple-600 text-white'
+                                        ? 'bg-blue-600 text-white'
                                         : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
                                     }`}
                                   >
@@ -1927,8 +1929,8 @@ export const UserDashboard: React.FC = () => {
 
                               {/* Inline Expanded Activity Trail for This Member */}
                               {isExpanded && (
-                                <div className="mt-3 pt-3 border-t border-purple-500/30 space-y-2 animate-in fade-in duration-200">
-                                  <div className="flex items-center justify-between text-[11px] font-bold text-purple-300">
+                                <div className="mt-3 pt-3 border-t border-blue-500/30 space-y-2 animate-in fade-in duration-200">
+                                  <div className="flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400">
                                     <span>Personal Activity History ({memberLogs.length})</span>
                                     <span className="text-[10px] text-zinc-500">Live Supabase Feed</span>
                                   </div>
@@ -1994,12 +1996,12 @@ export const UserDashboard: React.FC = () => {
                     })})`;
 
                     return (
-                      <div className="p-3.5 rounded-2xl bg-[#13111c] border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 text-purple-200">
-                          <Clock className="w-4 h-4 text-purple-400 shrink-0" />
+                      <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-slate-900 border-2 border-blue-200 dark:border-slate-800 text-blue-900 dark:text-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
+                          <Clock className="w-4 h-4 text-blue-600 shrink-0" />
                           <span>
                             <strong>Audit Scope:</strong> Showing real time member activities logged between{' '}
-                            <code className="text-white font-bold">{dateRangeStr}</code>
+                            <code className="text-blue-950 dark:text-white font-black">{dateRangeStr}</code>
                           </span>
                         </div>
                         <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 font-mono font-bold text-[10px] self-start sm:self-auto shrink-0">
@@ -2038,8 +2040,8 @@ export const UserDashboard: React.FC = () => {
                             onClick={() => setLogDaysFilter(tf.key as any)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                               logDaysFilter === tf.key
-                                ? 'bg-purple-600/30 text-white border border-purple-500/60 font-black shadow-sm'
-                                : 'bg-[#14141c] text-zinc-400 hover:text-white border border-zinc-800'
+                                ? 'bg-blue-600 text-white font-black shadow-sm'
+                                : 'bg-slate-100 dark:bg-[#14141c] text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800'
                             }`}
                           >
                             {tf.label}
@@ -2181,7 +2183,7 @@ export const UserDashboard: React.FC = () => {
                             actionUpper === 'ACCOUNT_REQUEST' ||
                             detailsLower.includes('registration request')
                           ) {
-                            badgeClass = 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+                            badgeClass = 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/40';
                             label = 'Registration Request';
                             ActionIcon = UserPlus;
                           } else if (
@@ -2227,7 +2229,7 @@ export const UserDashboard: React.FC = () => {
                             actionUpper.includes('CREATE') ||
                             detailsLower.includes('registered new component')
                           ) {
-                            badgeClass = 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+                            badgeClass = 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/40';
                             label = 'Component Added';
                             ActionIcon = Plus;
                           } else if (
@@ -2258,7 +2260,7 @@ export const UserDashboard: React.FC = () => {
                             >
                               {/* Left: User Avatar + Action Details */}
                               <div className="flex items-start sm:items-center gap-3 min-w-0">
-                                <div className="w-9 h-9 rounded-full bg-[#1b1b26] border border-zinc-700 text-purple-300 font-bold text-xs flex items-center justify-center shrink-0">
+                                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-[#1b1b26] border border-blue-200 dark:border-zinc-700 text-blue-600 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
                                   {(log.user_name || 'U').charAt(0).toUpperCase()}
                                 </div>
 
@@ -2314,7 +2316,7 @@ export const UserDashboard: React.FC = () => {
                     <button
                       type="button"
                       onClick={fetchPendingAccounts}
-                      className="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
                     >
                       Refresh Queue
                     </button>
@@ -2335,13 +2337,13 @@ export const UserDashboard: React.FC = () => {
                         >
                           {/* Left: Avatar & User Info */}
                           <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-purple-500/40">
+                            <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0 ring-2 ring-blue-500/30">
                               {(account.full_name || account.email || 'U').charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-bold text-sm text-white">{account.full_name || 'Member'}</span>
-                                <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-extrabold uppercase">
+                                <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 text-[10px] font-extrabold uppercase">
                                   {account.role || 'MEMBER'}
                                 </span>
                                 <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
@@ -2375,7 +2377,7 @@ export const UserDashboard: React.FC = () => {
                               type="button"
                               disabled={processingUserId === account.id}
                               onClick={() => handleRejectAccount(account.id, account.full_name || account.email)}
-                              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-300 dark:bg-red-950/40 dark:border-red-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                             >
                               <XCircle className="w-3.5 h-3.5 text-rose-400" />
                               <span>Reject</span>
@@ -2384,7 +2386,7 @@ export const UserDashboard: React.FC = () => {
                               type="button"
                               disabled={processingUserId === account.id}
                               onClick={() => handleApproveAccount(account.id, account.full_name || account.email)}
-                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-emerald-950/50 disabled:opacity-50"
+                              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 disabled:opacity-50"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>{processingUserId === account.id ? 'Approving...' : 'Approve Account'}</span>
@@ -2417,18 +2419,18 @@ export const UserDashboard: React.FC = () => {
         {/* VIEW 7: MY PROFILE */}
         {/* ============================================================== */}
         {activeView === 'profile' && (
-          <div className="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-6 shadow-2xl">
+          <div className="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
             <div className="border-b border-zinc-800 pb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-purple-400" />
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Operator Profile Details
                 </h2>
                 <p className="text-xs text-zinc-400 mt-1">
                   Manage your verified student identity and laboratory credentials
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-extrabold uppercase">
+              <span className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 text-xs font-extrabold uppercase">
                 {roleName}
               </span>
             </div>
@@ -2436,7 +2438,7 @@ export const UserDashboard: React.FC = () => {
             {/* Avatar Circle Display with Photo Upload */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 sm:p-5 rounded-2xl bg-[#14141c] border border-zinc-800">
               <div className="relative group shrink-0">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 overflow-hidden">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-md ring-2 ring-blue-500/30 overflow-hidden">
                   {editAvatarUrl ? (
                     <img src={editAvatarUrl} alt={editName || userName} className="w-full h-full object-cover" />
                   ) : (
@@ -2459,7 +2461,7 @@ export const UserDashboard: React.FC = () => {
               <div className="flex-1 text-center sm:text-left min-w-0">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <span className="text-base sm:text-lg font-bold text-white block truncate">{editName || userName}</span>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold uppercase">
+                  <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 text-[10px] font-bold uppercase">
                     {roleName}
                   </span>
                 </div>
@@ -2481,7 +2483,7 @@ export const UserDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => profileFileInputRef.current?.click()}
-                    className="px-2.5 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-600/20 dark:hover:bg-blue-600/30 border border-blue-200 dark:border-blue-500/40 text-blue-700 dark:text-blue-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>{editAvatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
@@ -2511,7 +2513,7 @@ export const UserDashboard: React.FC = () => {
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#14141c] border border-zinc-800 focus:border-purple-500 rounded-xl text-white outline-none"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-600 rounded-xl text-slate-900 dark:text-white outline-none"
                   />
                 </div>
               </div>
@@ -2540,7 +2542,7 @@ export const UserDashboard: React.FC = () => {
                     value={editEnrollment}
                     onChange={(e) => setEditEnrollment(e.target.value)}
                     placeholder="e.g. 992501030399"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#14141c] border border-zinc-800 focus:border-purple-500 rounded-xl text-white outline-none font-mono"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-600 rounded-xl text-slate-900 dark:text-white outline-none font-mono"
                   />
                 </div>
               </div>
@@ -2555,7 +2557,7 @@ export const UserDashboard: React.FC = () => {
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
                     placeholder="e.g. 7428938113"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#14141c] border border-zinc-800 focus:border-purple-500 rounded-xl text-white outline-none"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-600 rounded-xl text-slate-900 dark:text-white outline-none"
                   />
                 </div>
               </div>
@@ -2569,7 +2571,7 @@ export const UserDashboard: React.FC = () => {
                     type="text"
                     disabled
                     value={roleName}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#09090d] border border-zinc-800/60 rounded-xl text-purple-300 font-bold outline-none cursor-not-allowed uppercase font-mono tracking-wider"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-100 dark:bg-[#09090d] border-2 border-slate-200 dark:border-zinc-800/60 rounded-xl text-blue-700 dark:text-blue-300 font-bold outline-none cursor-not-allowed uppercase font-mono tracking-wider"
                   />
                 </div>
               </div>

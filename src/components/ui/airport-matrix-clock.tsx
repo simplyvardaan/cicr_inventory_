@@ -346,7 +346,7 @@ export function AirportMatrixClock({
     >
       <div>
         <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-2 sm:px-5 bg-[#08080e]">
-          <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-purple-300/80">
+          <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-blue-400">
             LIVE CLOCK
           </p>
           <span className="text-[9px] sm:text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-widest">
@@ -387,7 +387,7 @@ export function AirportMatrixClock({
                   const firstInCountry = (Object.keys(AIRPORT_MATRIX_CITIES) as AirportMatrixCityId[]).find((id) => AIRPORT_MATRIX_CITIES[id].country === country) ?? 'new-delhi';
                   setSelectedCity(firstAvailable ?? firstInCountry);
                 }}
-                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-purple-500"
+                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500"
               >
                 {SUPPORTED_COUNTRIES.map((country) => <option key={country} value={country}>{country}</option>)}
               </select>
@@ -397,7 +397,7 @@ export function AirportMatrixClock({
                 aria-label="City"
                 value={selectedCity}
                 onChange={(event) => setSelectedCity(event.target.value as AirportMatrixCityId)}
-                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-purple-500"
+                className="min-w-0 rounded-lg border border-zinc-700 bg-[#161622] px-2 py-1.5 font-sans text-xs text-white outline-none focus:border-blue-500"
               >
                 {countryCityIds.map((id) => <option key={id} value={id}>{AIRPORT_MATRIX_CITIES[id].name}</option>)}
               </select>
@@ -405,7 +405,7 @@ export function AirportMatrixClock({
                 type="button"
                 onClick={handleAddCity}
                 disabled={selectedCities.length >= 5 || selectedCities.includes(selectedCity)}
-                className="rounded-lg bg-purple-600 px-3 py-1.5 font-sans text-xs font-bold text-white transition-colors hover:bg-purple-500 disabled:opacity-40"
+                className="rounded-lg bg-blue-600 px-3 py-1.5 font-sans text-xs font-bold text-white transition-colors hover:bg-blue-500 disabled:opacity-40"
               >
                 Add
               </button>
