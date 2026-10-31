@@ -214,6 +214,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(res.data.user);
         setSession(res.data.session);
         await loadProfile(res.data.user);
+
+        // Real-time log sign-in to activity_logs
+        try {
+          await supabaseAdmin.from('activity_logs').insert([
+            {
+              user_id: res.data.user.id,
+              user_name: profData?.full_name || res.data.user.user_metadata?.full_name || emailToAuth.split('@')[0],
+              action: 'USER_SIGNIN',
+              details: `${profData?.full_name || emailToAuth.split('@')[0]} signed in to CICR Inventory Vault`,
+            },
+          ]);
+        } catch (logErr) {
+          console.warn('Sign-in log error:', logErr);
+        }
       }
 
       return { success: true };
@@ -239,32 +253,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const initialStatus = 'pending';
+      let createdUserId: string | null = null;
 
-      // 1. Create user in Supabase Auth
-      const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
-        email: emailToRegister,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name,
-          enrollment_no,
-          phone,
-          role,
-          status: initialStatus,
-          avatar_url: avatar_url || undefined,
-        },
-      });
-
-      if (adminError) {
-        return { success: false, error: adminError.message };
+      // 1. Attempt to create user in Supabase Auth via supabaseAdmin
+      try {
+        const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
+          email: emailToRegister,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name,
+            enrollment_no,
+            phone,
+            role,
+            status: initialStatus,
+            avatar_url: avatar_url || undefined,
+          },
+        });
+        if (!adminError && adminUser?.user) {
+          createdUserId = adminUser.user.id;
+        } else if (adminError) {
+          console.warn('Notice from auth.admin.createUser:', adminError.message);
+        }
+      } catch (err) {
+        console.warn('auth.admin.createUser warning:', err);
       }
 
-      if (adminUser?.user) {
-        // 2. Insert to profiles table
+      // 2. If auth user was created, upsert to profiles table
+      if (createdUserId) {
         try {
-          await supabase.from('profiles').upsert([
+          await supabaseAdmin.from('profiles').upsert([
             {
-              id: adminUser.user.id,
+              id: createdUserId,
               full_name,
               email: emailToRegister,
               role,
@@ -276,70 +296,165 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (profileErr) {
           console.warn('Profile insert warning:', profileErr);
         }
-
-        // 3. Log to activity_logs for Admin portal visibility
-        try {
-          await supabase.from('activity_logs').insert([
-            {
-              user_id: adminUser.user.id,
-              user_name: full_name,
-              action: 'ACCOUNT_REQUEST',
-              details: JSON.stringify({
-                userId: adminUser.user.id,
-                email: emailToRegister,
-                fullName: full_name,
-                enrollmentNo: enrollment_no,
-                phone,
-                role,
-                status: initialStatus,
-                avatar_url: avatar_url || undefined,
-                created_at: new Date().toISOString(),
-              }),
-            },
-          ]);
-        } catch (logErr) {
-          console.warn('Activity log insert warning:', logErr);
-        }
-
-        return {
-          success: true,
-          message:
-            'Registration request submitted successfully! Your account is pending admin approval in Admin Logs before you can log in.',
-        };
       }
 
-      return { success: true };
+      // 3. ALWAYS insert ACCOUNT_REQUEST into activity_logs so the Admin Portal displays it
+      await supabaseAdmin.from('activity_logs').insert([
+        {
+          user_id: createdUserId,
+          user_name: full_name,
+          action: 'ACCOUNT_REQUEST',
+          details: JSON.stringify({
+            userId: createdUserId,
+            email: emailToRegister,
+            fullName: full_name,
+            enrollmentNo: enrollment_no,
+            phone,
+            role,
+            status: initialStatus,
+            avatar_url: avatar_url || undefined,
+            password,
+            created_at: new Date().toISOString(),
+          }),
+        },
+      ]);
+
+      return {
+        success: true,
+        message:
+          'Registration request submitted successfully! Your account is pending admin approval in Admin Logs before you can log in.',
+      };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       return { success: false, error: message };
     }
   };
 
-  const approveUserAccount = async (userId: string) => {
+  const approveUserAccount = async (targetId: string) => {
     try {
-      // Update in Supabase Auth user_metadata
-      await supabaseAdmin.auth.admin.updateUserById(userId, {
-        user_metadata: { status: 'approved' },
+      // Find account request from activity_logs
+      const { data: logMatches } = await supabaseAdmin
+        .from('activity_logs')
+        .select('*')
+        .eq('action', 'ACCOUNT_REQUEST')
+        .order('created_at', { ascending: false });
+
+      let targetLog = logMatches?.find((l) => {
+        try {
+          const det = typeof l.details === 'string' ? JSON.parse(l.details) : l.details;
+          return (
+            det.userId === targetId ||
+            l.user_id === targetId ||
+            l.id === targetId ||
+            det.email === targetId
+          );
+        } catch {
+          return false;
+        }
       });
 
-      // Update in Supabase profiles table (only if avatar_url doesn't contain a real uploaded photo)
-      const { data: currentProf } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', userId)
-        .maybeSingle();
+      let email = '';
+      let password = '';
+      let fullName = '';
+      let enrollmentNo = '';
+      let phone = '';
+      let role = 'member';
+      let avatarUrl = '';
+      let userId = targetId;
 
-      if (!currentProf?.avatar_url || currentProf.avatar_url === 'status:pending') {
-        await supabase.from('profiles').update({ avatar_url: 'status:approved' }).eq('id', userId);
+      if (targetLog) {
+        try {
+          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
+          email = det.email || '';
+          password = det.password || 'Cicr@2026';
+          fullName = det.fullName || targetLog.user_name || 'Member';
+          enrollmentNo = det.enrollmentNo || det.roll_number || '';
+          phone = det.phone || '';
+          role = det.role || 'member';
+          avatarUrl = det.avatarUrl || det.avatar_url || '';
+          if (det.userId) userId = det.userId;
+        } catch {
+          // ignore
+        }
+      }
+
+      // Check if user already exists in auth.users
+      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = usersData?.users?.find(
+        (u) => (email && u.email?.toLowerCase() === email.toLowerCase()) || u.id === userId
+      );
+
+      if (existingUser) {
+        userId = existingUser.id;
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          email_confirm: true,
+          user_metadata: { status: 'approved' },
+        });
+      } else if (email && password) {
+        try {
+          const { data: newUser } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: fullName,
+              enrollment_no: enrollmentNo,
+              phone,
+              role,
+              status: 'approved',
+              avatar_url: avatarUrl || undefined,
+            },
+          });
+          if (newUser?.user) {
+            userId = newUser.user.id;
+          }
+        } catch (createErr) {
+          console.warn('Admin create user on approve:', createErr);
+        }
+      }
+
+      // Ensure profile row in public.profiles table
+      if (userId && userId.length > 20) {
+        try {
+          await supabaseAdmin.from('profiles').upsert([
+            {
+              id: userId,
+              full_name: fullName || 'Member',
+              email: email || '',
+              role,
+              roll_number: enrollmentNo,
+              phone,
+              avatar_url: avatarUrl || 'status:approved',
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+        } catch (profileErr) {
+          console.warn('Profile upsert warning:', profileErr);
+        }
+      }
+
+      // Mark request as approved in activity_logs
+      if (targetLog) {
+        try {
+          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
+          await supabaseAdmin
+            .from('activity_logs')
+            .update({
+              details: JSON.stringify({ ...det, status: 'approved', approved_at: new Date().toISOString() }),
+            })
+            .eq('id', targetLog.id);
+        } catch (updateErr) {
+          console.warn('Log update warning:', updateErr);
+        }
       }
 
       // Log action
-      await supabase.from('activity_logs').insert([
+      await supabaseAdmin.from('activity_logs').insert([
         {
-          user_id: userId,
+          user_id: userId || null,
           user_name: profile?.full_name || 'Admin',
           action: 'ACCOUNT_APPROVED',
-          details: `Account for user ${userId} approved by ${profile?.full_name || 'Admin'}`,
+          details: `Account for ${fullName || email || targetId} was approved by ${profile?.full_name || 'Admin'}`,
         },
       ]);
 
@@ -350,31 +465,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const rejectUserAccount = async (userId: string) => {
+  const rejectUserAccount = async (targetId: string) => {
     try {
-      // Update in Supabase Auth user_metadata
-      await supabaseAdmin.auth.admin.updateUserById(userId, {
-        user_metadata: { status: 'rejected' },
+      const { data: logMatches } = await supabaseAdmin
+        .from('activity_logs')
+        .select('*')
+        .eq('action', 'ACCOUNT_REQUEST')
+        .order('created_at', { ascending: false });
+
+      let targetLog = logMatches?.find((l) => {
+        try {
+          const det = typeof l.details === 'string' ? JSON.parse(l.details) : l.details;
+          return (
+            det.userId === targetId ||
+            l.user_id === targetId ||
+            l.id === targetId ||
+            det.email === targetId
+          );
+        } catch {
+          return false;
+        }
       });
 
-      // Update in Supabase profiles table
-      const { data: currentProf } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', userId)
-        .maybeSingle();
+      let fullName = targetLog?.user_name || 'User';
+      if (targetLog) {
+        try {
+          const det = typeof targetLog.details === 'string' ? JSON.parse(targetLog.details) : targetLog.details;
+          fullName = det.fullName || targetLog.user_name || 'User';
+          await supabaseAdmin
+            .from('activity_logs')
+            .update({
+              details: JSON.stringify({ ...det, status: 'rejected', rejected_at: new Date().toISOString() }),
+            })
+            .eq('id', targetLog.id);
+        } catch (e) {
+          console.warn('Reject log update warning:', e);
+        }
+      }
 
-      if (!currentProf?.avatar_url || currentProf.avatar_url.startsWith('status:')) {
-        await supabase.from('profiles').update({ avatar_url: 'status:rejected' }).eq('id', userId);
+      // If user exists in auth.users, update metadata
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(targetId, {
+          user_metadata: { status: 'rejected' },
+        });
+      } catch {
+        // ignore
       }
 
       // Log action
-      await supabase.from('activity_logs').insert([
+      await supabaseAdmin.from('activity_logs').insert([
         {
-          user_id: userId,
+          user_id: targetId || null,
           user_name: profile?.full_name || 'Admin',
           action: 'ACCOUNT_REJECTED',
-          details: `Account for user ${userId} rejected by ${profile?.full_name || 'Admin'}`,
+          details: `Account registration for ${fullName} was rejected by ${profile?.full_name || 'Admin'}`,
         },
       ]);
 
@@ -424,6 +568,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      if (user) {
+        try {
+          await supabaseAdmin.from('activity_logs').insert([
+            {
+              user_id: user.id,
+              user_name:
+                profile?.full_name ||
+                user.user_metadata?.full_name ||
+                user.email?.split('@')[0] ||
+                'User',
+              action: 'USER_SIGNOUT',
+              details: `${
+                profile?.full_name ||
+                user.user_metadata?.full_name ||
+                user.email?.split('@')[0] ||
+                'User'
+              } signed out of CICR Inventory Vault`,
+            },
+          ]);
+        } catch (logErr) {
+          console.warn('Sign-out log error:', logErr);
+        }
+      }
       await supabase.auth.signOut();
     } catch (err) {
       console.error('Sign out error:', err);

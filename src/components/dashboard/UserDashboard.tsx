@@ -8,7 +8,7 @@ import { AddEditItemModal } from '../inventory/AddEditItemModal';
 import { ItemDetailModal } from '../inventory/ItemDetailModal';
 import { MeetTheDevelopers } from './MeetTheDevelopers';
 import { InventoryItem } from '../../types/inventory';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { compressImageToBase64 } from '../../lib/imageUtils';
 import {
@@ -58,6 +58,9 @@ import {
   SlidersHorizontal,
   Copy,
   Camera,
+  LogIn,
+  LogOut,
+  UserPlus,
 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
@@ -71,7 +74,7 @@ export const UserDashboard: React.FC = () => {
     rejectUserAccount,
   } = useAuth();
   const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
-  const { items, requests, logs, deleteItem, updateBorrowStatus, isLiveDatabase } = useInventory();
+  const { items, requests, logs, deleteItem, updateBorrowStatus, isLiveDatabase, refreshData } = useInventory();
   const { showToast } = useToast();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
@@ -140,7 +143,7 @@ export const UserDashboard: React.FC = () => {
   // Fetch pending registration accounts for admin review
   const fetchPendingAccounts = async () => {
     try {
-      const { data: profs } = await supabase
+      const { data: profs } = await supabaseAdmin
         .from('profiles')
         .select('*')
         .eq('avatar_url', 'status:pending')
@@ -164,7 +167,7 @@ export const UserDashboard: React.FC = () => {
       }
 
       // Also parse from activity_logs
-      const { data: logsData } = await supabase
+      const { data: logsData } = await supabaseAdmin
         .from('activity_logs')
         .select('*')
         .eq('action', 'ACCOUNT_REQUEST')
@@ -173,18 +176,20 @@ export const UserDashboard: React.FC = () => {
       if (logsData) {
         logsData.forEach((l) => {
           try {
-            const details = JSON.parse(l.details);
-            const uid = details.userId || l.user_id;
-            if (details.status === 'pending' && !accountsMap.has(uid)) {
+            const details = typeof l.details === 'string' ? JSON.parse(l.details) : l.details;
+            const uid = details?.userId || l.user_id || l.id || details?.email;
+            const isPending = !details?.status || details?.status === 'pending';
+            if (isPending && uid && !accountsMap.has(uid)) {
               accountsMap.set(uid, {
                 id: uid,
-                full_name: l.user_name || details.fullName,
-                email: details.email,
-                roll_number: details.enrollmentNo,
-                phone: details.phone,
-                role: details.role,
+                full_name: l.user_name || details?.fullName || details?.email?.split('@')[0],
+                email: details?.email,
+                roll_number: details?.enrollmentNo || details?.roll_number,
+                phone: details?.phone,
+                role: details?.role || 'member',
                 created_at: l.created_at,
                 status: 'pending',
+                avatar_url: details?.avatar_url,
               });
             }
           } catch {
@@ -203,7 +208,7 @@ export const UserDashboard: React.FC = () => {
   const fetchAllMembers = async () => {
     try {
       setLoadingMembers(true);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
@@ -438,6 +443,8 @@ export const UserDashboard: React.FC = () => {
     if (res.success) {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      await refreshData();
+      await fetchAllMembers();
     } else {
       showToast('error', 'Approval Failed', res.error || 'Could not approve account');
     }
@@ -450,6 +457,8 @@ export const UserDashboard: React.FC = () => {
     if (res.success) {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      await refreshData();
+      await fetchAllMembers();
     } else {
       showToast('error', 'Rejection Failed', res.error || 'Could not reject account');
     }
@@ -2066,8 +2075,13 @@ export const UserDashboard: React.FC = () => {
                           log.action?.toLowerCase().includes('user') ||
                           log.action?.toLowerCase().includes('account') ||
                           log.action?.toLowerCase().includes('role') ||
+                          log.action?.toLowerCase().includes('sign') ||
+                          log.action?.toLowerCase().includes('login') ||
+                          log.action?.toLowerCase().includes('logout') ||
                           log.details?.toLowerCase().includes('account') ||
                           log.details?.toLowerCase().includes('registration') ||
+                          log.details?.toLowerCase().includes('signed in') ||
+                          log.details?.toLowerCase().includes('signed out') ||
                           log.details?.toLowerCase().includes('role');
                         if (!isAccount) return false;
                       } else if (logCategoryFilter === 'inventory') {
@@ -2118,6 +2132,29 @@ export const UserDashboard: React.FC = () => {
                           let ActionIcon = Clock;
 
                           if (
+                            actionUpper === 'USER_SIGNIN' ||
+                            detailsLower.includes('signed in') ||
+                            detailsLower.includes('logged in')
+                          ) {
+                            badgeClass = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+                            label = 'Member Sign In';
+                            ActionIcon = LogIn;
+                          } else if (
+                            actionUpper === 'USER_SIGNOUT' ||
+                            detailsLower.includes('signed out') ||
+                            detailsLower.includes('logged out')
+                          ) {
+                            badgeClass = 'bg-slate-500/20 text-slate-300 border-slate-500/40';
+                            label = 'Member Sign Out';
+                            ActionIcon = LogOut;
+                          } else if (
+                            actionUpper === 'ACCOUNT_REQUEST' ||
+                            detailsLower.includes('registration request')
+                          ) {
+                            badgeClass = 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+                            label = 'Registration Request';
+                            ActionIcon = UserPlus;
+                          } else if (
                             actionUpper.includes('BORROW') ||
                             detailsLower.includes('requested') ||
                             detailsLower.includes('requisition')
