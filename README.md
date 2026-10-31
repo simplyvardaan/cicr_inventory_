@@ -1,105 +1,184 @@
-# CICR Inventory Portal 🚀
-### Centre for Innovation, Creativity & Robotics | College Club Inventory System
+# CICR Robotics Vault & Inventory Management Platform 🤖⚡
+### Creative & Innovative Cell in Robotics | JIIT Noida
 
-A modern, high-performance web dashboard built with **React**, **TypeScript**, **Tailwind CSS**, and **Supabase Backend** for managing club electronics, microcontrollers, sensors, motors, fabrication equipment, and student project borrow requests.
+A modern, high-performance web dashboard and robotics hardware management platform built with **React 18**, **TypeScript**, **Tailwind CSS**, and **Supabase (PostgreSQL)**, deployed on **Vercel**. Designed to manage laboratory components, microcontrollers, sensors, actuators, and student project requisitions with complete audit accountability.
 
----
-
-## ⚡ Features
-
-### 🔐 1. Full Authentication & Member Profiles
-- **Sign Up & Sign In** with Supabase Auth:
-  - Full Name, Student Roll Number, College Email, Department & Club Role.
-  - Role-based permissions (**Admin**, **Lead**, **Member**).
-- **1-Click Quick Demo Login** on the login modal:
-  - **Admin Lead**: `admin@cicr.edu.in` / `cicr_admin_2026`
-  - **Club Member**: `member@cicr.edu.in` / `cicr_member_2026`
-- Persistent session storage & automatic token refresh.
-- Profile editing (Name, Department, Roll Number, Phone Number).
-
-### 📦 2. Inventory Management
-- **Catalog of Club Equipment**:
-  - Microcontrollers & SBCs (ESP32, Arduino Mega, Raspberry Pi 4, etc.)
-  - Sensors & Modules (LiDAR, MPU-6050, Ultrasonic, etc.)
-  - Motors, Actuators & Drivers (NEMA 17, MG996R Servos, L298N, etc.)
-  - Power & Batteries (3S LiPo, chargers, bench power)
-  - Fabrication & Lab Tools (Creality 3D Printers, TS100 Soldering Stations)
-  - Mechanical & Electronic Components
-- **Item Details**: SKU codes, Storage Locations (Lab Shelf/Cabinet/Locker), Total vs Available stock, Minimum alert thresholds, Condition badges, Image URLs, and direct Datasheet links.
-- **Dual View Modes**: Interactive Grid view and searchable Table view.
-- **Real-Time Filters & Sorting**: Search by name/SKU/keyword, filter by domain category, filter by stock status, and sort by quantity/name.
-- **CRUD Operations**: Leads & Admins can add, update, and remove items with instant feedback.
-
-### 🔄 3. Equipment Borrowing & Issuance System
-- **Borrow Requisition**:
-  - Club members submit requests with project name, purpose, quantity, and expected return date.
-- **Admin Approval Queue**:
-  - Admins & Leads can review, approve, reject, or mark items as returned with notes.
-  - Automatic real-time inventory quantity deduction on approval.
-  - Automatic stock restoration upon marking item returned.
-- **Personal Requisition History**:
-  - Members can track all components they currently possess and their return deadlines.
-
-### 📊 4. Dashboard Analytics & Audit Trail
-- Metric counters: Total Items, In-Stock Units, Active Checkouts, Low Stock Warnings.
-- Category distribution breakdown with visual availability bars.
-- Live Lab Activity feed & Audit trail logging every creation, checkout, return, and update.
-
-### 🌐 5. Supabase Backend Integration
-- Integrated with remote Supabase project `nmwkljtaymujqnmzgyxn`.
-- Complete schema migration script provided in `supabase_schema.sql` (Profiles, Inventory, Borrow Requests, Activity Logs, and automated triggers).
-- **Dual-Mode Sync**: Works seamlessly with live Supabase PostgreSQL tables; if tables are fresh, gracefully caches locally and provides a 1-click **"Seed Live Database"** button to populate the remote tables immediately once schema is run!
+🌐 **Live Production App**: [https://cicr-inventory-gamma.vercel.app/](https://cicr-inventory-gamma.vercel.app/)  
+📦 **Repository**: [https://github.com/simplyvardaan/cicr_inventory_](https://github.com/simplyvardaan/cicr_inventory_)  
+🏷️ **Current Version**: `v2.0.0`
 
 ---
 
-## 🛠 Tech Stack
+## 🏛️ System Architecture
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide React Icons
-- **Backend & Auth**: Supabase (`@supabase/supabase-js`, PostgreSQL, Row-Level Security)
-- **Build Tool**: Vite 6
+The CICR Inventory Platform is architected around a reactive, cloud-native stack with strict security isolation, real-time database synchronizations, and edge delivery:
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Layer (React 18 + Vite)"]
+        UI["Modern Glassmorphism UI (Tailwind CSS)"]
+        Dock["Floating Centered Dock Navbar"]
+        AuthCtx["AuthContext (Dynamic RBAC)"]
+        InvCtx["InventoryContext (172 Assets Stream)"]
+        Router["Client-Side SPA Routing"]
+    end
+
+    subgraph CDN ["Edge Delivery (Vercel)"]
+        VercelCDN["Vercel Global Edge Network"]
+        Rewrites["vercel.json SPA Rewrites"]
+    end
+
+    subgraph Backend ["Cloud Infrastructure (Supabase)"]
+        SupaAuth["Supabase Auth (JWT & GoTrue)"]
+        Postgres["PostgreSQL Database"]
+        RLS["Row Level Security (RLS Policies)"]
+        
+        subgraph Tables ["Database Tables"]
+            T_Profiles["profiles (Members & Roles)"]
+            T_Items["inventory_items (172 Hardware Assets)"]
+            T_Requests["borrow_requests (Requisition State Machine)"]
+            T_Logs["activity_logs (7-Day Immutable Audit)"]
+        end
+    end
+
+    UI --> Dock
+    UI --> AuthCtx
+    UI --> InvCtx
+    CDN --> Router
+    Router --> UI
+
+    AuthCtx <-->|"JWT Auth & Session"| SupaAuth
+    InvCtx <-->|"PostgREST API & RLS"| Postgres
+    
+    Postgres --> T_Profiles
+    Postgres --> T_Items
+    Postgres --> T_Requests
+    Postgres --> T_Logs
+```
 
 ---
 
-## 🚀 Getting Started
+## ⚡ Core Features
 
-### 1. Installation
-Clone the repository and install dependencies:
+### 1. 🔐 Dynamic Authentication & Admin Approval Pipeline
+- **Student Signups**: College Email (`@mail.jiit.ac.in`), Enrollment Number, Phone Number, and requested laboratory role.
+- **Admin Clearance Queue**: All newly created member accounts start in `status:pending`. Users cannot access the platform until an Administrator approves their registration in the **Management Hub**.
+- **100% Dynamic Roles**: Zero hardcoded credentials or bypasses. Roles (`admin`, `lead`, `member`) are dynamically queried from Supabase `profiles` with Row Level Security enforcement.
+
+### 2. 🗄️ Component Vault (172 Laboratory Assets)
+- **172 Hardware Assets** categorized into 5 primary robotics domains:
+  - **Microcontrollers & SBCs** (ESP32-WROOM, Arduino Mega 2560, Raspberry Pi 4, STM32 Blue Pill)
+  - **Sensors & Modules** (RPLIDAR A1, MPU-6050, Ultrasonic HC-SR04, PIR Motion Sensor, VL53L0X ToF)
+  - **Motors & Actuators** (NEMA 17 Steppers, MG996R Metal Servos, L298N Motor Drivers)
+  - **Power & Batteries** (3S LiPo Packs, Buck Converters, 18650 Battery Shields)
+  - **Tools & Fabrication** (Soldering Stations, Wire Strippers, RunCam FPV, Multimeters)
+- **Live Metrics**: Total Assets (172), Available Ready for Checkout (172), Active Loans, Low Reserves, and Depleted stock.
+- **Real-Time Stock Adjustment**: Stock is automatically decremented upon approval and restored immediately upon component return.
+
+### 3. 👥 Club Members Roster & Management
+- Direct overview of all registered club members with:
+  - Avatar initials, Full Name, Role Badge (`ADMIN`, `LEAD`, `MEMBER`).
+  - College Email, Enrollment Number, Phone Number, and Join Date.
+  - Hardware requisition metrics (total requests submitted, active loans held).
+  - **Activity Trail**: Dedicated drawer displaying every transaction associated with an individual member.
+  - **Dynamic Role Promotions**: Administrators can promote or demote members between `Member`, `Lead`, and `Admin` directly from the dashboard.
+
+### 4. 📜 7-Day Immutable Activity History & Audit
+- Scoped multi-day activity history automatically displaying laboratory operations from the **last 7 days**.
+- Quick time filters: **Last 7 Days (Default)**, Today (24 Hours), Last 3 Days, and All Time.
+- Category filters: Borrows & Checkouts, Returns, Account Actions, and Component Updates.
+- Live search across users, components, and action types.
+- Detailed relative timestamps ("10m ago", "Yesterday at 4:15 PM").
+
+### 5. 📱 Responsive Floating Dock Navbar
+- Fixed, backdrop-blurred floating bottom dock providing seamless navigation:
+  - `Dashboard` | `Inventory` (with dedicated dropup category selector) | `Requests` | `Logs` (Admin only) | `Team`
+  - Right user capsule displaying initial avatar, full name, role badge, change password trigger, and logout.
+  - Clean responsive shrinking ensuring zero text collisions on mobile, tablet, and widescreen viewports.
+
+---
+
+## 👥 Meet the Team
+
+| Role | Member | Links |
+| :--- | :--- | :--- |
+| **Mentor** | **Gunjan Pal** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gunjan-pal-796093284/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Gunjan00001) |
+| **Developer** | **Vardaan Saxena** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/simplyvardaan/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/simplyvardaan) [![Portfolio](https://img.shields.io/badge/Portfolio-22c55e?style=flat&logo=google-chrome&logoColor=white)](https://vardaansaxena.tech) |
+| **Developer** | **Samiksha Jhunjhunwala** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/samiksha-jhunjhunwala-9343b02b3/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Samikshajjw) |
+| **Developer** | **Mohammad Arsh** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohammad-arsh-1792008-hd/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/HybridzDynamics) |
+
+---
+
+## 📋 Version History & Changelog
+
+### `v2.0.0` — Production Release (Current)
+- **172 Assets Synchronization**: Fully synchronized all 53 unique component categories totaling 172 units in remote Supabase PostgreSQL.
+- **Team Roster Addition**: Integrated **Mohammad Arsh** with GitHub and LinkedIn credentials into the interactive team carousel.
+- **Comprehensive Management Hub**: Transformed Logs view into a full member directory with dynamic role management, individual activity trails, and 7-day scoped audit timelines.
+- **Admin Approval Queue**: Implemented strict registration authorization where new signups require administrator approval before logging in.
+- **Bottom Navbar Redesign**: Removed redundant standalone admin button and added responsive label shortening to eliminate text overlapping.
+- **Production Edge Deployment**: Added `vercel.json` SPA rewrites and public client credentials fallbacks in `src/lib/supabase.ts` for instant zero-config deployments.
+
+### `v1.2.0`
+- **Dynamic Security Architecture**: Removed all hardcoded credentials and sample admin scripts; unified dynamic role checks against Supabase `profiles`.
+- **Schema Simplification**: Streamlined database models by removing deprecated `department`, `condition`, and `sku` columns across UI and PostgreSQL schemas.
+
+### `v1.1.0`
+- **Supabase Integration**: Connected live PostgreSQL instance `nmwkljtaymujqnmzgyxn` with Row Level Security (RLS) policies.
+- **Requisition State Machine**: Integrated automated quantity deductions upon borrow approval and restorations upon return.
+
+### `v1.0.0`
+- **Initial Release**: Core React + Vite dashboard structure, hardware catalog view, mock data fallback, and authentication modals.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend Framework** | React 18, TypeScript (TSX) |
+| **Styling & Design** | Tailwind CSS 3.4, PostCSS, Lucide React Icons |
+| **Build & Bundler** | Vite 6 |
+| **Database & Auth** | Supabase (PostgreSQL 15, GoTrue Auth, Row Level Security) |
+| **Hosting & CDN** | Vercel Global Edge Network (`vercel.json`) |
+
+---
+
+## 🚀 Local Development Setup
+
+### 1. Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm** or **pnpm**
+- **Git**
+
+### 2. Clone & Install
 ```bash
 git clone https://github.com/simplyvardaan/cicr_inventory_.git
 cd cicr_inventory_
 npm install
 ```
 
-### 2. Environment Configuration
-The `.env` file is pre-configured with the Supabase credentials:
+### 3. Environment Configuration
+Create a `.env` file in the project root (reference `.env.example`):
 ```env
 VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-supabase-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-### 3. Run Development Server
+### 4. Run Development Server
 ```bash
 npm run dev
 ```
-Open your browser at `http://localhost:3000`.
+Open `http://localhost:3000` in your browser.
 
-### 4. Build for Production
+### 5. Production Build
 ```bash
 npm run build
+npm run preview
 ```
 
 ---
 
-## 🗄 Database Schema Setup (1-Minute Setup)
-
-To enable live remote database tables in your Supabase project:
-1. Open [Supabase SQL Editor](https://supabase.com/dashboard/project/nmwkljtaymujqnmzgyxn/sql/new).
-2. Copy and paste the contents of [`supabase_schema.sql`](./supabase_schema.sql).
-3. Click **Run**.
-4. In the web app, click **Backend Ready** or open the **Supabase Backend Setup** dialog and click **"Seed Live Database"** to instantly push all starter inventory items to your PostgreSQL tables!
-
----
-
-Developed with ❤️ for the **Centre for Innovation, Creativity & Robotics (CICR)**.
-
+## 📄 License
+Maintained by the **Creative & Innovative Cell in Robotics (CICR)**, Jaypee Institute of Information Technology (JIIT), Noida.

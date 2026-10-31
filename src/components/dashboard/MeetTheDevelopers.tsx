@@ -24,7 +24,7 @@ export interface TeamMember {
   portfolio?: string;
 }
 
-// Exactly ordered as requested: Gunjan (Mentor) -> Vardaan (Developer) -> Samiksha (Developer)
+// Exactly ordered as requested: Gunjan (Mentor) -> Vardaan (Developer) -> Samiksha (Developer) -> Mohammad Arsh (Developer)
 const teamMembers: TeamMember[] = [
   {
     id: 'gunjan',
@@ -59,6 +59,17 @@ const teamMembers: TeamMember[] = [
     linkedin: 'https://www.linkedin.com/in/samiksha-jhunjhunwala-9343b02b3/',
     github: 'https://github.com/Samikshajjw',
     githubUser: 'Samikshajjw',
+  },
+  {
+    id: 'arsh',
+    name: 'Mohammad Arsh',
+    role: 'Developer',
+    category: 'developer',
+    photoUrl: '/images/team/arsh.jpg',
+    quote: 'Engineering autonomous robotics systems, hardware-software integration, and scalable digital platforms.',
+    linkedin: 'https://www.linkedin.com/in/mohammad-arsh-1792008-hd/',
+    github: 'https://github.com/HybridzDynamics',
+    githubUser: 'HybridzDynamics',
   },
 ];
 
