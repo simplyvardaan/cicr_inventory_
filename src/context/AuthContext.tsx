@@ -379,6 +379,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       /*
+      const isMasterAdminEmail = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(
+        emailToRegister.toLowerCase()
+      );
+      const enforcedRole = isMasterAdminEmail ? 'admin' : 'member';
+      const initialStatus = isMasterAdminEmail ? 'approved' : 'pending';
       let createdUserId: string | null = null;
 
       // 1. Attempt to create user in Supabase Auth via supabaseAdmin
@@ -391,7 +396,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name,
             enrollment_no,
             phone,
-            role,
+            role: enforcedRole,
             status: initialStatus,
             avatar_url: avatar_url || undefined,
           },
