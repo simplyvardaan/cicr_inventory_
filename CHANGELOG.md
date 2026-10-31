@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.1] : 2026-10-31
+
+### Fixed
+* Responsive Category Navigation Submenu: Centered floating catalog category submenu directly above the bottom navigation dock across both mobile and desktop viewports.
+* Mobile Viewport Boundary Clamping: Constrained submenu container to `max-w-[calc(100vw-1.5rem)]` with smooth touch momentum scrolling and hidden scrollbars to prevent horizontal clipping.
+* Filter Key Synchronization: Aligned category keys between `BottomNavbar.tsx` and `ComponentVaultView.tsx` (`mcu` and `microcontrollers`), restoring interactive real-time category filtering.
+* Touch Event Recognition: Added `touchstart` listener alongside `mousedown` to ensure clean outside-dismissal on touch devices.
+
+***
+
 ## [2.18.0] : 2026-10-31
 
 ### Added

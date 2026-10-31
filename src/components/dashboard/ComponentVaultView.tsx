@@ -91,7 +91,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   const filteredItems = items.filter((item) => {
     // 1. Category filter
     let matchesCategory = true;
-    if (categoryFilter === 'mcu') {
+    if (categoryFilter === 'mcu' || categoryFilter === 'microcontrollers') {
       matchesCategory = item.category.toLowerCase().includes('microcontroller') || item.category.toLowerCase().includes('sbc');
     } else if (categoryFilter === 'sensors') {
       matchesCategory = item.category.toLowerCase().includes('sensor');
@@ -171,7 +171,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
             { key: 'tools', label: 'Tools', icon: Wrench },
           ].map((cat) => {
             const Icon = cat.icon;
-            const active = categoryFilter === cat.key;
+            const active = categoryFilter === cat.key || (cat.key === 'mcu' && categoryFilter === 'microcontrollers');
             return (
               <button
                 key={cat.key}

@@ -37,7 +37,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.15.0** | Released | **Mobile Viewport Optimization, Full Name Roster Display, Signup Review Modal & Modal Theme Adaptation.** Fixed email and location text overflow in Requisitions Portal; eliminated name truncation in Member Management Roster; added registration review popup modal notifying applicants of admin review status; and adapted MorphingDialog to dual light/dark themes with elevated z-index. |
 | **v2.16.0** | Released | **Production Deployment Resiliency & Dual Supabase Failover.** Resolved Vercel deployment crash by restoring safe production credential decoders in `src/lib/supabase.ts`; reinstated `/api/(.*)` rewrites in `vercel.json`; integrated direct client-side Supabase failover for registration, approvals, and rejections; complete cross-branch parity across all active repository branches. |
 | **v2.17.0** | Released | **Official Google SMTP Mailer Integration & Serverless Telemetry Pipeline.** Production Gmail SSL mailer on port 465 with base64 failover decoders; transactional dispatch for authentication, clearance requisitions, and overdue return reminders; multi-branch parity across all active branches. |
-| **v2.18.0** | Released (current) | **Personalized Active Loans, Clean Requisition Clearance & Notification Persistence.** Scoped Component Vault active loans to individual members while preserving full lab oversight for admins; removed locker instructions input from clearance portal; resolved notification "Read all" persistence; verified 100% full stock return across all components. |
+| **v2.18.0** | Released | **Personalized Active Loans, Clean Requisition Clearance & Notification Persistence.** Scoped Component Vault active loans to individual members while preserving full lab oversight for admins; removed locker instructions input from clearance portal; resolved notification "Read all" persistence; verified 100% full stock return across all components. |
+| **v2.18.1** | Released (current) | **Responsive Centered Category Submenu & Touch Interactivity Patch.** Centered bottom navigation catalog categories above the dock; constrained mobile layout to viewport boundaries with touch momentum scrolling; unified category filter keys between navbar and vault view; added touchstart outside dismissal. |
 
 ---
 
@@ -59,6 +60,7 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.16.0** | `v2.16.0`, `v2.16` | Production Resiliency | Deployment crash resolution, base64 decoders, failover authentication |
 | **v2.17.0** | `v2.17.0`, `v2.17` | Mailer & Telemetry | Official Google SMTP integration, automated transactional dispatch, return reminders |
 | **v2.18.0** | `v2.18.0`, `v2.18` | Personalization & Clearance | Member loan scoping, streamlined clearance actions, notification read fix |
+| **v2.18.1** | `v2.18.1` | Responsive Navigation | Centered category dock popup, touch momentum scrolling, filter key parity |
 
 ---
 
