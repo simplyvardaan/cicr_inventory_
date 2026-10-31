@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.7] : 2026-11-01
+
+### Fixed
+* Full TypeScript & IDE Diagnostics Alignment:
+  - Reinstalled and updated `@types/nodemailer` and added `@types/pg` devDependencies to resolve missing type definitions for PostgreSQL and email modules in the editor.
+  - Updated `tsconfig.json` to include `"api"` alongside `"src"`, enabling unified IDE type-checking and eliminating editor squiggles and false-positive diagnostics across all serverless API endpoints (`accounts.ts`, `email.ts`, `reminders.ts`).
+  - Resolved `createTransport` option overload typing in `api/_mailer.ts`.
+
+***
+
 ## [2.18.6] : 2026-11-01
 
 ### Fixed
