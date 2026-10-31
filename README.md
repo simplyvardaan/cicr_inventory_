@@ -3,7 +3,7 @@
 
 A modern, high-performance web dashboard and robotics hardware management platform built with **React 18**, **TypeScript**, **Tailwind CSS**, and **Supabase (PostgreSQL)**, deployed on **Vercel**. Designed to manage laboratory components, microcontrollers, sensors, actuators, and student project requisitions with complete audit accountability.
 
-🌐 **Live Production App**: [https://cicr-inventory-gamma.vercel.app/](https://cicr-inventory-gamma.vercel.app/)  
+🌐 **Live Production App**: [https://cicr-inventory.vercel.app/](https://cicr-inventory.vercel.app/)  
 📦 **Repository**: [https://github.com/simplyvardaan/cicr_inventory_](https://github.com/simplyvardaan/cicr_inventory_)  
 🏷️ **Current Version**: `v2.0.0`
 
