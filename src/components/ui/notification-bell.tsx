@@ -132,10 +132,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={motionTransitions.springSnappy}
-            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-3rem)] max-w-[340px] sm:max-w-none sm:w-96 rounded-3xl bg-white/98 dark:bg-[#0c0c14]/98 backdrop-blur-2xl border-2 border-slate-200 dark:border-zinc-800 shadow-2xl shadow-slate-900/15 dark:shadow-black z-50 overflow-hidden text-slate-900 dark:text-slate-100"
+            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-3rem)] max-w-[340px] sm:max-w-none sm:w-96 rounded-3xl bg-white dark:bg-[#07070a] border-2 border-slate-300 dark:border-zinc-800 shadow-2xl shadow-slate-900/30 dark:shadow-black z-50 overflow-hidden text-slate-900 dark:text-slate-100"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#12121c]">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#101018]">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                   Notifications
@@ -171,7 +171,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/80">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/80 bg-white dark:bg-[#07070a]">
               {notifications.length === 0 ? (
                 <div className="py-10 px-4 text-center">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-600 flex items-center justify-center mx-auto mb-2">
@@ -200,8 +200,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       className={cn(
                         'p-3.5 flex items-start gap-3 transition-colors text-xs cursor-pointer',
                         item.read
-                          ? 'hover:bg-slate-50 dark:hover:bg-zinc-900/50'
-                          : 'bg-blue-50/50 dark:bg-purple-950/20 hover:bg-blue-50 dark:hover:bg-purple-950/30'
+                          ? 'bg-white dark:bg-[#07070a] hover:bg-slate-50 dark:hover:bg-[#0f0f16]'
+                          : 'bg-blue-50/90 dark:bg-[#150d24] hover:bg-blue-100 dark:hover:bg-[#1e1333]'
                       )}
                       onClick={() => {
                         if (!item.read) onMarkAsRead(item.id);

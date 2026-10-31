@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { InventoryItem } from '../../types/inventory';
 import { useInventory } from '../../context/InventoryContext';
 import { useToast } from '../common/Toast';
+import { PaymentStatus } from '../ui/payment-status';
+import { useAuth } from '../../context/AuthContext';
 import { X, Send, AlertCircle, ShoppingBag } from 'lucide-react';
 
 interface BorrowModalProps {
@@ -16,6 +18,8 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   onClose,
 }) => {
   const { submitBorrowRequest } = useInventory();
+  const { user, profile } = useAuth();
+  const [confirmedLoan, setConfirmedLoan] = useState<boolean>(false);
   const { showToast } = useToast();
 
   const [quantity, setQuantity] = useState(1);
@@ -60,16 +64,37 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     setLoading(false);
 
     if (res.success) {
-      showToast(
-        'success',
-        'Request Submitted',
-        `Requisition for ${quantity}x ${item.name} sent to Lab Leads.`
-      );
-      onClose();
+      setConfirmedLoan(true);
     } else {
       setErrorMsg(res.error || 'Failed to submit borrow request.');
     }
   };
+
+  if (confirmedLoan) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in">
+        <PaymentStatus
+          type="loan"
+          status="success"
+          title="Hardware Requisition Dispatched"
+          subtitle={`Requisition for ${quantity}x ${item.name} has been sent to Lab Leads.`}
+          amount={`${quantity} item(s)`}
+          amountLabel="Loaned Units"
+          transactionId={`REQ-${Date.now().toString(36).toUpperCase()}`}
+          transactionLabel="Requisition Ref"
+          paymentMethod={user?.user_metadata?.full_name || profile?.full_name || user?.email || 'Member'}
+          paymentMethodLabel="Borrower"
+          items={[{ name: item.name, quantity, price: `${quantity}x unit` }]}
+          merchantName="CICR Robotics Lab"
+          primaryActionLabel="Done"
+          onClose={() => {
+            setConfirmedLoan(false);
+            onClose();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/85 backdrop-blur-md animate-in fade-in">

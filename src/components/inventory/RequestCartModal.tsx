@@ -4,6 +4,7 @@ import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
 import { DragToConfirm } from '../ui/drag-to-confirm';
+import { PaymentStatus, PaymentReceiptItem } from '../ui/payment-status';
 import {
   X,
   ShoppingBag,
@@ -49,6 +50,11 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [confirmedLoanData, setConfirmedLoanData] = useState<{
+    transactionId: string;
+    items: PaymentReceiptItem[];
+    totalUnits: number;
+  } | null>(null);
 
   if (!isOpen) return null;
 
@@ -86,13 +92,16 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
       }
 
       if (failureCount === 0) {
-        showToast(
-          'success',
-          'Consolidated Requisition Dispatched!',
-          `Successfully submitted request for ${totalUnits} hardware component(s).`
-        );
-        onClearCart();
-        onClose();
+        const receiptItems: PaymentReceiptItem[] = cart.map((c) => ({
+          name: c.item.name,
+          quantity: c.quantity,
+          price: `${c.quantity}x unit`,
+        }));
+        setConfirmedLoanData({
+          transactionId: `REQ-${Date.now().toString(36).toUpperCase()}`,
+          items: receiptItems,
+          totalUnits,
+        });
       } else {
         showToast(
           'warning',
@@ -106,6 +115,35 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
+
+  if (confirmedLoanData) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+        <PaymentStatus
+          type="loan"
+          status="success"
+          title="Hardware Requisition Dispatched"
+          subtitle="Your hardware checkout request has been registered in the CICR database."
+          amount={`${confirmedLoanData.totalUnits} items`}
+          amountLabel="Total Units"
+          transactionId={confirmedLoanData.transactionId}
+          transactionLabel="Requisition Ref"
+          paymentMethod={user?.user_metadata?.full_name || profile?.full_name || user?.email || 'Member'}
+          paymentMethodLabel="Borrower"
+          items={confirmedLoanData.items}
+          merchantName="CICR Robotics Lab"
+          primaryActionLabel="Finish & Return to Vault"
+          onClose={() => {
+            onClearCart();
+            setConfirmedLoanData(null);
+            onClose();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">

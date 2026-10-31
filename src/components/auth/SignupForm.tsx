@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
-import { User, Mail, Lock, Phone, Hash, ShieldCheck, Eye, EyeOff, LogIn, Camera, AlertCircle, Info } from 'lucide-react';
+import { User, Mail, Lock, Phone, Hash, ShieldCheck, Eye, EyeOff, LogIn, Camera, AlertCircle, Info, X } from 'lucide-react';
+import { AnimatedFileUpload } from '../ui/animated-file-upload';
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
@@ -34,6 +35,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [showDropZone, setShowDropZone] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -163,23 +165,53 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowDropZone(!showDropZone)}
               className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-purple-950/40 hover:bg-blue-100 text-blue-700 dark:text-purple-300 border border-blue-200 dark:border-purple-800 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Upload</span>
+              <span>{showDropZone ? 'Close' : avatarUrl ? 'Change' : 'Upload'}</span>
             </button>
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={() => setAvatarUrl('')}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                title="Remove photo"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Animated File Upload Drop Zone */}
+        {showDropZone && (
+          <div className="p-1 animate-in fade-in duration-200">
+            <AnimatedFileUpload
+              variant="compact"
+              multiple={false}
+              accept="image/*"
+              maxSize={2 * 1024 * 1024}
+              maxFiles={1}
+              dropTitle="Drop Profile Avatar"
+              dropSubtitle="PNG, JPG (up to 2MB)"
+              onFilesSelected={(files: File[]) => {
+                if (files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    if (e.target?.result) {
+                      setAvatarUrl(e.target.result as string);
+                      setShowDropZone(false);
+                    }
+                  };
+                  reader.readAsDataURL(files[0]);
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* 6 Form Input Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">

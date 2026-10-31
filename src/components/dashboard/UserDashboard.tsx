@@ -8,6 +8,9 @@ import { AddEditItemModal } from '../inventory/AddEditItemModal';
 import { ItemDetailModal } from '../inventory/ItemDetailModal';
 import { MeetTheDevelopers } from './MeetTheDevelopers';
 import { InventoryItem } from '../../types/inventory';
+import { CicrLogo } from '../common/CicrLogo';
+import { MorphingDialog } from '../ui/morphing-dialog';
+import { AnimatedFileUpload } from '../ui/animated-file-upload';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { compressImageToBase64 } from '../../lib/imageUtils';
@@ -74,6 +77,49 @@ const isLowReserveItem = (i: InventoryItem): boolean => {
   const isBelowThreshold = i.available_qty <= threshold;
   const isHalfOrLess = i.total_qty > 0 && i.available_qty / i.total_qty <= 0.5;
   return isBelowThreshold || isHalfOrLess;
+};
+
+
+interface ParsedActivity {
+  cleanSummary: string;
+  meta: Record<string, any> | null;
+}
+
+const parseActivityDetails = (details: string): ParsedActivity => {
+  if (!details) return { cleanSummary: 'No additional details logged', meta: null };
+  const trimmed = details.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    try {
+      const data = JSON.parse(trimmed);
+      const name = data.fullName || data.full_name || '';
+      const email = data.email || '';
+      const roll = data.enrollmentNo || data.enrollment_no || data.roll_number || '';
+      const phone = data.phone || '';
+      const role = data.role ? String(data.role).toUpperCase() : '';
+      const status = data.status ? String(data.status).toUpperCase() : '';
+
+      const summaryParts: string[] = [];
+      if (name) summaryParts.push(name);
+      if (email) summaryParts.push(email);
+      if (roll) summaryParts.push(`Roll: ${roll}`);
+      if (role) summaryParts.push(`Role: ${role}`);
+
+      const cleanSummary = summaryParts.length > 0
+        ? `Registration application submitted (${summaryParts.join(' • ')})`
+        : `Record metadata: ${Object.entries(data).filter(([k]) => k !== 'password').map(([k, v]) => `${k}: ${v}`).join(' • ')}`;
+
+      const safeMeta = { ...data };
+      delete safeMeta.password;
+
+      return {
+        cleanSummary,
+        meta: safeMeta,
+      };
+    } catch {
+      // fallback to plain details
+    }
+  }
+  return { cleanSummary: details, meta: null };
 };
 
 export const UserDashboard: React.FC = () => {
@@ -676,8 +722,19 @@ export const UserDashboard: React.FC = () => {
       {/* Top Floating Island Header Bar (Permanently Fixed on All Mobile & Desktop Screens on Scroll) */}
       <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
         <header className="pointer-events-auto rounded-full bg-white/95 dark:bg-[#0f0f16]/95 backdrop-blur-2xl border-2 border-slate-200 dark:border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/80 gap-2">
-          {/* Left: Breadcrumbs Capsule */}
-          <div className="flex items-center min-w-0">
+          {/* Left: CICR Logo + Breadcrumbs Capsule */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setActiveView('dashboard')}
+              className="flex items-center gap-2 cursor-pointer group shrink-0 focus-visible:outline-none"
+              title="CICR Inventory Dashboard"
+            >
+              <CicrLogo size={28} className="rounded-full shadow-sm group-hover:scale-105 transition-transform" />
+              <span className="hidden xl:inline text-xs font-black tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
+                CICR Inventory
+              </span>
+            </button>
             <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400">
               <span
                 className="hidden sm:inline text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors"
@@ -2178,11 +2235,13 @@ export const UserDashboard: React.FC = () => {
                     }
 
                     return (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-                        <div className="text-[11px] text-zinc-500 font-mono pb-1 col-span-full">
-                          Showing {filteredLogs.length} events logged in timeline
+                      <div className="space-y-2">
+                        <div className="text-[11px] text-zinc-500 font-mono pb-1 flex items-center justify-between">
+                          <span>Showing {filteredLogs.length} events logged in chronological timeline</span>
+                          <span className="hidden sm:inline">Real-time Activity Feed</span>
                         </div>
 
+                        <div className="rounded-2xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-zinc-800/90 divide-y divide-slate-100 dark:divide-zinc-800/80 overflow-hidden shadow-sm">
                         {filteredLogs.map((log) => {
                           const actionUpper = (log.action || '').toUpperCase();
                           const detailsLower = (log.details || '').toLowerCase();
@@ -2281,18 +2340,20 @@ export const UserDashboard: React.FC = () => {
                           else if (diffDays === 1) relativeTime = 'Yesterday';
                           else if (diffDays > 1) relativeTime = `${diffDays}d ago`;
 
+                          const { cleanSummary, meta } = parseActivityDetails(log.details);
+
                           return (
                             <div
                               key={log.id}
-                              className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 hover:border-blue-500 dark:hover:border-purple-500 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+                              className="px-4 py-3.5 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-[#141420] transition-colors"
                             >
                               {/* Left: User Avatar + Action Details */}
-                              <div className="flex items-start sm:items-center gap-3 min-w-0">
-                                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-[#1b1b26] border border-blue-200 dark:border-zinc-700 text-blue-600 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0">
+                              <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0">
                                   {(log.user_name || 'U').charAt(0).toUpperCase()}
                                 </div>
 
-                                <div className="min-w-0 space-y-1">
+                                <div className="min-w-0 space-y-0.5 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-bold text-xs text-slate-900 dark:text-white">
                                       {log.user_name || 'System Member'}
@@ -2304,30 +2365,124 @@ export const UserDashboard: React.FC = () => {
                                       <span>{label}</span>
                                     </span>
                                   </div>
-                                  <p className="text-xs text-slate-700 dark:text-zinc-300 leading-snug">
-                                    {log.details}
+                                  <p className="text-xs text-slate-700 dark:text-zinc-300 leading-snug line-clamp-2">
+                                    {cleanSummary}
                                   </p>
                                 </div>
                               </div>
 
-                              {/* Right: Timestamp */}
-                              <div className="text-left sm:text-right shrink-0 font-mono text-[11px] self-start sm:self-auto pl-12 sm:pl-0">
-                                <span className="block text-slate-800 dark:text-zinc-300 font-bold">
-                                  {relativeTime}
-                                </span>
-                                <span className="text-[10px] text-zinc-500">
-                                  {logDate.toLocaleString('en-GB', {
+                              {/* Right: Timestamp & Morphing Dialog Trigger */}
+                              <div className="flex items-center gap-3 self-end sm:self-auto shrink-0 pl-12 sm:pl-0">
+                                <div className="text-left sm:text-right font-mono text-[11px]">
+                                  <span className="block text-slate-800 dark:text-zinc-300 font-bold">
+                                    {relativeTime}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500">
+                                    {logDate.toLocaleTimeString('en-GB', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+
+                                {/* Morphing Dialog for Full Inspection without JSON */}
+                                <MorphingDialog
+                                  id={`activity-morph-${log.id}`}
+                                  title={`Activity Log: ${label}`}
+                                  subtitle={`Logged on ${logDate.toLocaleString('en-GB', {
                                     day: 'numeric',
                                     month: 'short',
+                                    year: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit',
                                     second: '2-digit',
-                                  })}
-                                </span>
+                                  })}`}
+                                  trigger={(open) => (
+                                    <button
+                                      type="button"
+                                      onClick={open}
+                                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                                      title="Inspect Details"
+                                    >
+                                      Inspect
+                                    </button>
+                                  )}
+                                >
+                                  <div className="space-y-4 text-xs">
+                                    {/* User and Operation Card */}
+                                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-slate-500 dark:text-zinc-400">Actor / Member</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">{log.user_name || 'System Member'}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-slate-500 dark:text-zinc-400">Action Type</span>
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border ${badgeClass}`}>{label}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-slate-500 dark:text-zinc-400">Timestamp</span>
+                                        <span className="font-mono text-slate-800 dark:text-zinc-300">{logDate.toLocaleString('en-GB')}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Breakdown of Record Data without raw JSON */}
+                                    {meta ? (
+                                      <div className="space-y-2">
+                                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                          Application Record Details
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                          {meta.fullName && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Full Name</span>
+                                              <span className="font-bold text-slate-900 dark:text-white">{meta.fullName}</span>
+                                            </div>
+                                          )}
+                                          {meta.email && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Email Address</span>
+                                              <span className="font-bold text-slate-900 dark:text-white break-all">{meta.email}</span>
+                                            </div>
+                                          )}
+                                          {(meta.enrollmentNo || meta.enrollment_no) && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Enrollment No</span>
+                                              <span className="font-bold font-mono text-slate-900 dark:text-white">{meta.enrollmentNo || meta.enrollment_no}</span>
+                                            </div>
+                                          )}
+                                          {meta.phone && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Phone</span>
+                                              <span className="font-bold font-mono text-slate-900 dark:text-white">{meta.phone}</span>
+                                            </div>
+                                          )}
+                                          {meta.role && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Account Role</span>
+                                              <span className="font-bold uppercase text-blue-600 dark:text-purple-400">{meta.role}</span>
+                                            </div>
+                                          )}
+                                          {meta.status && (
+                                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800">
+                                              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Status</span>
+                                              <span className="font-bold uppercase text-emerald-600 dark:text-emerald-400">{meta.status}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 space-y-1">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-mono">Logged Description</p>
+                                        <p className="text-slate-800 dark:text-zinc-200 font-medium leading-relaxed">{cleanSummary}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </MorphingDialog>
                               </div>
                             </div>
                           );
                         })}
+                        </div>
                       </div>
                     );
                   })()}
@@ -2508,14 +2663,27 @@ export const UserDashboard: React.FC = () => {
                     onChange={handleProfileAvatarChange}
                     className="hidden"
                   />
-                  <button
-                    type="button"
-                    onClick={() => profileFileInputRef.current?.click()}
-                    className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-purple-600/20 dark:hover:bg-purple-600/30 border border-blue-200 dark:border-purple-500/40 text-blue-700 dark:text-purple-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>{editAvatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
-                  </button>
+                  <div className="w-full sm:w-auto">
+                    <AnimatedFileUpload
+                      variant="compact"
+                      multiple={false}
+                      accept="image/*"
+                      maxSize={5 * 1024 * 1024}
+                      maxFiles={1}
+                      dropTitle={editAvatarUrl ? 'Change Photo' : 'Upload Photo'}
+                      dropSubtitle="Drop picture or click to select"
+                      onFilesSelected={(files) => {
+                        if (files[0]) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            if (ev.target?.result) setEditAvatarUrl(ev.target.result as string);
+                          };
+                          reader.readAsDataURL(files[0]);
+                        }
+                      }}
+                      className="max-w-xs"
+                    />
+                  </div>
                   {editAvatarUrl && (
                     <button
                       type="button"
