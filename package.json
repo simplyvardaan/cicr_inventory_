@@ -8,9 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "neon:init": "node scripts/initialize_neon.cjs",
-    "backup:neon": "node scripts/backup_to_neon.cjs",
-    "test-user:create": "node scripts/create_test_user.cjs",
-    "test-data:seed": "node scripts/seed_test_data.cjs"
+    "backup:neon": "node scripts/backup_to_neon.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

@@ -220,29 +220,6 @@ Vercel environment variables
 environment variables. Supabase Auth remains primary, so login and signup are
 not available if Supabase Auth itself is down.
 
-To populate a safe, repeatable test dataset in Supabase, set
-`TEST_FIXTURE_PASSWORD` locally and run:
-
-```bash
-npm run test-data:seed
-```
-
-For a fresh Supabase test dataset:
-
-1. Run [`supabase_schema.sql`](./supabase_schema.sql) in the Supabase SQL Editor.
-2. Run [`supabase_test_database.sql`](./supabase_test_database.sql) in the SQL Editor.
-3. Set `TEST_FIXTURE_PASSWORD` in `.env` and run `npm run test-data:seed`.
-
-The SQL fixture resets only rows with `FIX-*` SKUs and fixed fixture IDs. The Node
-command creates the three Supabase Auth users, their profiles, borrow requests,
-and activity logs. Auth users are created by the Node command because passwords
-must not be inserted into a SQL fixture.
-
-This creates or updates three approved fixture users, three inventory items, two
-borrow requests, and activity logs. Fixture rows use the `cicr-fixture` prefix
-and are never deleted by the command.
-
-
 ### 5. Run Development Server
 ```bash
 npm run dev
