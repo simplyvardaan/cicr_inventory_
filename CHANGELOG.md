@@ -9,18 +9,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.2.0] - 2026-10-31
 
 ### Added
+- **Two-Box Side-by-Side Profile View**: Split Operator Profile into two distinct side-by-side modules: Operator Identity & Avatar (Left) and Verified Academic Credentials (Right).
+- **Locked Institutional Credentials**: Enforced security locks on Email, Enrollment Number, and Contact Number so they cannot be changed.
 - **macOS Window Team Showcase**: Interactive developer and mentor profile card matching the KPH JIIT design with traffic light window controls (`#ff5f56`, `#ffbd2e`, `#27c93f`), radiant gradient avatar ring, and interactive social buttons (LinkedIn, GitHub, Portfolio).
 - **Strict Role Separation**: Hierarchical tab segregation between `Mentor` (Gunjan Pal) and `Developer` (Vardaan Saxena, Samiksha Jhunjhunwala, Mohammad Arsh).
 - **Synchronous Session Hydration**: Added `getInitialAuth()` to `AuthContext` to instantly restore active user sessions and profiles from `localStorage` upon initial script evaluation, completely eliminating page refresh flickers and stuck authentication states.
 - **Dynamic File Code Tags**: Each team member profile dynamically displays a live file code moniker (`gunjan_pal.tsx`, `vardaan_saxena.tsx`, `samiksha_jhunjhunwala.tsx`, `mohammad_arsh.tsx`).
 
 ### Changed
+- **Centered & Prominent Request Slider**: Removed the redundant Close button from the item detail modal and placed the `Slide to Request Item` slider in the center with a larger `lg` footprint.
 - **Inventory Vault Scoping for Cart**: Moved and strictly restricted the `Cart` indicator button in `TopNavbar` so that it is only visible when the user is actively viewing the Component Vault inventory page.
 - **Minimalist Team Typography**: Removed subtitle badge tags (`Lead Architect & Developer`, `Mentor & Technical Advisor`, etc.) beneath developer and mentor names as requested.
 - **Header Action Cleanup**: Removed redundant `Request Cart` and `+ Add Equipment` buttons from the vault subheader for a clean, streamlined dashboard experience.
 - **Eliminated Preloader Delays**: Removed the blocking full-page spinning preloader, ensuring instant frame-1 rendering of the dashboard.
 
 ### Fixed
+- Fixed text turning invisible on hover in light theme across the Admin Hub navigation tabs, filter buttons, and search clear icons.
+- Fixed dark container box in light theme on the Requisition Approval Portal when no borrow requests match filter criteria.
+- Fixed backend synchronization for the Requisitions tab by ensuring `borrow_requests` queries and submissions bypass RLS restrictions and sync immediately with Supabase and activity logs.
 - Fixed issue where refreshing the browser on `localhost` or `cicr-inventory.vercel.app` briefly routed the user to the login form or stayed stuck on "Authenticating...".
 - Fixed action pill clutter at the bottom of the developer page.
 - Fixed layout responsiveness of the member avatar carousel on mobile and desktop viewports.
@@ -64,4 +70,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Initial release of the Creative & Innovative Cell in Robotics (CICR) laboratory inventory platform.
 - Basic component tracking, manual loan logs, and user authentication.
-

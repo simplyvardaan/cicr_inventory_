@@ -68,7 +68,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setItems(normalizedItems);
 
         // 2. Fetch real borrow requests from Supabase
-        const { data: dbRequests } = await supabase
+        const { data: dbRequests } = await supabaseAdmin
           .from('borrow_requests')
           .select('*')
           .order('created_at', { ascending: false });
@@ -114,7 +114,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data) {
         setItems((prev) => [data as InventoryItem, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Admin',
@@ -195,7 +195,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const { data: dbData, error } = await supabase
+      const { data: dbData, error } = await supabaseAdmin
         .from('borrow_requests')
         .insert([
           {
@@ -218,7 +218,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (dbData) {
         setRequests((prev) => [dbData as BorrowRequest, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Member',

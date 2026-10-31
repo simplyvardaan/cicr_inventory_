@@ -121,7 +121,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white">{req.user_name}</span>
                       <span className="text-slate-500 dark:text-zinc-500"> ({req.quantity} units)</span>
-                      <span className="text-slate-500 dark:text-zinc-500"> • {req.project_name}</span>
+                      <span className="text-slate-500 dark:text-zinc-500"> | {req.project_name}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {new Date(req.created_at).toLocaleDateString()}
@@ -133,19 +133,12 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700 transition-colors"
-          >
-            Close
-          </button>
-
+        {/* Footer: Centered prominent DragToConfirm, Close button removed */}
+        <div className="pt-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-center">
           {item.available_qty > 0 ? (
-            <div className="w-full sm:w-64">
+            <div className="w-full max-w-md sm:max-w-lg">
               <DragToConfirm
-                size="sm"
+                size="lg"
                 label="Slide to Request Item"
                 confirmedLabel="Item Selected!"
                 actionType="confirm"
@@ -161,7 +154,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           ) : (
             <button
               disabled
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-red-50 text-red-700 border-2 border-red-300 cursor-not-allowed"
+              className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm bg-red-50 text-red-700 border-2 border-red-300 cursor-not-allowed shadow-sm"
             >
               <span>Out of Stock</span>
             </button>

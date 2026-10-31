@@ -69,7 +69,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
   return (
     <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
       {/* Header */}
-      <div className="border-b border-zinc-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="border-b border-slate-200 dark:border-zinc-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5 tracking-tight">
             <Bell className="w-5 h-5 text-blue-600 dark:text-purple-400" />
@@ -77,7 +77,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
               ? 'Requisition Approval Portal (Admin Clearance)'
               : 'My Hardware Requisitions & Issues'}
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
             {isLeadOrAdmin
               ? 'Authorize member hardware requisitions. Hardware can only be issued and collected after administrator approval.'
               : 'Track requisition status. Components must be approved by an administrator before they can be issued.'}
@@ -124,7 +124,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                       isTabActive
                         ? 'bg-white text-blue-600 dark:text-purple-400'
-                        : 'bg-zinc-800 text-zinc-400'
+                        : 'bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-400'
                     }`}
                   >
                     {tab.count}
@@ -148,16 +148,16 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
 
         {/* Requests List */}
         {filteredList.length === 0 ? (
-          <div className="py-16 text-center rounded-2xl bg-[#121219] border border-zinc-800/70 p-6 space-y-3">
+          <div className="py-16 text-center rounded-2xl bg-slate-50 dark:bg-[#121219] border-2 border-slate-200 dark:border-zinc-800/70 p-6 space-y-3">
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-purple-950/40 border-2 border-blue-200 dark:border-purple-500/30 text-blue-600 dark:text-purple-400 flex items-center justify-center mx-auto">
               <Inbox className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-white">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               {requestStatusTab === 'all'
                 ? 'No borrow requests found'
                 : `No ${requestStatusTab} requests found`}
             </h3>
-            <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
               {!isLeadOrAdmin
                 ? 'You currently have no requisitions in this tab. Explore our component vault to check out electronics.'
                 : 'No requisitions currently match this filter criteria.'}
@@ -215,7 +215,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                       <div className="flex items-center gap-2 text-zinc-400 text-xs">
                         <User className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Borrower:</span>
-                        <strong className="text-white font-semibold">{req.user_name}</strong>
+                        <strong className="text-slate-900 dark:text-white font-semibold">{req.user_name}</strong>
                         <span className="text-zinc-500 font-mono text-[11px]">({req.user_email})</span>
                       </div>
                     )}
@@ -228,7 +228,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                         {req.purpose && (
                           <>
                             <span className="text-zinc-600 mx-1.5">|</span>
-                            <span className="text-zinc-300">{req.purpose}</span>
+                            <span className="text-slate-700 dark:text-zinc-300">{req.purpose}</span>
                           </>
                         )}
                       </div>
@@ -239,7 +239,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-zinc-500" />
                         <span>Requested: </span>
-                        <strong className="text-zinc-300 font-medium">
+                        <strong className="text-slate-800 dark:text-zinc-300 font-medium">
                           {req.created_at ? req.created_at.split('T')[0] : 'Recently'}
                         </strong>
                       </span>
@@ -250,7 +250,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                       </span>
                       {matchedItem?.location && (
                         <span className="text-zinc-400 font-mono">
-                          Lab Location: <strong className="text-zinc-200">{matchedItem.location}</strong>
+                          Lab Location: <strong className="text-slate-800 dark:text-zinc-200">{matchedItem.location}</strong>
                         </span>
                       )}
                       {req.actual_return_date && (
@@ -263,14 +263,14 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                     {/* Admin Note / Instructions */}
                     {req.admin_notes && (
                       <div className="mt-2 p-2 rounded-xl bg-slate-50 dark:bg-[#1b1b26] border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300">
-                        <span className="font-bold text-white">Admin Note: </span>
+                        <span className="font-bold text-slate-900 dark:text-white">Admin Note: </span>
                         {req.admin_notes}
                       </div>
                     )}
                   </div>
 
                   {/* Action Column for Both Admins & Members */}
-                  <div className="flex flex-col sm:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-800">
+                  <div className="flex flex-col sm:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-200 dark:border-zinc-800">
                     {isLeadOrAdmin ? (
                       <>
                         {req.status === 'pending' && (
@@ -286,7 +286,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                                 setAdminNote((prev) => ({ ...prev, [req.id]: e.target.value }))
                               }
                               placeholder="Locker / collection instructions..."
-                              className="w-full sm:w-56 px-2.5 py-1 text-[11px] bg-[#0c0c12] border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500 dark:focus:border-purple-500"
+                              className="w-full sm:w-56 px-2.5 py-1 text-[11px] bg-slate-50 dark:bg-[#0c0c12] border-2 border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-500 dark:focus:border-purple-500"
                             />
                             <div className="flex items-center gap-2">
                               <button

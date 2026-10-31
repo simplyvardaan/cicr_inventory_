@@ -199,7 +199,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               adminLogsTab === 'members'
                 ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
-                : 'text-zinc-400 hover:text-white border border-transparent'
+                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
             }`}
           >
             <Users className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400" />
@@ -219,7 +219,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               adminLogsTab === 'logs-7d'
                 ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
-                : 'text-zinc-400 hover:text-white border border-transparent'
+                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-emerald-400" />
@@ -239,7 +239,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               adminLogsTab === 'requests'
                 ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
-                : 'text-zinc-400 hover:text-white border border-transparent'
+                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
             }`}
           >
             <UserCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -272,7 +272,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setMemberSearch('')}
-                  className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-white"
+                  className="absolute right-2.5 top-2.5 text-slate-400 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -288,7 +288,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-colors cursor-pointer ${
                     memberRoleFilter === r
                       ? 'bg-blue-600 dark:bg-purple-600 text-white'
-                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-600 dark:text-zinc-400 hover:text-white border-2 border-slate-200 dark:border-zinc-800'
+                      : 'bg-slate-100 dark:bg-[#14141c] text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800'
                   }`}
                 >
                   {r === 'all' ? 'All Roles' : r}
