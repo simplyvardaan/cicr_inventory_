@@ -99,9 +99,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } = await supabase.auth.getSession();
         if (!mounted) return;
         setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await loadProfile(session.user);
+        const storedFallback = localStorage.getItem('neon-fallback-user');
+        const fallbackUser = storedFallback ? JSON.parse(storedFallback) as User : null;
+        const currentUser = session?.user ?? fallbackUser;
+        setUser(currentUser);
+        if (currentUser) {
+          await loadProfile(currentUser);
         } else {
           setProfile(null);
         }
@@ -170,7 +173,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (res.error) {
-        return { success: false, error: res.error.message };
+        const fallback = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: emailToAuth, password }),
+        });
+        if (!fallback.ok) return { success: false, error: res.error.message };
+        const fallbackData = await fallback.json();
+        const fallbackUser = fallbackData.user as User;
+        setUser(fallbackUser);
+        setSession(null);
+        await loadProfile(fallbackUser);
+        localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
+        return { success: true };
       }
 
       if (res.data.user) {
@@ -598,6 +613,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      localStorage.removeItem('neon-fallback-user');
     }
   };
 

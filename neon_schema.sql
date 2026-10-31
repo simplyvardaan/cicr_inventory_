@@ -76,6 +76,10 @@ CREATE TABLE IF NOT EXISTS auth_users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE auth_users
+  ADD COLUMN IF NOT EXISTS password_hash TEXT,
+  ADD COLUMN IF NOT EXISTS password_reset_required BOOLEAN NOT NULL DEFAULT TRUE;
+
 CREATE INDEX IF NOT EXISTS inventory_items_category_idx ON inventory_items(category);
 CREATE INDEX IF NOT EXISTS borrow_requests_user_id_idx ON borrow_requests(user_id);
 CREATE INDEX IF NOT EXISTS activity_logs_created_at_idx ON activity_logs(created_at DESC);

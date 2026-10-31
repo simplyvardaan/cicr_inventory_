@@ -6,6 +6,7 @@ const { loadEnv } = require('./loadEnv.cjs');
 
 const { supabaseUrl, serviceRoleKey } = loadEnv();
 const neonDatabaseUrl = process.env.NEON_DATABASE_URL;
+const supabaseDatabaseUrl = process.env.SUPABASE_DB_URL;
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error('VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
@@ -22,6 +23,9 @@ const neon = new Client({
   connectionString: neonDatabaseUrl,
   ssl: { rejectUnauthorized: true },
 });
+const supabaseDatabase = supabaseDatabaseUrl
+  ? new Client({ connectionString: supabaseDatabaseUrl, ssl: { rejectUnauthorized: true } })
+  : null;
 
 const sourceTables = [
   { name: 'profiles', updatedColumn: 'updated_at' },
@@ -78,8 +82,18 @@ async function fetchAuthUsers() {
     page += 1;
   }
 
+  const hashes = new Map();
+  if (supabaseDatabase) {
+    const result = await supabaseDatabase.query(
+      'SELECT id, encrypted_password FROM auth.users WHERE encrypted_password IS NOT NULL'
+    );
+    for (const row of result.rows) hashes.set(row.id, row.encrypted_password);
+  } else {
+    console.warn('SUPABASE_DB_URL is not configured; password hashes cannot be mirrored from auth.users.');
+  }
+
   return users.map((user) => {
-    const passwordHash = [user.password_hash, user.encrypted_password]
+    const passwordHash = [hashes.get(user.id), user.password_hash, user.encrypted_password]
       .find((value) => typeof value === 'string' && /^\$(2[aby]?|argon2(?:id)?|7)\$/.test(value));
 
     return {
@@ -163,7 +177,7 @@ async function syncOperationalTables(tables, authUsers) {
     },
     {
       name: 'auth_users',
-      columns: ['id', 'email', 'created_at', 'updated_at'],
+      columns: ['id', 'email', 'password_hash', 'password_reset_required', 'created_at', 'updated_at'],
     },
   ];
 
@@ -199,6 +213,7 @@ async function syncOperationalTables(tables, authUsers) {
 
 async function backup() {
   await neon.connect();
+  if (supabaseDatabase) await supabaseDatabase.connect();
   await ensureSchema();
 
   const run = await neon.query(
@@ -220,7 +235,8 @@ async function backup() {
     const authUsers = await fetchAuthUsers();
     await syncRecords('auth_users', 'updated_at', authUsers);
     totalRows += authUsers.length;
-    console.log(`Backed up ${authUsers.length} auth user records (password hashes only when provided by Supabase).`);
+    const hashedUsers = authUsers.filter((user) => user.password_hash).length;
+    console.log(`Backed up ${authUsers.length} auth user records (${hashedUsers} password hashes mirrored).`);
 
     await syncOperationalTables(tableData, authUsers);
     console.log('Mirrored records into Neon operational tables.');
@@ -242,6 +258,7 @@ async function backup() {
     throw error;
   } finally {
     await neon.end();
+    if (supabaseDatabase) await supabaseDatabase.end();
   }
 }
 

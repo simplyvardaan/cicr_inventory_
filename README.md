@@ -167,8 +167,10 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
 ```
 
-`NEON_DATABASE_URL` is server-side only. It must not use the `VITE_` prefix or be
-included in frontend deployment variables.
+`NEON_DATABASE_URL`, `SUPABASE_DB_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are
+server-side only. They must not be included in frontend deployment variables.
+`SUPABASE_DB_URL` is the direct Supabase Postgres connection string used to copy
+the existing `auth.users.encrypted_password` hashes without exposing them.
 
 The browser always sends database requests through `/api/db`. The gateway tries
 Supabase first and automatically uses the mirrored Neon tables when Supabase
@@ -203,8 +205,10 @@ REST API cannot execute schema DDL using an anon or service-role key.
 The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
 It replaces each mirrored table's backup snapshot atomically and records each run
 in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
-If Supabase provides a supported password hash, it is stored as `password_hash`;
-otherwise the record is marked `password_reset_required` for failover recovery.
+The mirror reads `auth.users.encrypted_password` through `SUPABASE_DB_URL` and
+stores it as `password_hash`, allowing the same password to be verified during
+failover. Without `SUPABASE_DB_URL`, the Supabase API cannot provide password
+hashes and users are marked `password_reset_required`.
 
 ### Database failover gateway
 
