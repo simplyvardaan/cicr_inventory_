@@ -221,11 +221,22 @@ Vercel environment variables
 environment variables. Supabase Auth remains primary, so login and signup are
 not available if Supabase Auth itself is down.
 
+### Email notifications
+
+Configure Google SMTP with a Gmail App Password using `SMTP_HOST`, `SMTP_PORT`,
+`SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. The server endpoints
+send notifications for login, logout, account registration and decisions, borrow
+requests, approvals, rejections, returns, and return reminders.
+
+`/api/reminders` is available for an external scheduler or manual invocation.
+Vercel cron is intentionally not configured.
+
+
 ### 5. Run Development Server
 ```bash
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+Run `npm run dev` for the full local app. It serves the Vite frontend and `/api/*` endpoints natively on `http://localhost:3000`; Vercel is not required for local development.
 
 ### 6. Production Build
 ```bash

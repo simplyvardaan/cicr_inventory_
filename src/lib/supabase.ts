@@ -1,5 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 const decodeFallback = (encoded: string): string => {
   if (typeof atob === 'function') {
     try {
@@ -63,4 +77,6 @@ export const supabaseAdmin = createClient(
 );
 
 export const SUPABASE_PROJECT_URL = supabaseUrl;
-export const SUPABASE_PROJECT_REF = supabaseUrl ? supabaseUrl.split('//')[1]?.split('.')[0] || '' : '';
+export const SUPABASE_PROJECT_REF = supabaseUrl
+  ? supabaseUrl.split('//')[1]?.split('.')[0] || ''
+  : '';

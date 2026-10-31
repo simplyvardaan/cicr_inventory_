@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, supabaseAdmin } from '../lib/supabase';
 import { UserProfile, UserRole } from '../types/inventory';
+import { notifyEmail } from '../lib/notifications';
 
 export interface SignUpData {
   email: string;
@@ -314,6 +315,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-in log error:', logErr);
         }
+        void notifyEmail('login', res.data.user.email, {
+          name: profData?.full_name || res.data.user.user_metadata?.full_name,
+          email: res.data.user.email,
+          role: profData?.role || res.data.user.user_metadata?.role,
+        });
       }
 
       return { success: true };
@@ -339,6 +345,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const initialStatus = 'pending';
+      const accountResponse = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          email: emailToRegister,
+          password,
+          full_name,
+          enrollment_no,
+          phone,
+          role,
+          avatar_url,
+        }),
+      });
+      if (!accountResponse.ok) {
+        const accountError = await accountResponse.json().catch(() => ({}));
+        return { success: false, error: accountError.error || 'Registration failed.' };
+      }
+      return {
+        success: true,
+        message: 'Registration request submitted successfully! Check your email and wait for administrator approval.',
+      };
+
+      /*
       let createdUserId: string | null = null;
 
       // 1. Attempt to create user in Supabase Auth via supabaseAdmin
@@ -403,12 +433,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }),
         },
       ]);
+      await notifyEmail('account_created', emailToRegister, {
+        name: full_name,
+        email: emailToRegister,
+        role,
+        status: initialStatus,
+      });
 
       return {
         success: true,
         message:
           'Registration request submitted successfully! Your account is pending admin approval in Admin Logs before you can log in.',
       };
+      */
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       return { success: false, error: message };
@@ -417,6 +454,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveUserAccount = async (targetId: string) => {
     try {
+      const response = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', target_id: targetId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, error: result.error || 'Approval failed.' };
+      return { success: true };
+
+      /*
       // Find account request from activity_logs
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
@@ -469,6 +516,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (existingUser) {
         userId = existingUser.id;
+        email = email || existingUser.email || '';
         await supabaseAdmin.auth.admin.updateUserById(userId, {
           email_confirm: true,
           user_metadata: {
@@ -530,8 +578,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           details: `Account for ${fullName || email || targetId} was approved by ${profile?.full_name || 'Admin'}`,
         },
       ]);
+      await notifyEmail('account_approved', email, {
+        name: fullName,
+        email,
+        role,
+        status: 'approved',
+      });
 
       return { success: true };
+      */
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Approval failed';
       return { success: false, error: msg };
@@ -540,6 +595,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectUserAccount = async (targetId: string) => {
     try {
+      const response = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', target_id: targetId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, error: result.error || 'Rejection failed.' };
+      return { success: true };
+
+      /*
       const { data: logMatches } = await supabaseAdmin
         .from('activity_logs')
         .select('*')
@@ -594,8 +659,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           details: `Account registration for ${fullName} was rejected by ${profile?.full_name || 'Admin'}`,
         },
       ]);
+      const rejectedDetails = targetLog
+        ? typeof targetLog.details === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(targetLog.details) as Record<string, unknown>;
+              } catch {
+                return {};
+              }
+            })()
+          : (targetLog.details as Record<string, unknown>)
+        : {};
+      const rejectedEmail =
+        typeof rejectedDetails.email === 'string' ? rejectedDetails.email : undefined;
+      await notifyEmail('account_rejected', rejectedEmail, {
+        name: fullName,
+        email: rejectedEmail,
+        status: 'rejected',
+      });
 
       return { success: true };
+      */
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Rejection failed';
       return { success: false, error: msg };
@@ -663,6 +747,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-out log error:', logErr);
         }
+        void notifyEmail('logout', user.email, {
+          name: profile?.full_name || user.user_metadata?.full_name,
+        });
       }
       await supabase.auth.signOut();
     } catch (err) {
