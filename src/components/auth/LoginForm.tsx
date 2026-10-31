@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
-import { Lock, User, Key, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { Lock, User, Key, Eye, EyeOff, LogIn, AlertCircle, Info } from 'lucide-react';
 
 interface LoginFormProps {
   onSwitchToSignup: () => void;
@@ -89,11 +89,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         </button>
       </div>
 
-      {/* Error Alert */}
+      {/* Status / Error Alert */}
       {errorMsg && (
-        <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border-2 border-red-500 text-red-900 dark:text-red-200 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-          <div className="flex-1">{errorMsg}</div>
+        <div
+          className={`mb-4 p-3.5 rounded-2xl border-2 text-xs font-medium flex items-start gap-2.5 animate-in fade-in ${
+            errorMsg.toLowerCase().includes('admin portal') || errorMsg.toLowerCase().includes('pending')
+              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500/80 text-amber-900 dark:text-amber-200'
+              : 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-900 dark:text-red-200'
+          }`}
+        >
+          {errorMsg.toLowerCase().includes('admin portal') || errorMsg.toLowerCase().includes('pending') ? (
+            <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1 leading-relaxed">{errorMsg}</div>
         </div>
       )}
 

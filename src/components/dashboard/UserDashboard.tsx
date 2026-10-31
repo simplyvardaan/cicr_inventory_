@@ -34,6 +34,7 @@ export const UserDashboard: React.FC = () => {
     updateProfile,
     approveUserAccount,
     rejectUserAccount,
+    updateUserRole,
   } = useAuth();
   const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
   const { items, requests, logs, deleteItem, updateBorrowStatus, refreshData } = useInventory();
@@ -366,21 +367,27 @@ export const UserDashboard: React.FC = () => {
       const targetMember = allMembers.find((m) => m.id === targetUserId);
       if (
         targetMember?.email &&
-        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(targetMember.email.toLowerCase())
+        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(targetMember.email.toLowerCase())
       ) {
         showToast('error', 'Action Restricted', 'Master superadmin roles cannot be modified.');
         return;
       }
-      const { error } = await supabaseAdmin
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
-      if (error) throw error;
+
+      setProcessingUserId(targetUserId);
+      const res = await updateUserRole(targetUserId, newRole);
+      if (!res.success) {
+        showToast('error', 'Role Update Failed', res.error || 'Failed to update member role.');
+        return;
+      }
+
       showToast('success', 'Role Updated', `${name} is now ${newRole.toUpperCase()}.`);
       await fetchAllMembers();
+      await refreshData();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not change member role.';
       showToast('error', 'Role Update Failed', msg);
+    } finally {
+      setProcessingUserId(null);
     }
   };
 

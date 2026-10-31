@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.5] : 2026-11-01
+
+### Added
+* Backend Connected Role Promotions & Demotions: Connected the "Promote to Admin" / "Demote to Member" actions to the backend `/api/accounts` endpoint via `updateUserRole` in `AuthContext`.
+* Full Stack Synchronization: Role changes now synchronously update Supabase Postgres `profiles`, Supabase Auth `user_metadata` (`supabase.auth.admin.updateUserById`), and mirror to Neon PostgreSQL (`NEON_DATABASE_URL`).
+* Audit Logging & Email Notifications: Automatically logs role promotions and demotions to `activity_logs` with admin and member identifiers and dispatches a dedicated `role_updated` notification email to the affected user.
+* UI Feedback & Protection: Added button loading state (`Updating...`), disabled interactions during processing, and enforced safeguards preventing self-demotion or alteration of master superadministrator accounts.
+
+### Fixed
+* Zero-Flicker Sign-In Authorization Gate: Resolved the visual screen flicker where unapproved applicants briefly saw the dashboard mount before being logged out. Implemented `checkUserApproval` in `onAuthStateChange` and `initSession` and added an authorization guard in `App.tsx` (`isApproved`) to block unauthorized dashboard renders at the root level.
+* Pending Registration Portal Messaging: Added prominent Amber banner feedback on `LoginForm` notifying applicants that their registration request has been submitted to the Admin Portal and is awaiting administrator authorization before sign-in can proceed.
+* Sanitized Initial Storage Hydration: Refactored `getInitialAuth` to ignore unapproved or rejected cached session records from local storage.
+
+***
+
 ## [2.18.4] : 2026-11-01
 
 ### Fixed

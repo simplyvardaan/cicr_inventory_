@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { Client } from 'pg';
 import { getMailFrom, isSmtpConfigured, getTransporter, renderEmail } from './_mailer';
 
 function response(res: VercelResponse, status: number, body: unknown) {
@@ -32,6 +33,9 @@ async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getA
   if (!authorization?.startsWith('Bearer ')) throw new Error('Authentication is required.');
   const { data, error } = await supabase.auth.getUser(authorization.slice(7));
   if (error || !data.user) throw new Error('Authentication is required.');
+  const email = (data.user.email || '').toLowerCase();
+  const isSuperadmin = ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(email);
+  if (isSuperadmin) return data.user;
   const role = data.user.user_metadata?.role;
   if (role !== 'admin') {
     const { data: profile, error: profileError } = await supabase
@@ -41,9 +45,14 @@ async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getA
       .maybeSingle();
     if (profileError || profile?.role !== 'admin') throw new Error('Administrator access is required.');
   }
+  return data.user;
 }
 
-async function sendAccountEmail(event: 'account_created' | 'account_approved' | 'account_rejected', to: string, data: Record<string, unknown>) {
+async function sendAccountEmail(
+  event: 'account_created' | 'account_approved' | 'account_rejected' | 'role_updated',
+  to: string,
+  data: Record<string, unknown>
+) {
   if (!isSmtpConfigured()) {
     console.warn(`SMTP is not configured; skipped ${event} email.`);
     return;
@@ -74,32 +83,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const action = body?.action;
 
     if (action === 'role') {
-      await requireAdmin(req, supabase);
+      const adminUser = await requireAdmin(req, supabase);
       const targetId = typeof body?.target_id === 'string' ? body.target_id : '';
       const role = body?.role === 'admin' || body?.role === 'member' ? body.role : '';
       if (!targetId || !role) return response(res, 400, { error: 'A valid user and role are required.' });
-      if (targetId === (await supabase.auth.getUser(req.headers.authorization!.slice(7))).data.user?.id) {
+      if (targetId === adminUser?.id) {
         return response(res, 400, { error: 'You cannot change your own administrator role.' });
       }
 
+      // Fetch target user profile and auth details
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', targetId)
+        .maybeSingle();
+
+      const { data: targetAuth } = await supabase.auth.admin.getUserById(targetId);
+      const targetEmail = targetProfile?.email || targetAuth?.user?.email || '';
+      const targetName = targetProfile?.full_name || targetAuth?.user?.user_metadata?.full_name || targetEmail || 'Member';
+
+      if (
+        targetEmail &&
+        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(targetEmail.toLowerCase())
+      ) {
+        return response(res, 400, { error: 'Master administrator accounts cannot be demoted or modified.' });
+      }
+
+      // 1. Update Supabase profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ role, updated_at: new Date().toISOString() })
         .eq('id', targetId);
       requireDatabaseSuccess(profileError, 'Role update');
 
+      // 2. Update Supabase Auth user_metadata
+      const currentMeta = targetAuth?.user?.user_metadata || {};
       const { error: authError } = await supabase.auth.admin.updateUserById(targetId, {
-        user_metadata: { role },
+        user_metadata: { ...currentMeta, role },
       });
       requireDatabaseSuccess(authError, 'Auth role update');
 
+      // 3. Mirror to Neon PostgreSQL if configured
+      if (process.env.NEON_DATABASE_URL) {
+        try {
+          const pgClient = new Client({
+            connectionString: process.env.NEON_DATABASE_URL,
+            ssl: { rejectUnauthorized: true },
+          });
+          await pgClient.connect();
+          await pgClient.query('UPDATE profiles SET role = $1, updated_at = NOW() WHERE id = $2', [role, targetId]);
+          await pgClient.end();
+        } catch (neonErr) {
+          console.warn('Neon role sync notice:', neonErr);
+        }
+      }
+
+      // 4. Record audit log
+      const adminName = adminUser?.user_metadata?.full_name || adminUser?.email || 'Administrator';
       const { error: logError } = await supabase.from('activity_logs').insert([{
         user_id: targetId,
-        user_name: 'Administrator',
+        user_name: targetName,
         action: 'ROLE_UPDATED',
-        details: `Account role changed to ${role}.`,
+        details: `${targetName}'s role was updated to ${role.toUpperCase()} by ${adminName}.`,
       }]);
       requireDatabaseSuccess(logError, 'Role update logging');
+
+      // 5. Send notification email if target email exists
+      if (targetEmail) {
+        await sendAccountEmail('role_updated', targetEmail, {
+          name: targetName,
+          email: targetEmail,
+          role,
+        });
+      }
+
       return response(res, 200, { success: true, role });
     }
 

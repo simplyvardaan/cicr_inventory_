@@ -7,6 +7,7 @@ const allowedEvents = new Set([
   'account_created',
   'account_approved',
   'account_rejected',
+  'role_updated',
   'borrow_requested',
   'borrow_approved',
   'borrow_rejected',

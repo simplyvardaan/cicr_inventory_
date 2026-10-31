@@ -351,6 +351,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     <div className="sm:shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-zinc-800/80 flex sm:block justify-end">
                       <button
                         type="button"
+                        disabled={processingUserId === member.id}
                         onClick={() =>
                           onPromoteRole(
                             member.id,
@@ -358,13 +359,17 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                             member.full_name || member.email
                           )
                         }
-                        className={`w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-center ${
+                        className={`w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed ${
                           isAdminMember
                             ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-slate-300 dark:border-zinc-700'
                             : 'bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600'
                         }`}
                       >
-                        {isAdminMember ? 'Demote to Member' : 'Promote to Admin'}
+                        {processingUserId === member.id
+                          ? 'Updating...'
+                          : isAdminMember
+                          ? 'Demote to Member'
+                          : 'Promote to Admin'}
                       </button>
                     </div>
                   </div>
