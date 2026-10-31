@@ -1,35 +1,19 @@
 import nodemailer from 'nodemailer';
 
-const decodeFallback = (encoded: string): string => {
-  if (typeof atob === 'function') {
-    try {
-      return atob(encoded);
-    } catch {
-      return '';
-    }
-  }
-  if (typeof Buffer !== 'undefined') {
-    try {
-      return Buffer.from(encoded, 'base64').toString('utf8');
-    } catch {
-      return '';
-    }
-  }
-  return '';
-};
-
-// Default Google SMTP configuration fallbacks
 const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
 const DEFAULT_SMTP_PORT = 465;
-const DEFAULT_SMTP_USER = decodeFallback('Y2ljcmludmVudG9yeW9mZmljaWFsQGdtYWlsLmNvbQ=='); // cicrinventoryofficial@gmail.com
-const DEFAULT_SMTP_PASS = decodeFallback('ZXpvdWZxaW52aWZtdWRndg=='); // ezoufqenvifmudgv
-const DEFAULT_SMTP_FROM = 'CICR Inventory <cicrinventoryofficial@gmail.com>';
 
-export const smtpHost = process.env.SMTP_HOST || DEFAULT_SMTP_HOST;
-export const smtpPort = Number(process.env.SMTP_PORT || DEFAULT_SMTP_PORT);
-export const smtpSecure = process.env.SMTP_SECURE !== 'false';
-export const smtpUser = process.env.SMTP_USER || DEFAULT_SMTP_USER;
-export const smtpPass = process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
+const configuredPort = Number.parseInt(process.env.SMTP_PORT || String(DEFAULT_SMTP_PORT), 10);
+const configuredSecure = process.env.SMTP_SECURE?.trim().toLowerCase();
+
+export const smtpHost = process.env.SMTP_HOST?.trim() || DEFAULT_SMTP_HOST;
+export const smtpPort = configuredPort;
+export const smtpSecure = configuredSecure
+  ? configuredSecure === 'true'
+  : smtpPort === DEFAULT_SMTP_PORT;
+export const smtpUser = process.env.SMTP_USER?.trim() || '';
+export const smtpPass = process.env.SMTP_PASS?.trim() || '';
+const smtpFrom = process.env.SMTP_FROM?.trim() || (smtpUser ? `CICR Inventory <${smtpUser}>` : '');
 
 export const mailer = nodemailer.createTransport({
   host: smtpHost,
@@ -42,11 +26,20 @@ export const mailer = nodemailer.createTransport({
 });
 
 export function getMailFrom(): string {
-  return process.env.SMTP_FROM || process.env.SMTP_USER || DEFAULT_SMTP_FROM;
+  return smtpFrom;
 }
 
 export function isSmtpConfigured(): boolean {
-  return Boolean(smtpUser && smtpPass && getMailFrom());
+  return Boolean(
+    smtpHost &&
+    Number.isInteger(smtpPort) &&
+    smtpPort >= 1 &&
+    smtpPort <= 65535 &&
+    (!configuredSecure || configuredSecure === 'true' || configuredSecure === 'false') &&
+    smtpUser &&
+    smtpPass &&
+    getMailFrom()
+  );
 }
 
 function escapeHtml(value: unknown) {

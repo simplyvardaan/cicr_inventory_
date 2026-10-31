@@ -310,7 +310,8 @@ not available if Supabase Auth itself is down.
 
 Configure Google SMTP with a Gmail App Password using `SMTP_HOST`, `SMTP_PORT`,
 `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. The server endpoints
-send notifications for login, logout, account registration and decisions, borrow
+require these server-side variables and do not contain fallback credentials. The
+server endpoints send notifications for login, logout, account registration and decisions, borrow
 requests, approvals, rejections, returns, and return reminders.
 
 `/api/reminders` is available for an external scheduler or manual invocation.
