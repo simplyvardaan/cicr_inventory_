@@ -21,11 +21,8 @@ import { Notification } from '../ui/notification-bell';
 
 const isLowReserveItem = (i: InventoryItem): boolean => {
   if (i.available_qty <= 0) return false;
-  if (i.available_qty >= i.total_qty) return false;
-  const threshold = i.min_threshold ?? 2;
-  const isBelowThreshold = i.available_qty <= threshold;
-  const isBelowHalf = i.total_qty > 0 && i.available_qty / i.total_qty <= 0.5;
-  return isBelowThreshold || isBelowHalf;
+  if (i.total_qty <= 0) return false;
+  return (i.available_qty / i.total_qty) < 0.5;
 };
 
 export const UserDashboard: React.FC = () => {
@@ -74,7 +71,45 @@ export const UserDashboard: React.FC = () => {
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   // Notifications
+  // Notifications with persistent read status in localStorage
+  const [readNotifIds, setReadNotifIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('cicr-read-notifications');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const handleMarkNotificationRead = (id: string) => {
+    setReadNotifIds((prev) => {
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem('cicr-read-notifications', JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setReadNotifIds((prev) => {
+      const next = new Set(prev);
+      notifications.forEach((n) => next.add(n.id));
+      try {
+        localStorage.setItem('cicr-read-notifications', JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearNotifications = () => {
+    handleMarkAllNotificationsRead();
+    setNotifications([]);
+  };
 
   // Update profile edit state when profile changes
   useEffect(() => {
@@ -127,31 +162,35 @@ export const UserDashboard: React.FC = () => {
     }
   }, [isAdmin]);
 
-  // Generate notifications from low reserves & active loans
+  // Generate notifications: warnings are strictly visible to only admin accounts!
   useEffect(() => {
     const list: Notification[] = [];
-    const lowItems = items.filter((i) => isLowReserveItem(i));
-    lowItems.forEach((it) => {
-      list.push({
-        id: `low-${it.id}`,
-        title: `Low Reserve: ${it.name}`,
-        message: `Only ${it.available_qty} units left in stock (${it.location}).`,
-        type: 'warning',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        read: false,
-        action: () => setActiveView('inventory'),
+    if (isAdmin) {
+      const lowItems = items.filter((i) => isLowReserveItem(i));
+      lowItems.forEach((it) => {
+        const notifId = `low-${it.id}`;
+        list.push({
+          id: notifId,
+          title: `Low Reserve: ${it.name}`,
+          message: `Only ${it.available_qty} units left in stock (${it.location}).`,
+          type: 'warning',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          read: readNotifIds.has(notifId),
+          action: () => setActiveView('inventory'),
+        });
       });
-    });
+    }
 
     const pendingReqs = requests.filter((r) => r.status === 'pending');
     if (isLeadOrAdmin && pendingReqs.length > 0) {
+      const notifId = 'pending-reqs-alert';
       list.push({
-        id: 'pending-reqs-alert',
+        id: notifId,
         title: `${pendingReqs.length} Requisition(s) Pending`,
         message: 'Members have requested hardware awaiting admin authorization.',
         type: 'info',
         timestamp: 'Real-time',
-        read: false,
+        read: readNotifIds.has(notifId),
         action: () => setActiveView('review-requests'),
       });
     }
@@ -162,20 +201,21 @@ export const UserDashboard: React.FC = () => {
         (r) => (r.user_email?.toLowerCase() === user.email?.toLowerCase() || r.user_id === user.id) && r.status === 'approved'
       );
       if (myApproved.length > 0) {
+        const notifId = 'my-approved-requisitions';
         list.push({
-          id: 'my-approved-requisitions',
+          id: notifId,
           title: `${myApproved.length} Requisition(s) Cleared`,
           message: 'Admin has authorized your hardware pass. Tap to view and collect hardware.',
           type: 'success',
           timestamp: 'Authorized',
-          read: false,
+          read: readNotifIds.has(notifId),
           action: () => setActiveView('review-requests'),
         });
       }
     }
 
     setNotifications(list);
-  }, [items, requests, isLeadOrAdmin, user]);
+  }, [items, requests, isLeadOrAdmin, isAdmin, user, readNotifIds]);
 
   // Cart operations
   const handleAddToCart = (item: InventoryItem) => {
@@ -227,6 +267,7 @@ export const UserDashboard: React.FC = () => {
     const res = await updateBorrowStatus(requestId, action, note);
     if (res.success) {
       showToast('success', `Requisition ${action.toUpperCase()}`, `Borrow status updated to ${action}.`);
+      await refreshData();
     } else {
       showToast('error', 'Update Failed', res.error);
     }

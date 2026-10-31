@@ -21,7 +21,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
   const totalUnits = items.reduce((sum, item) => sum + (item.total_qty || 0), 0);
   const availableUnits = items.reduce((sum, item) => sum + (item.available_qty || 0), 0);
   const borrowedUnits = totalUnits - availableUnits;
-  const lowStockItems = items.filter((item) => item.available_qty <= item.min_threshold);
+  const lowStockItems = items.filter((item) => item.available_qty > 0 && item.total_qty > 0 && (item.available_qty / item.total_qty) < 0.5);
   const pendingRequests = requests.filter((r) => r.status === 'pending');
 
   const statCards = [

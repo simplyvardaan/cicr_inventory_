@@ -186,15 +186,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 </div>
               ) : (
                 notifications.map((item) => {
-                  const dateString =
-                    typeof item.timestamp === 'string'
-                      ? new Date(item.timestamp).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : item.timestamp.toLocaleDateString();
+                  const dateString = typeof item.timestamp === "string" ? item.timestamp : item.timestamp instanceof Date ? item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just now";
 
                   return (
                     <motion.div

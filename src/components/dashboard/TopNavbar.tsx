@@ -8,6 +8,7 @@ import { AlertTriangle, ShoppingBag } from 'lucide-react';
 interface TopNavbarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
+  isAdmin?: boolean;
   isLeadOrAdmin: boolean;
   cartCount?: number;
   onOpenCart?: () => void;
@@ -21,6 +22,7 @@ interface TopNavbarProps {
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeView,
   setActiveView,
+  isAdmin,
   isLeadOrAdmin,
   cartCount,
   onOpenCart,
@@ -86,7 +88,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Low Reserves Warning Pill (clickable to filter low reserves in vault) */}
-          {lowReservesCount > 0 && (
+          {isAdmin && lowReservesCount > 0 && (
             <button
               type="button"
               onClick={() => setActiveView('inventory')}
