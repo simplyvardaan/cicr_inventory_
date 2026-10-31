@@ -28,7 +28,7 @@ export interface TeamMember {
  * Team Rosters for Phase 1 and Phase 2
  * Phase 1:
  *   Mentor: Gunjan Pal
- *   Developers: Vardaan Saxena, Kushagra, Divyam, Mahak
+ *   Developers: Vardaan Saxena, Kushagra Garg, Divyam Jain, Mahak Katahara
  * Phase 2:
  *   Mentor: Gunjan Pal
  *   Developers: Vardaan Saxena, Samiksha Jhunjhunwala, Mohammad Arsh
@@ -62,26 +62,29 @@ const teamRosters: Record<TeamPhase, { mentor: TeamMember; developers: TeamMembe
         portfolio: 'https://vardaansaxena.tech',
       },
       {
-        id: 'kushagra',
-        name: 'Kushagra',
+        id: 'divyam',
+        name: 'Divyam Jain',
         category: 'developer',
-        filename: 'kushagra.tsx',
+        filename: 'divyam_jain.tsx',
+        photoUrl: '/images/team/divyam.jpg',
+        monogram: 'DJ',
+        quote: 'Laying the initial groundwork for digital asset tracking in the robotics laboratory.',
+      },
+      {
+        id: 'kushagra',
+        name: 'Kushagra Garg',
+        category: 'developer',
+        filename: 'kushagra_garg.tsx',
+        photoUrl: '/images/team/kushagra.jpg',
         monogram: 'KG',
         quote: 'Exploring initial inventory indexing and hardware requisition structures.',
       },
       {
-        id: 'divyam',
-        name: 'Divyam',
-        category: 'developer',
-        filename: 'divyam.tsx',
-        monogram: 'DV',
-        quote: 'Laying the initial groundwork for digital asset tracking in the robotics laboratory.',
-      },
-      {
         id: 'mahak',
-        name: 'Mahak',
+        name: 'Mahak Katahara',
         category: 'developer',
-        filename: 'mahak.tsx',
+        filename: 'mahak_katahara.tsx',
+        photoUrl: '/images/team/mahak.jpg',
         monogram: 'MK',
         quote: 'Building foundational layouts and early user onboarding flows for club members.',
       },
@@ -209,7 +212,7 @@ export const MeetTheDevelopers: React.FC = () => {
   }, [handlePrevMember, handleNextMember]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 space-y-6 sm:space-y-8 pb-24 select-none animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 space-y-4 sm:space-y-5 pb-16 select-none animate-in fade-in duration-300">
       
       {/* Title Header */}
       <div className="text-center space-y-1">
@@ -222,7 +225,7 @@ export const MeetTheDevelopers: React.FC = () => {
       </div>
 
       {/* Primary Phase 1 and Phase 2 Buttons */}
-      <div className="flex flex-col items-center justify-center gap-3">
+      <div className="flex flex-col items-center justify-center gap-2.5">
         <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-[#120d22] border-2 border-slate-200 dark:border-zinc-800 shadow-sm">
           <button
             type="button"
@@ -281,7 +284,7 @@ export const MeetTheDevelopers: React.FC = () => {
         aria-label={`Profile of ${currentMember.name}`}
       >
         {/* macOS Title Bar */}
-        <div className="select-none bg-slate-100/80 dark:bg-[#141026]/90 border-b border-slate-200 dark:border-[#222232] px-4 sm:px-7 py-3 flex items-center justify-between">
+        <div className="select-none bg-slate-100/80 dark:bg-[#141026]/90 border-b border-slate-200 dark:border-[#222232] px-4 sm:px-7 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] inline-block shadow-sm" />
             <span className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] inline-block shadow-sm" />
@@ -297,10 +300,10 @@ export const MeetTheDevelopers: React.FC = () => {
         </div>
 
         {/* Profile Card Body */}
-        <div className="p-5 sm:p-10 md:p-12 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
+        <div className="p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-center gap-5 sm:gap-7 md:gap-10">
           {/* Avatar with Radiant Glow Ring and Monogram Fallback */}
           <div className="shrink-0 relative">
-            <div className={`w-32 h-32 sm:w-44 sm:h-44 md:w-56 md:h-56 rounded-full p-2 bg-gradient-to-br shadow-2xl ${
+            <div className={`w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 rounded-full p-2 bg-gradient-to-br shadow-2xl ${
               currentMember.category === 'mentor'
                 ? 'from-amber-400/40 via-yellow-500/20 to-orange-500/30 ring-2 ring-amber-400/50'
                 : 'from-blue-500/40 via-purple-500/20 to-pink-500/30 ring-2 ring-purple-400/50'
@@ -329,7 +332,7 @@ export const MeetTheDevelopers: React.FC = () => {
           </div>
 
           {/* Member Details */}
-          <div className="flex-1 text-center md:text-left space-y-3 min-w-0 w-full">
+          <div className="flex-1 text-center md:text-left space-y-2.5 min-w-0 w-full">
             <div className="flex items-center justify-center md:justify-start gap-2">
               <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-zinc-400">
                 Hi, my name is
@@ -345,7 +348,7 @@ export const MeetTheDevelopers: React.FC = () => {
             </p>
 
             {/* Social Links Row */}
-            <div className="flex items-center justify-center md:justify-start gap-2 pt-2 flex-wrap">
+            <div className="flex items-center justify-center md:justify-start gap-2 pt-1.5 flex-wrap">
               {/* LinkedIn */}
               {currentMember.linkedin && (
                 <a
@@ -394,7 +397,7 @@ export const MeetTheDevelopers: React.FC = () => {
 
       {/* Member Avatar Selection Track with Carousel Controls */}
       <div
-        className="flex items-center justify-center gap-2 sm:gap-4 pt-2 max-w-lg mx-auto px-2"
+        className="flex items-center justify-center gap-2 sm:gap-4 pt-1 max-w-lg mx-auto px-2"
         aria-label="Member selection carousel"
       >
         {/* Left Arrow Button */}
