@@ -37,7 +37,7 @@ interface BottomNavbarProps {
   pendingAccountsCount?: number;
 }
 
-// Custom [ ⚡ ] Power icon
+// Custom Power icon
 const PowerIcon: React.FC<{ className?: string }> = ({ className }) => (
   <span className={`inline-flex items-center font-mono text-[11px] font-bold tracking-tight shrink-0 ${className}`}>
     [<Zap className="w-3 h-3 inline mx-0.5" />]
@@ -134,7 +134,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-purple-600/25 border border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                  className="absolute inset-0 rounded-full bg-purple-600/20 border border-purple-500/35 shadow-sm"
                 />
               )}
               <LayoutGrid className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -164,7 +164,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                   <motion.span
                     layoutId="easyui-pill-active-dock"
                     transition={motionTransitions.springMorph}
-                    className="absolute inset-0 rounded-full bg-purple-600/25 border border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                    className="absolute inset-0 rounded-full bg-purple-600/20 border border-purple-500/35 shadow-sm"
                   />
                 )}
                 <Boxes className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-purple-400" />
@@ -234,13 +234,13 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-purple-600/25 border border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                  className="absolute inset-0 rounded-full bg-purple-600/20 border border-purple-500/35 shadow-sm"
                 />
               )}
               <Bell className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span className="relative z-10 hidden md:inline">Requests</span>
               {pendingCount > 0 && (
-                <span className="relative z-10 px-1.5 py-0.2 rounded-full bg-[#2ee59d] text-black font-extrabold text-[10px]">
+                <span className="relative z-10 px-1.5 py-0.2 rounded-full bg-emerald-500 text-black font-extrabold text-[10px]">
                   {pendingCount}
                 </span>
               )}
@@ -265,7 +265,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                   <motion.span
                     layoutId="easyui-pill-active-dock"
                     transition={motionTransitions.springMorph}
-                    className="absolute inset-0 rounded-full bg-purple-600/25 border border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                    className="absolute inset-0 rounded-full bg-purple-600/20 border border-purple-500/35 shadow-sm"
                   />
                 )}
                 <ScrollText className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -296,7 +296,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                 <motion.span
                   layoutId="easyui-pill-active-dock"
                   transition={motionTransitions.springMorph}
-                  className="absolute inset-0 rounded-full bg-purple-600/25 border border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                  className="absolute inset-0 rounded-full bg-purple-600/20 border border-purple-500/35 shadow-sm"
                 />
               )}
               <Code2 className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />

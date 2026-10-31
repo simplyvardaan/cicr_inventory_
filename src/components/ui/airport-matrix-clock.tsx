@@ -186,7 +186,7 @@ const CountryLabel = memo(function CountryLabel({ country, rebuildId, reduceMoti
   return (
     <span
       aria-label={country}
-      className="mt-0.5 block break-words font-mono text-[9px] font-bold tracking-[0.14em] text-purple-400 uppercase"
+      className="mt-0.5 block break-words font-mono text-[9px] font-bold tracking-[0.14em] text-zinc-400 uppercase"
     >
       {Array.from(country.toUpperCase()).map((char, index) => (
         char === ' '
@@ -235,11 +235,11 @@ const AirportMatrixClockRow = memo(function AirportMatrixClockRow({
       className={`flex items-center justify-between gap-4 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#0c0c16]/90 hover:bg-[#141422] transition-colors ${rowIndex < rowCount - 1 ? 'border-b border-zinc-800/80' : ''}`}
     >
       <div className="flex items-center gap-4 sm:gap-7 min-w-0">
-        <div className="min-w-0 text-[#2ee59d] text-base sm:text-xl font-bold font-mono tracking-wider drop-shadow-[0_0_8px_rgba(46,229,157,0.4)] shrink-0">
+        <div className="min-w-0 text-emerald-400 text-base sm:text-xl font-bold font-mono tracking-wider shrink-0">
           <MatrixText text={row.time.matrix} label={`${row.time.accessible}, ${row.name}`} reduceMotion={reduceMotion} rebuildId={rebuildId} />
         </div>
         <div className="min-w-0">
-          <div className="text-white text-xs sm:text-base font-black tracking-widest uppercase font-mono drop-shadow-[0_0_6px_rgba(255,255,255,0.25)]">
+          <div className="text-zinc-100 text-xs sm:text-base font-black tracking-widest uppercase font-mono">
             <MatrixText text={row.name} label={row.name} reduceMotion={reduceMotion} rebuildId={rebuildId} />
           </div>
           {showCountry && <CountryLabel country={row.country} rebuildId={rebuildId} reduceMotion={reduceMotion} />}
@@ -346,10 +346,10 @@ export function AirportMatrixClock({
     >
       <div>
         <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-2 sm:px-5 bg-[#08080e]">
-          <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-[#c084fc]">
+          <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-purple-300/80">
             LIVE CLOCK
           </p>
-          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#60a5fa] uppercase tracking-widest">
+          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-widest">
             IST (UTC+05:30)
           </span>
         </header>
