@@ -76,10 +76,10 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
         <PaymentStatus
           type="loan"
           status="success"
-          title="Hardware Requisition Dispatched"
-          subtitle={`Requisition for ${quantity}x ${item.name} has been sent to Lab Leads.`}
+          title="Requisition Sent to Admin Portal"
+          subtitle={`Requisition for ${quantity}x ${item.name} has been sent to Admin Portal. Hardware will be ready to issue once approved.`}
           amount={`${quantity} item(s)`}
-          amountLabel="Loaned Units"
+          amountLabel="Requested Units"
           transactionId={`REQ-${Date.now().toString(36).toUpperCase()}`}
           transactionLabel="Requisition Ref"
           paymentMethod={user?.user_metadata?.full_name || profile?.full_name || user?.email || 'Member'}

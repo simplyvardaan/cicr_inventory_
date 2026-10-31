@@ -403,7 +403,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                         type="button"
                         onClick={() => {
                           // Opens Google Form in new tab
-                          window.open('https://docs.google.com/forms/d/e/1FAIpQLScicr-inventory-bug-report/viewform', '_blank');
+                          window.open('https://docs.google.com/forms/d/e/1FAIpQLScF-vaE7NEi-teLfHsB3FkIkW2ggAzRLV3nr7jM0rp1pP5w8g/viewform', '_blank');
                           setProfileMenuOpen(false);
                         }}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 transition-colors text-left cursor-pointer group"

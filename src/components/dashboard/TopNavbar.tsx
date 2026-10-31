@@ -1,0 +1,153 @@
+import React from 'react';
+import { CicrLogo } from '../common/CicrLogo';
+import { IOSSearchBar } from '../ui/ios-search-bar';
+import { NotificationBell, Notification } from '../ui/notification-bell';
+import { LiquidToggle } from '../ui/liquid-toggle';
+import { ActiveView } from '../layout/BottomNavbar';
+import {
+  Search,
+  Plus,
+  Compass,
+  AlertTriangle,
+} from 'lucide-react';
+import { InventoryItem } from '../../types/inventory';
+
+interface TopNavbarProps {
+  activeView: ActiveView;
+  setActiveView: (view: ActiveView) => void;
+  isLeadOrAdmin: boolean;
+  onOpenAddItem: () => void;
+  items: InventoryItem[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  notifications: Notification[];
+  onMarkNotificationRead: (id: string) => void;
+  onMarkAllNotificationsRead: () => void;
+  onClearNotifications: () => void;
+  lowReservesCount: number;
+}
+
+export const TopNavbar: React.FC<TopNavbarProps> = ({
+  activeView,
+  setActiveView,
+  isLeadOrAdmin,
+  onOpenAddItem,
+  items,
+  searchQuery,
+  setSearchQuery,
+  notifications,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
+  onClearNotifications,
+  lowReservesCount,
+}) => {
+  const getBreadcrumbLabel = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return 'DASHBOARD';
+      case 'inventory':
+        return 'COMPONENT VAULT';
+      case 'review-requests':
+        return isLeadOrAdmin ? 'CLEARANCE PORTAL' : 'MY REQUISITIONS';
+      case 'logs':
+        return 'MANAGEMENT HUB';
+      case 'developers':
+        return 'TEAM TIMELINE';
+      case 'profile':
+        return 'OPERATOR PROFILE';
+      default:
+        return 'DASHBOARD';
+    }
+  };
+
+  return (
+    <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
+      <header className="pointer-events-auto rounded-full bg-white/95 dark:bg-[#0f0f16]/95 backdrop-blur-2xl border-2 border-slate-200 dark:border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/80 gap-2">
+        {/* Left: CICR Logo + Breadcrumbs Capsule (Without 'Robotics Lab' text) */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => setActiveView('dashboard')}
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0 focus-visible:outline-none"
+            title="CICR Inventory Dashboard"
+          >
+            <CicrLogo size={42} className="rounded-2xl shadow-sm group-hover:scale-105 transition-transform shrink-0" />
+            <div className="hidden md:flex flex-col text-left leading-none">
+              <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-purple-400 transition-colors">
+                CICR Inventory
+              </span>
+            </div>
+          </button>
+
+          {/* Breadcrumb Capsule */}
+          <div className="px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-slate-100 dark:bg-[#151520] border border-slate-200 dark:border-zinc-800 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600 dark:text-zinc-400">
+            <span
+              className="hidden sm:inline text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors"
+              onClick={() => setActiveView('dashboard')}
+            >
+              HOME
+            </span>
+            <span className="hidden sm:inline text-zinc-600 dark:text-zinc-600 font-mono">/</span>
+            <span className="text-blue-600 dark:text-purple-400 font-extrabold uppercase tracking-wide truncate max-w-[120px] sm:max-w-none">
+              {getBreadcrumbLabel()}
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Quick Action Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* iOS Morphing Search Bar */}
+          <IOSSearchBar
+            value={searchQuery}
+            onChange={(q) => {
+              setSearchQuery(q);
+              if (activeView !== 'inventory') {
+                setActiveView('inventory');
+              }
+            }}
+            placeholder="Search vault equipment..."
+            collapsedWidth="200px"
+            expandedWidth="280px"
+          />
+
+          {/* Low Reserves Warning Pill (clickable to filter low reserves) */}
+          {lowReservesCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveView('inventory')}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 text-xs font-bold transition-all cursor-pointer animate-pulse"
+              title={`${lowReservesCount} items running low on reserves`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>{lowReservesCount} Low</span>
+            </button>
+          )}
+
+          {/* Notification Bell */}
+          <NotificationBell
+            notifications={notifications}
+            onMarkAsRead={onMarkNotificationRead}
+            onMarkAllAsRead={onMarkAllNotificationsRead}
+            onClearAll={onClearNotifications}
+          />
+
+          {/* Liquid Theme Switcher */}
+          <LiquidToggle className="hidden sm:flex" />
+
+          {/* Add Component Button (for Admins / Leads) */}
+          {isLeadOrAdmin && (
+            <button
+              type="button"
+              onClick={onOpenAddItem}
+              className="btn-auth-primary px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+              title="Add New Equipment to Vault"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden md:inline">+ Add Equipment</span>
+            </button>
+          )}
+        </div>
+      </header>
+    </div>
+  );
+};
