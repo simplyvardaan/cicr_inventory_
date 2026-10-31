@@ -116,7 +116,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none select-none">
       {/* Docked Centered Floating Navbar - Compact & Perfectly Aligned */}
       <nav className="relative flex justify-center px-2 py-2 sm:p-3 pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-2xl sm:rounded-3xl bg-[#0c0c12]/98 backdrop-blur-3xl border border-[#252538] shadow-2xl shadow-black max-w-3xl w-full justify-between">
+        <div className="pointer-events-auto flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-2xl sm:rounded-3xl bg-[#0c0c12]/98 backdrop-blur-3xl border border-[#252538] shadow-2xl shadow-black max-w-4xl w-full justify-between">
           
           {/* Navigation Tabs - Compact on mobile, expanded on desktop */}
           <div className="flex items-center gap-1 sm:gap-1.5 py-0.5 min-w-0">

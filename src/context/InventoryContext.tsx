@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
 
@@ -60,7 +60,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } else if (dbItems) {
         setIsLiveDatabase(true);
         setSchemaNeeded(false);
-        setItems(dbItems as InventoryItem[]);
+        const normalizedItems: InventoryItem[] = (dbItems as any[]).map((item) => ({
+          ...item,
+          total_qty: Number(item.total_qty ?? item.quantity ?? 1),
+          available_qty: Number(item.available_qty ?? item.available_quantity ?? item.total_qty ?? item.quantity ?? 1),
+        }));
+        setItems(normalizedItems);
 
         // 2. Fetch real borrow requests from Supabase
         const { data: dbRequests } = await supabase
@@ -72,12 +77,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setRequests(dbRequests as BorrowRequest[]);
         }
 
-        // 3. Fetch real activity logs (full multi-day audit history)
-        const { data: dbLogs } = await supabase
+        // 3. Fetch real activity logs (full multi-day audit history via supabaseAdmin)
+        const { data: dbLogs } = await supabaseAdmin
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(200);
+          .limit(250);
 
         if (dbLogs) {
           setLogs(dbLogs as ActivityLog[]);

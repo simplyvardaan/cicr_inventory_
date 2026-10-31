@@ -58,3 +58,4 @@ export const compressImageToBase64 = (
     reader.readAsDataURL(file);
   });
 };
+
