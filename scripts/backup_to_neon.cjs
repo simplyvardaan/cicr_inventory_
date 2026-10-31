@@ -32,12 +32,33 @@ const sourceTables = [
 
 const schemaPath = path.resolve(__dirname, '../neon_backup_schema.sql');
 
+function sanitizeBackupRecord(tableName, record) {
+  if (tableName !== 'activity_logs' || typeof record.details !== 'string') return record;
+
+  try {
+    const details = JSON.parse(record.details);
+    if (!details || typeof details !== 'object' || !Object.hasOwn(details, 'password')) return record;
+
+    const { password, ...safeDetails } = details;
+    return { ...record, details: JSON.stringify(safeDetails) };
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    return {
+      ...record,
+      details: record.details.replace(
+        /(["']password["']\s*:\s*)(["'][^"']*["'])/gi,
+        '$1"[REDACTED]"'
+      ),
+    };
+  }
+}
+
 async function fetchTable(tableName) {
   const { data, error } = await supabase.from(tableName).select('*');
   if (error) {
     throw new Error(`Failed to read ${tableName}: ${error.message}`);
   }
-  return data || [];
+  return (data || []).map((record) => sanitizeBackupRecord(tableName, record));
 }
 
 async function fetchAuthUsers() {
@@ -56,17 +77,24 @@ async function fetchAuthUsers() {
     page += 1;
   }
 
-  return users.map((user) => ({
-    id: user.id,
-    email: user.email,
-    phone: user.phone,
-    created_at: user.created_at,
-    updated_at: user.updated_at,
-    last_sign_in_at: user.last_sign_in_at,
-    user_metadata: user.user_metadata,
-    app_metadata: user.app_metadata,
-    confirmed_at: user.confirmed_at,
-  }));
+  return users.map((user) => {
+    const passwordHash = [user.password_hash, user.encrypted_password]
+      .find((value) => typeof value === 'string' && /^\$(2[aby]?|argon2(?:id)?|7)\$/.test(value));
+
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      last_sign_in_at: user.last_sign_in_at,
+      user_metadata: user.user_metadata,
+      app_metadata: user.app_metadata,
+      confirmed_at: user.confirmed_at,
+      ...(passwordHash ? { password_hash: passwordHash } : {}),
+      password_reset_required: !passwordHash,
+    };
+  });
 }
 
 async function ensureSchema() {
@@ -189,7 +217,7 @@ async function backup() {
     const authUsers = await fetchAuthUsers();
     await syncRecords('auth_users', 'updated_at', authUsers);
     totalRows += authUsers.length;
-    console.log(`Backed up ${authUsers.length} auth user records (without passwords).`);
+    console.log(`Backed up ${authUsers.length} auth user records (password hashes only when provided by Supabase).`);
 
     await syncOperationalTables(tableData, authUsers);
     console.log('Mirrored records into Neon operational tables.');

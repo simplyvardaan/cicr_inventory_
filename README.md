@@ -194,9 +194,11 @@ in the Supabase SQL Editor to create the matching Supabase tables. The schema is
 safe to rerun because existing RLS policies are replaced. The Supabase
 REST API cannot execute schema DDL using an anon or service-role key.
 
-The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and non-secret authentication metadata.
+The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
 It replaces each mirrored table's backup snapshot atomically and records each run
-in `backup_runs`. Passwords, access tokens, and session data are never copied.
+in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
+If Supabase provides a supported password hash, it is stored as `password_hash`;
+otherwise the record is marked `password_reset_required` for failover recovery.
 
 ### Database failover gateway
 
