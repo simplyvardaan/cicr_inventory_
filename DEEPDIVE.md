@@ -38,7 +38,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.16.0** | Released | **Production Deployment Resiliency & Dual Supabase Failover.** Resolved Vercel deployment crash by restoring safe production credential decoders in `src/lib/supabase.ts`; reinstated `/api/(.*)` rewrites in `vercel.json`; integrated direct client-side Supabase failover for registration, approvals, and rejections; complete cross-branch parity across all active repository branches. |
 | **v2.17.0** | Released | **Official Google SMTP Mailer Integration & Serverless Telemetry Pipeline.** Production Gmail SSL mailer on port 465 with base64 failover decoders; transactional dispatch for authentication, clearance requisitions, and overdue return reminders; multi-branch parity across all active branches. |
 | **v2.18.0** | Released | **Personalized Active Loans, Clean Requisition Clearance & Notification Persistence.** Scoped Component Vault active loans to individual members while preserving full lab oversight for admins; removed locker instructions input from clearance portal; resolved notification "Read all" persistence; verified 100% full stock return across all components. |
-| **v2.18.1** | Released (current) | **Responsive Centered Category Submenu & Touch Interactivity Patch.** Centered bottom navigation catalog categories above the dock; constrained mobile layout to viewport boundaries with touch momentum scrolling; unified category filter keys between navbar and vault view; added touchstart outside dismissal. |
+| **v2.18.1** | Released | **Responsive Centered Category Submenu & Touch Interactivity Patch.** Centered bottom navigation catalog categories above the dock; constrained mobile layout to viewport boundaries with touch momentum scrolling; unified category filter keys between navbar and vault view; added touchstart outside dismissal. |
+| **v2.18.2** | Released (current) | **Mobile Viewport Centered Notification Panel & Interactive Alert System.** Centered floating notification panel on mobile without viewport overflow; added mobile touch backdrop overlay; introduced All/Unread filter tabs, individual dismiss action, and expanded alerts for rejected requests and pending signups. |
 
 ---
 
@@ -61,6 +62,7 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.17.0** | `v2.17.0`, `v2.17` | Mailer & Telemetry | Official Google SMTP integration, automated transactional dispatch, return reminders |
 | **v2.18.0** | `v2.18.0`, `v2.18` | Personalization & Clearance | Member loan scoping, streamlined clearance actions, notification read fix |
 | **v2.18.1** | `v2.18.1` | Responsive Navigation | Centered category dock popup, touch momentum scrolling, filter key parity |
+| **v2.18.2** | `v2.18.2` | Responsive Notifications | Centered mobile notification drawer, touch backdrop, tabs & dismiss actions |
 
 ---
 

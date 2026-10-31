@@ -111,6 +111,11 @@ export const UserDashboard: React.FC = () => {
     setNotifications([]);
   };
 
+  const handleDismissNotification = (id: string) => {
+    handleMarkNotificationRead(id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
   // Update profile edit state when profile changes
   useEffect(() => {
     if (profile) {
@@ -195,6 +200,19 @@ export const UserDashboard: React.FC = () => {
       });
     }
 
+    if (isAdmin && pendingAccounts.length > 0) {
+      const notifId = 'pending-accounts-alert';
+      list.push({
+        id: notifId,
+        title: `${pendingAccounts.length} Registration(s) Pending`,
+        message: 'New user account requests are awaiting admin verification in Management Hub.',
+        type: 'info',
+        timestamp: 'Pending Review',
+        read: readNotifIds.has(notifId),
+        action: () => setActiveView('logs'),
+      });
+    }
+
     // Member-specific requisition updates
     if (user?.email) {
       const myApproved = requests.filter(
@@ -208,6 +226,22 @@ export const UserDashboard: React.FC = () => {
           message: 'Admin has authorized your hardware pass. Tap to view and collect hardware.',
           type: 'success',
           timestamp: 'Authorized',
+          read: readNotifIds.has(notifId),
+          action: () => setActiveView('review-requests'),
+        });
+      }
+
+      const myRejected = requests.filter(
+        (r) => (r.user_email?.toLowerCase() === user.email?.toLowerCase() || r.user_id === user.id) && r.status === 'rejected'
+      );
+      if (myRejected.length > 0) {
+        const notifId = 'my-rejected-requisitions';
+        list.push({
+          id: notifId,
+          title: `${myRejected.length} Requisition(s) Declined`,
+          message: 'An administrator has reviewed and declined your requisition request.',
+          type: 'error',
+          timestamp: 'Reviewed',
           read: readNotifIds.has(notifId),
           action: () => setActiveView('review-requests'),
         });
@@ -378,6 +412,7 @@ export const UserDashboard: React.FC = () => {
         onMarkNotificationRead={handleMarkNotificationRead}
         onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         onClearNotifications={handleClearNotifications}
+        onDismissNotification={handleDismissNotification}
         lowReservesCount={lowReservesCount}
       />
 
