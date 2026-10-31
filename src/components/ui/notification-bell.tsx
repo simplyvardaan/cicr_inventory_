@@ -8,7 +8,9 @@ import { motionTransitions } from '../../lib/motion-tokens';
 
 export interface Notification {
   id: string;
+  title?: string;
   message: string;
+  type?: 'info' | 'warning' | 'error' | 'success';
   timestamp: Date | string;
   read: boolean;
   action?: () => void;
@@ -18,6 +20,7 @@ export interface NotificationBellProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead?: () => void;
+  onClearAll?: () => void;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   showCount?: boolean;
@@ -28,6 +31,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   notifications,
   onMarkAsRead,
   onMarkAllAsRead,
+  onClearAll,
   isOpen: controlledIsOpen,
   onOpenChange,
   showCount = true,

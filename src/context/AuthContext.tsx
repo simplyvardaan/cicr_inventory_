@@ -100,9 +100,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } = await supabase.auth.getSession();
         if (!mounted) return;
         setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await loadProfile(session.user);
+        const storedFallback = localStorage.getItem('neon-fallback-user');
+        let fallbackUser = null;
+        if (storedFallback) {
+          try {
+            fallbackUser = JSON.parse(storedFallback);
+          } catch {
+            fallbackUser = null;
+          }
+        }
+        const currentUser = session?.user ?? fallbackUser;
+        setUser(currentUser);
+        if (currentUser) {
+          await loadProfile(currentUser);
         } else {
           setProfile(null);
         }
@@ -143,35 +153,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailToAuth = `${emailToAuth.toLowerCase()}@mail.jiit.ac.in`;
       }
 
-      let res = await supabase.auth.signInWithPassword({
-        email: emailToAuth,
-        password,
-      });
+      let res: any = { data: null, error: null };
+      try {
+        const authRes = await supabase.auth.signInWithPassword({
+          email: emailToAuth,
+          password,
+        });
+        res = authRes;
 
-      // Handle unconfirmed email automatically using service role admin
-      if (res.error && res.error.message.toLowerCase().includes('not confirmed')) {
-        try {
-          const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-          const target = usersData?.users?.find(
-            (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
-          );
-          if (target) {
-            await supabaseAdmin.auth.admin.updateUserById(target.id, {
-              email_confirm: true,
-            });
-            // Retry login now that email is confirmed!
-            res = await supabase.auth.signInWithPassword({
-              email: emailToAuth,
-              password,
-            });
+        // Handle unconfirmed email automatically using service role admin
+        if (res.error && res.error.message?.toLowerCase().includes('not confirmed')) {
+          try {
+            const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+            const target = usersData?.users?.find(
+              (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
+            );
+            if (target) {
+              await supabaseAdmin.auth.admin.updateUserById(target.id, {
+                email_confirm: true,
+              });
+              res = await supabase.auth.signInWithPassword({
+                email: emailToAuth,
+                password,
+              });
+            }
+          } catch (adminErr) {
+            console.warn('Auto-confirm attempt error:', adminErr);
           }
-        } catch (adminErr) {
-          console.warn('Auto-confirm attempt error:', adminErr);
         }
+      } catch (networkErr) {
+        console.warn('Supabase sign-in network error:', networkErr);
+        res = { data: null, error: networkErr };
       }
 
+      // If Supabase failed or threw network error, attempt Neon failover
       if (res.error) {
-        return { success: false, error: res.error.message };
+        try {
+          const fallback = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: emailToAuth, password }),
+          });
+          if (fallback.ok) {
+            const fallbackData = await fallback.json();
+            if (fallbackData?.user) {
+              const fallbackUser = fallbackData.user;
+              setUser(fallbackUser);
+              setSession(null);
+              await loadProfile(fallbackUser);
+              localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
+              return { success: true };
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn('Neon auth failover error:', fallbackErr);
+        }
+
+        const errMsg = res.error?.message || (res.error instanceof Error ? res.error.message : String(res.error));
+        if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('failed to fetch')) {
+          return {
+            success: false,
+            error: 'Authentication server connection timeout. Please check your internet connection or try again shortly.',
+          };
+        }
+        return { success: false, error: errMsg || 'Invalid login credentials. Please verify your email and password.' };
       }
 
       if (res.data.user) {
@@ -608,6 +653,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      localStorage.removeItem('neon-fallback-user');
     }
   };
 

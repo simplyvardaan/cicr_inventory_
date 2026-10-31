@@ -124,10 +124,10 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
         <PaymentStatus
           type="loan"
           status="success"
-          title="Hardware Requisition Dispatched"
-          subtitle="Your hardware checkout request has been registered in the CICR database."
+          title="Requisition Sent to Admin Portal"
+          subtitle="Your hardware requisition has been routed to the Admin Approval Portal. Hardware can only be issued and collected after an Administrator approves this requisition."
           amount={`${confirmedLoanData.totalUnits} items`}
-          amountLabel="Total Units"
+          amountLabel="Requested Units"
           transactionId={confirmedLoanData.transactionId}
           transactionLabel="Requisition Ref"
           paymentMethod={user?.user_metadata?.full_name || profile?.full_name || user?.email || 'Member'}

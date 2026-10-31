@@ -169,7 +169,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. ESP32-WROOM-32D Development Board"
+              placeholder="e.g. ESP32 Development Board"
               className="w-full px-3.5 py-2.5 bg-white dark:bg-[#14141c] border-2 border-slate-300 dark:border-zinc-700 focus:border-blue-600 dark:border-purple-600 dark:focus:border-purple-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 font-medium outline-none transition-all"
             />
           </div>
