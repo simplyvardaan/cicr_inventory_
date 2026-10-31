@@ -131,13 +131,62 @@ export const UserDashboard: React.FC = () => {
   // Fetch pending registrations and all members
   const fetchPendingAccounts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profData } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('status', 'pending');
-      if (!error && data) {
-        setPendingAccounts(data);
+        .select('*');
+
+      const approvedEmails = new Set(
+        (profData || [])
+          .filter((p) => p.status === 'approved' || p.role === 'admin' || p.avatar_url === 'status:approved')
+          .map((p) => p.email?.toLowerCase())
+      );
+
+      const pendingMap = new Map();
+
+      (profData || []).forEach((p) => {
+        if (
+          p.role !== 'admin' &&
+          (p.status === 'pending' || p.avatar_url === 'status:pending' || !p.status)
+        ) {
+          pendingMap.set(p.email?.toLowerCase() || p.id, p);
+        }
+      });
+
+      try {
+        const { data: reqLogs } = await supabaseAdmin
+          .from('activity_logs')
+          .select('*')
+          .eq('action', 'ACCOUNT_REQUEST')
+          .order('created_at', { ascending: false });
+
+        (reqLogs || []).forEach((log) => {
+          let details: any = {};
+          try {
+            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          } catch {
+            details = {};
+          }
+          const email = (details?.email || '').toLowerCase();
+          const isPending = !details?.status || details?.status === 'pending';
+
+          if (isPending && email && !approvedEmails.has(email) && !pendingMap.has(email)) {
+            pendingMap.set(email, {
+              id: details?.userId || log.user_id || log.id,
+              full_name: details?.fullName || log.user_name || 'New Member',
+              email: details?.email,
+              roll_number: details?.enrollmentNo || '',
+              phone: details?.phone || '',
+              role: details?.role || 'member',
+              status: 'pending',
+              created_at: log.created_at,
+            });
+          }
+        });
+      } catch (logErr) {
+        console.warn('Notice loading request logs:', logErr);
       }
+
+      setPendingAccounts(Array.from(pendingMap.values()));
     } catch {
       // ignore
     }
@@ -151,7 +200,7 @@ export const UserDashboard: React.FC = () => {
         .select('*')
         .order('full_name', { ascending: true });
       if (!error && data) {
-        setAllMembers(data);
+        setAllMembers(data.filter((m) => m.status === 'approved' || m.role === 'admin' || m.avatar_url === 'status:approved'));
       }
     } catch {
       // ignore

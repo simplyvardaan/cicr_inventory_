@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.3] : 2026-11-01
+
+### Fixed
+* Account Requests Detection: Enhanced `fetchPendingAccounts` in `UserDashboard.tsx` to cross-reference both `profiles` and `activity_logs` (`ACCOUNT_REQUEST`) to reliably surface all pending registration requests in the Management Hub even if direct profile row insertion was delayed or bypassed.
+* Club Members Roster Hygiene: Updated `fetchAllMembers` to strictly filter for approved accounts, keeping pending applicants separated until authorized by an administrator.
+* Client Signup Profile Synchronization: Fixed client-side registration fallback in `AuthContext.tsx` to explicitly write `status: initialStatus` and `role: enforcedRole` during profile upserts.
+
+***
+
 ## [2.18.2] : 2026-10-31
 
 ### Fixed
