@@ -37,7 +37,7 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search equipment by name, category, location, or keyword..."
+            placeholder="Search equipment..."
             className="w-full pl-10 pr-3.5 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-xs text-white placeholder-zinc-500 transition-all outline-none"
           />
         </div>

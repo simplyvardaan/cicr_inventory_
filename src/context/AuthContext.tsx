@@ -403,48 +403,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId = existingUser.id;
         await supabaseAdmin.auth.admin.updateUserById(userId, {
           email_confirm: true,
-          user_metadata: { status: 'approved' },
+          user_metadata: {
+            full_name: fullName || existingUser.user_metadata?.full_name,
+            enrollment_no: enrollmentNo || existingUser.user_metadata?.enrollment_no,
+            phone: phone || existingUser.user_metadata?.phone,
+            role,
+            status: 'approved',
+          },
         });
       } else if (email && password) {
-        try {
-          const { data: newUser } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: fullName,
-              enrollment_no: enrollmentNo,
-              phone,
-              role,
-              status: 'approved',
-              avatar_url: avatarUrl || undefined,
-            },
-          });
-          if (newUser?.user) {
-            userId = newUser.user.id;
-          }
-        } catch (createErr) {
-          console.warn('Admin create user on approve:', createErr);
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: fullName,
+            enrollment_no: enrollmentNo,
+            phone,
+            role,
+            status: 'approved',
+            avatar_url: avatarUrl || undefined,
+          },
+        });
+        if (createError) {
+          console.error('Admin create user on approve error:', createError);
+          return {
+            success: false,
+            error: `Supabase Auth creation error: ${createError.message}. (Run "DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;" in Supabase SQL Editor if a trigger is failing).`,
+          };
+        }
+        if (newUser?.user) {
+          userId = newUser.user.id;
         }
       }
 
       // Ensure profile row in public.profiles table
       if (userId && userId.length > 20) {
-        try {
-          await supabaseAdmin.from('profiles').upsert([
-            {
-              id: userId,
-              full_name: fullName || 'Member',
-              email: email || '',
-              role,
-              roll_number: enrollmentNo,
-              phone,
-              avatar_url: avatarUrl || 'status:approved',
-              updated_at: new Date().toISOString(),
-            },
-          ]);
-        } catch (profileErr) {
-          console.warn('Profile upsert warning:', profileErr);
+        const { error: profileErr } = await supabaseAdmin.from('profiles').upsert([
+          {
+            id: userId,
+            full_name: fullName || 'Member',
+            email: email || '',
+            role,
+            roll_number: enrollmentNo,
+            phone,
+            avatar_url: avatarUrl || 'status:approved',
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+        if (profileErr) {
+          console.error('Profile upsert error on approve:', profileErr);
+          return { success: false, error: `Profile database sync failed: ${profileErr.message}` };
         }
       }
 

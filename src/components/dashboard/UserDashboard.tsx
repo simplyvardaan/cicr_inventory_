@@ -11,6 +11,10 @@ import { InventoryItem } from '../../types/inventory';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { compressImageToBase64 } from '../../lib/imageUtils';
+import { AirportMatrixClock } from '../ui/airport-matrix-clock';
+import { IOSSearchBar } from '../ui/ios-search-bar';
+import { NotificationBell, Notification } from '../ui/notification-bell';
+import { LiquidToggle } from '../ui/liquid-toggle';
 import {
   Layers,
   ShoppingBag,
@@ -115,7 +119,7 @@ export const UserDashboard: React.FC = () => {
   const [allMembers, setAllMembers] = useState<any[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
-  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'lead' | 'member'>('all');
+  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
   const [selectedMemberActivityId, setSelectedMemberActivityId] = useState<string | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
 
@@ -123,6 +127,40 @@ export const UserDashboard: React.FC = () => {
   const [logDaysFilter, setLogDaysFilter] = useState<'7d' | '24h' | '3d' | 'all'>('7d');
   const [logCategoryFilter, setLogCategoryFilter] = useState<'all' | 'borrow' | 'return' | 'account' | 'inventory'>('all');
   const [logSearch, setLogSearch] = useState('');
+
+  // EasyUI Liquid Toggle Theme Switcher State
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  // EasyUI Notification Bell items list
+  const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const list: Notification[] = [];
+    requests
+      .filter((r) => r.status === 'pending')
+      .slice(0, 10)
+      .forEach((r) => {
+        list.push({
+          id: `req-${r.id}`,
+          message: `${r.user_name || 'Member'} requested ${r.item_name || 'Component'} (${r.project_name || 'Project'})`,
+          timestamp: r.created_at || new Date().toISOString(),
+          read: false,
+          action: () => setActiveView('review-requests'),
+        });
+      });
+    pendingAccounts
+      .slice(0, 5)
+      .forEach((acc) => {
+        list.push({
+          id: `acc-${acc.id}`,
+          message: `New Member Registration: ${acc.full_name || acc.email} awaiting Approval`,
+          timestamp: acc.created_at || new Date().toISOString(),
+          read: false,
+          action: () => setActiveView('logs'),
+        });
+      });
+    setNotificationsList(list);
+  }, [requests, pendingAccounts]);
 
   // Admin note for requests
   const [adminNote, setAdminNote] = useState<Record<string, string>>({});
@@ -227,7 +265,7 @@ export const UserDashboard: React.FC = () => {
   const handleUpdateRole = async (
     targetUserId: string,
     targetName: string,
-    newRole: 'admin' | 'lead' | 'member'
+    newRole: 'admin' | 'member'
   ) => {
     try {
       setUpdatingRoleUserId(targetUserId);
@@ -444,6 +482,7 @@ export const UserDashboard: React.FC = () => {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
       await refreshData();
+      await fetchPendingAccounts();
       await fetchAllMembers();
     } else {
       showToast('error', 'Approval Failed', res.error || 'Could not approve account');
@@ -458,6 +497,7 @@ export const UserDashboard: React.FC = () => {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
       setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
       await refreshData();
+      await fetchPendingAccounts();
       await fetchAllMembers();
     } else {
       showToast('error', 'Rejection Failed', res.error || 'Could not reject account');
@@ -538,7 +578,7 @@ export const UserDashboard: React.FC = () => {
     <div className="min-h-screen bg-[#07070a] text-slate-100 flex flex-col relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
       
       {/* Top Floating Island Header Bar (Permanently Fixed on All Mobile & Desktop Screens on Scroll) */}
-      <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-6xl mx-auto px-2 sm:px-6 pointer-events-none">
+      <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
         <header className="pointer-events-auto rounded-full bg-[#0f0f16]/95 backdrop-blur-2xl border border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-2xl shadow-black/80 gap-2">
           {/* Left: Breadcrumbs Capsule */}
           <div className="flex items-center min-w-0">
@@ -572,47 +612,53 @@ export const UserDashboard: React.FC = () => {
                 className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] hover:bg-[#1c1c2b] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 transition-all cursor-pointer animate-in fade-in"
                 title="View Hardware Cart"
               >
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center shrink-0">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
                   <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
                 <span className="hidden md:inline">CART</span>
-                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#2ee59d] text-black font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 text-black font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
                   {cart.length}
                 </span>
               </button>
             )}
 
-            {/* Notifications Pill with circular bell & count badge */}
-            <button
-              type="button"
-              onClick={() => setActiveView('review-requests')}
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] hover:bg-[#1c1c2b] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 transition-all cursor-pointer shrink-0"
-              title="Notifications"
-            >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-950/80 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
-                <Bell className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              </div>
-              <span className="hidden md:inline font-bold">NOTIFICATIONS</span>
-              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-600 text-white font-extrabold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
-                {pendingRequests.length}
-              </span>
-            </button>
+            {/* EasyUI Micro-Animated Notification Bell */}
+            <div className="shrink-0 flex items-center">
+              <NotificationBell
+                notifications={notificationsList}
+                onMarkAsRead={(id) => {
+                  setNotificationsList((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+                  );
+                }}
+                onMarkAllAsRead={() => {
+                  setNotificationsList((prev) => prev.map((n) => ({ ...n, read: true })));
+                }}
+              />
+            </div>
 
-            {/* Theme Dropdown Pill */}
+            {/* EasyUI Liquid Toggle Theme Switcher */}
             <div
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#151520] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 shrink-0"
-              title="Current Theme: Robosoccer"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-[#151520] border border-zinc-800 text-[11px] sm:text-xs font-bold text-zinc-300 shrink-0"
+              title="Toggle Robosoccer Cyber Theme"
             >
               <Palette className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              <span className="hidden md:inline font-semibold">Robosoccer</span>
-              <ChevronDown className="w-3 h-3 text-zinc-500 shrink-0" />
+              <span className="hidden md:inline font-semibold">Theme</span>
+              <LiquidToggle
+                value={isDarkTheme}
+                onChange={(val) => setIsDarkTheme(val)}
+                width={48}
+                height={26}
+                showLabels={false}
+                accentColor="#9333ea"
+              />
             </div>
           </div>
         </header>
       </div>
 
-      {/* Main Workspace Body - Padded so content scrolls smoothly between fixed top header and bottom dock */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 pt-16 sm:pt-20 pb-36 sm:pb-44 space-y-8 animate-in fade-in duration-300">
+      {/* Main Workspace Body - Responsively fills wide monitors while keeping comfortable margins */}
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 pt-16 sm:pt-20 pb-36 sm:pb-44 space-y-8 animate-in fade-in duration-300">
         
         {/* ============================================================== */}
         {/* VIEW 1: DASHBOARD (Matching Screenshot 1) */}
@@ -622,7 +668,7 @@ export const UserDashboard: React.FC = () => {
             {/* Hero Greeting & Live Clock Banner */}
             <div className="p-6 sm:p-8 rounded-3xl bg-[#0f0f15] border border-[#20202c] shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <span className="text-xs font-bold font-mono tracking-widest text-[#2ee59d] uppercase">
+                <span className="text-xs font-bold font-mono tracking-widest text-emerald-400 uppercase">
                   {roleName} DASHBOARD
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
@@ -632,19 +678,22 @@ export const UserDashboard: React.FC = () => {
                 </p>
               </div>
 
-              {/* Live Clock & Date */}
-              <div className="text-left md:text-right shrink-0">
-                <span className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase font-mono">
-                  {formattedDate}
-                </span>
-                <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight mt-0.5">
-                  {formattedTime}
-                </div>
+              {/* EasyUI Airport Matrix Departure Board Clock (Screenshot 2 Live Departure Format) */}
+              <div className="shrink-0 w-full lg:w-auto max-w-full">
+                <AirportMatrixClock
+                  cities={['new-delhi']}
+                  format="24h"
+                  showSeconds={true}
+                  updateInterval={1000}
+                  showCountry={true}
+                  showControls={false}
+                  className="w-full sm:min-w-[340px] md:min-w-[420px]"
+                />
               </div>
             </div>
 
-            {/* 4 Interactive Hub Cards (2x2 Grid from Screenshot 1) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* 4 Interactive Hub Cards (Auto-fills wide screens: 4 columns on desktop, 2x2 on tablet, 1 on mobile) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               
               {/* Card 1: Component Vault */}
               <div
@@ -656,7 +705,7 @@ export const UserDashboard: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <Layers className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
@@ -682,7 +731,7 @@ export const UserDashboard: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-[#2ee59d] flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                       <ShoppingBag className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono">
@@ -777,25 +826,16 @@ export const UserDashboard: React.FC = () => {
 
             {/* Search Bar & Vault Category Tabs (Screenshot 2) */}
             <div className="p-4 sm:p-5 rounded-3xl bg-[#0f0f15] border border-[#20202c] space-y-4 shadow-xl">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-4 top-3.5 text-zinc-500" />
-                <input
-                  type="text"
+              {/* EasyUI iOS Micro-Interactive Search Bar */}
+              <div className="w-full">
+                <IOSSearchBar
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search microcontrollers, sensors, actuators, specs, or racks..."
-                  className="w-full pl-11 pr-10 py-3 bg-[#14141c] border border-zinc-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-600 rounded-2xl text-xs sm:text-sm text-white placeholder-zinc-500 outline-none transition-all"
+                  onChange={setSearchQuery}
+                  placeholder="Search components..."
+                  className="w-full"
+                  collapsedWidth="100%"
+                  expandedWidth="100%"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-3.5 text-zinc-500 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
               </div>
 
               {/* Vault Category Filter Tabs */}
@@ -806,7 +846,7 @@ export const UserDashboard: React.FC = () => {
                   onClick={() => setCategoryFilter('all')}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                     categoryFilter === 'all'
-                      ? 'bg-emerald-950/80 text-[#2ee59d] border border-emerald-500/50 shadow-sm'
+                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/50 shadow-sm'
                       : 'bg-[#14141c] text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
@@ -920,7 +960,7 @@ export const UserDashboard: React.FC = () => {
                     FILTER
                   </span>
                 </div>
-                <div className="text-2xl font-black text-[#2ee59d]">{totalAvailableCount}</div>
+                <div className="text-2xl font-black text-emerald-400">{totalAvailableCount}</div>
                 <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Ready for checkout</p>
               </div>
 
@@ -1023,7 +1063,7 @@ export const UserDashboard: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5">
                 {filteredItems.map((item) => {
                   const isAvailable = item.available_qty > 0;
                   const isLow = item.available_qty > 0 && (item.total_qty > 0 ? item.available_qty / item.total_qty <= 0.5 : false);
@@ -1057,8 +1097,8 @@ export const UserDashboard: React.FC = () => {
                               <span>Low Reserve</span>
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#2ee59d]">
-                              <span className="w-2 h-2 rounded-full bg-[#2ee59d]" />
+                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               <span>Available</span>
                             </span>
                           )}
@@ -1131,7 +1171,7 @@ export const UserDashboard: React.FC = () => {
                                 ? 'bg-rose-500'
                                 : isLow
                                 ? 'bg-amber-400'
-                                : 'bg-[#2ee59d]'
+                                : 'bg-emerald-500'
                             }`}
                             style={{ width: `${Math.min(100, Math.max(0, availabilityRatio))}%` }}
                           />
@@ -1280,7 +1320,7 @@ export const UserDashboard: React.FC = () => {
                         type="text"
                         value={requestSearch}
                         onChange={(e) => setRequestSearch(e.target.value)}
-                        placeholder={isLeadOrAdmin ? "Search member, item, project..." : "Search my requests..."}
+                        placeholder="Search requests..."
                         className="w-full pl-9 pr-3 py-1.5 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                       />
                     </div>
@@ -1314,7 +1354,7 @@ export const UserDashboard: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-3.5">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                       {filteredList.map((req) => (
                         <div
                           key={req.id}
@@ -1478,7 +1518,7 @@ export const UserDashboard: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Club member directory, 7-day laboratory activity history, and user registration approvals
+                    Club member directory, laboratory activity history, and user registration approvals
                   </p>
                 </div>
 
@@ -1615,7 +1655,7 @@ export const UserDashboard: React.FC = () => {
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>7-Day Activity Logs</span>
+                    <span>Activity Logs</span>
                     {(() => {
                       const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
                       const count = logs.filter(
@@ -1669,7 +1709,7 @@ export const UserDashboard: React.FC = () => {
                         type="text"
                         value={memberSearch}
                         onChange={(e) => setMemberSearch(e.target.value)}
-                        placeholder="Search member by name, email, roll number, or phone..."
+                        placeholder="Search members..."
                         className="w-full pl-9 pr-8 py-2 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500 transition-colors"
                       />
                       {memberSearch && (
@@ -1685,7 +1725,7 @@ export const UserDashboard: React.FC = () => {
 
                     {/* Role Filter Pills */}
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                      {(['all', 'admin', 'lead', 'member'] as const).map((rKey) => {
+                      {(['all', 'admin', 'member'] as const).map((rKey) => {
                         const count =
                           rKey === 'all'
                             ? allMembers.length
@@ -1745,7 +1785,7 @@ export const UserDashboard: React.FC = () => {
                     }
 
                     return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                         {filteredMembers.map((member) => {
                           const memberRequests = requests.filter(
                             (r) =>
@@ -1857,14 +1897,13 @@ export const UserDashboard: React.FC = () => {
                                       handleUpdateRole(
                                         member.id,
                                         member.full_name || member.email,
-                                        e.target.value as 'admin' | 'lead' | 'member'
+                                        e.target.value as 'admin' | 'member'
                                       )
                                     }
                                     className="px-2 py-1 bg-[#171722] hover:bg-[#202030] text-zinc-300 text-[11px] font-bold rounded-lg border border-zinc-700 outline-none cursor-pointer disabled:opacity-50"
                                     title="Change User Role"
                                   >
                                     <option value="member">Member</option>
-                                    <option value="lead">Lead</option>
                                     <option value="admin">Admin</option>
                                   </select>
 
@@ -1948,22 +1987,22 @@ export const UserDashboard: React.FC = () => {
                     const dateRangeStr = `${sevenDaysAgo.toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
-                    })} – Today (${now.toLocaleDateString('en-GB', {
+                    })} to Today (${now.toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })})`;
 
                     return (
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/40 to-indigo-950/30 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="p-3.5 rounded-2xl bg-[#13111c] border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                         <div className="flex items-center gap-2 text-purple-200">
                           <Clock className="w-4 h-4 text-purple-400 shrink-0" />
                           <span>
-                            <strong>7-Day Audit Scope:</strong> Showing real-time member activities logged between{' '}
+                            <strong>Audit Scope:</strong> Showing real time member activities logged between{' '}
                             <code className="text-white font-bold">{dateRangeStr}</code>
                           </span>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-bold text-[10px] self-start sm:self-auto shrink-0">
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 font-mono font-bold text-[10px] self-start sm:self-auto shrink-0">
                           Live Audit Trail
                         </span>
                       </div>
@@ -1973,25 +2012,16 @@ export const UserDashboard: React.FC = () => {
                   {/* Filter Controls: Time Range Selector, Category Selector, and Search Bar */}
                   <div className="space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      {/* Search in 7-day logs */}
-                      <div className="relative flex-1 max-w-md">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-500" />
-                        <input
-                          type="text"
+                      {/* EasyUI iOS Search Bar in 7-day logs */}
+                      <div className="flex-1 max-w-md">
+                        <IOSSearchBar
                           value={logSearch}
-                          onChange={(e) => setLogSearch(e.target.value)}
-                          placeholder="Search 7-day logs by user name, component, or action..."
-                          className="w-full pl-9 pr-8 py-2 bg-[#14141c] border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500 transition-colors"
+                          onChange={setLogSearch}
+                          placeholder="Search logs..."
+                          className="w-full"
+                          collapsedWidth="100%"
+                          expandedWidth="100%"
                         />
-                        {logSearch && (
-                          <button
-                            type="button"
-                            onClick={() => setLogSearch('')}
-                            className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-white"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
                       </div>
 
                       {/* Timeframe Selector Pills */}
@@ -2118,8 +2148,8 @@ export const UserDashboard: React.FC = () => {
                     }
 
                     return (
-                      <div className="space-y-2.5">
-                        <div className="text-[11px] text-zinc-500 font-mono pb-1">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
+                        <div className="text-[11px] text-zinc-500 font-mono pb-1 col-span-full">
                           Showing {filteredLogs.length} events logged in timeline
                         </div>
 
@@ -2297,7 +2327,7 @@ export const UserDashboard: React.FC = () => {
                       <p className="text-xs text-zinc-400">All member signups are currently approved and active.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                       {pendingAccounts.map((account) => (
                         <div
                           key={account.id}

@@ -3,6 +3,7 @@ import { InventoryItem } from '../../types/inventory';
 import { StatusBadge } from '../common/Badge';
 import { X, MapPin, ExternalLink, ArrowRightCircle, Cpu } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
+import { DragToConfirm } from '../ui/drag-to-confirm';
 
 interface ItemDetailModalProps {
   item: InventoryItem | null;
@@ -122,8 +123,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, onClose,
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="pt-4 border-t border-purple-900/30 flex items-center justify-between gap-3">
+        {/* Footer with EasyUI Drag to Confirm */}
+        <div className="pt-4 border-t border-purple-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 text-xs font-medium rounded-xl bg-[#140f26] hover:bg-[#1f173b] text-zinc-300 transition-colors"
@@ -131,17 +132,30 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, onClose,
             Close
           </button>
 
-          <button
-            onClick={() => {
-              onClose();
-              onBorrow(item);
-            }}
-            disabled={item.available_qty <= 0}
-            className="btn-purple-glow flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md disabled:opacity-40"
-          >
-            <ArrowRightCircle className="w-4 h-4" />
-            <span>{item.available_qty > 0 ? 'Request to Borrow' : 'Out of Stock'}</span>
-          </button>
+          {item.available_qty > 0 ? (
+            <div className="w-full sm:w-64">
+              <DragToConfirm
+                size="sm"
+                label="Slide to Request Item"
+                confirmedLabel="Item Selected!"
+                actionType="confirm"
+                variant="default"
+                onConfirm={() => {
+                  setTimeout(() => {
+                    onClose();
+                    onBorrow(item);
+                  }, 400);
+                }}
+              />
+            </div>
+          ) : (
+            <button
+              disabled
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 text-zinc-500 cursor-not-allowed"
+            >
+              <span>Out of Stock</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
