@@ -347,7 +347,7 @@ export function AirportMatrixClock({
       <div>
         <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-2 sm:px-5 bg-[#08080e]">
           <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-[#c084fc]">
-            FLIGHT MATRIX LIVE CLOCK
+            LIVE CLOCK
           </p>
           <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#60a5fa] uppercase tracking-widest">
             IST (UTC+05:30)
