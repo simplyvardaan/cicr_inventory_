@@ -170,6 +170,12 @@ NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode
 `NEON_DATABASE_URL` is server-side only. It must not use the `VITE_` prefix or be
 included in frontend deployment variables.
 
+The browser always sends database requests through `/api/db`. The gateway tries
+Supabase first and automatically uses the mirrored Neon tables when Supabase
+times out or returns a server error. Use the deployed Vercel app (or `vercel dev`)
+to run the gateway; plain `npm run dev` only serves the frontend and cannot run
+the server-side Neon fallback.
+
 ### 4. Configure the Neon backup
 
 Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)

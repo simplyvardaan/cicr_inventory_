@@ -31,6 +31,7 @@ const sourceTables = [
 ];
 
 const schemaPath = path.resolve(__dirname, '../neon_backup_schema.sql');
+const operationalSchemaPath = path.resolve(__dirname, '../neon_schema.sql');
 
 function sanitizeBackupRecord(tableName, record) {
   if (tableName !== 'activity_logs' || typeof record.details !== 'string') return record;
@@ -100,6 +101,8 @@ async function fetchAuthUsers() {
 async function ensureSchema() {
   const schema = fs.readFileSync(schemaPath, 'utf8');
   await neon.query(schema);
+  const operationalSchema = fs.readFileSync(operationalSchemaPath, 'utf8');
+  await neon.query(operationalSchema);
 }
 
 async function syncRecords(tableName, updatedColumn, records) {
