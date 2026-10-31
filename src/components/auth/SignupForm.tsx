@@ -110,182 +110,173 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   };
 
   return (
-    <div className="w-full max-w-[660px] bg-[#0c0918] border border-purple-900/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_-10px_rgba(147,51,234,0.35)] relative overflow-hidden text-slate-200">
-      {/* Brand Header */}
-      <div className="flex flex-col items-center text-center mb-5">
-        <CicrLogo size={56} className="mb-2.5" />
-        <h1 className="text-xl font-bold text-white tracking-tight">CICR Inventory</h1>
-        <p className="text-[10px] tracking-[0.2em] font-semibold text-zinc-400 uppercase mt-0.5">
+    <div className="w-full max-w-[620px] bg-[#0c0918] border border-purple-900/40 rounded-3xl p-4 sm:p-6 shadow-[0_0_50px_-10px_rgba(147,51,234,0.35)] relative overflow-hidden text-slate-200">
+      {/* Brand Header - Compact */}
+      <div className="flex flex-col items-center text-center mb-3">
+        <CicrLogo size={38} className="mb-1.5" />
+        <h1 className="text-lg font-bold text-white tracking-tight leading-tight">CICR Inventory</h1>
+        <p className="text-[9px] tracking-[0.2em] font-semibold text-zinc-400 uppercase mt-0.5">
           CREATIVE & INNOVATIVE CELL IN ROBOTICS
         </p>
       </div>
 
-      {/* Segmented Tab Switcher */}
-      <div className="grid grid-cols-2 p-1 rounded-xl bg-[#120d22] border border-purple-900/30 mb-5">
+      {/* Segmented Tab Switcher - Compact */}
+      <div className="grid grid-cols-2 p-0.5 rounded-xl bg-[#120d22] border border-purple-900/30 mb-3">
         <button
           type="button"
           onClick={onSwitchToLogin}
-          className="flex items-center justify-center gap-2 py-2 rounded-lg text-zinc-400 hover:text-white font-medium text-xs transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-zinc-400 hover:text-white font-medium text-xs transition-colors cursor-pointer"
         >
           <LogIn className="w-3.5 h-3.5" />
           <span>Sign In</span>
         </button>
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-2 rounded-lg bg-[#f1ece1] text-[#0d091b] font-bold text-xs shadow-md transition-all cursor-default"
+          className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#f1ece1] text-[#0d091b] font-bold text-xs shadow-md transition-all cursor-default"
         >
-          <span className="text-base font-light leading-none">+</span>
+          <span className="text-sm font-light leading-none">+</span>
           <span>Register</span>
         </button>
       </div>
 
       {errorMsg && (
-        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+        <div className="mb-3 p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] flex items-start gap-1.5 animate-in fade-in">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Register Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        {/* Profile Picture Upload & Preview */}
-        <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#080512] border border-[#241a3d]">
-          <div className="relative group shrink-0">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-950/60 ring-2 ring-purple-500/40 overflow-hidden">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
-              ) : (
-                avatarInitial
-              )}
+      <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3 text-xs">
+        {/* Profile Picture Upload & Preview - Sleek Horizontal Strip */}
+        <div className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-xl bg-[#080512] border border-[#241a3d]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative group shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-md ring-1 ring-purple-500/40 overflow-hidden">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                ) : (
+                  avatarInitial
+                )}
+              </div>
             </div>
 
-            {/* Quick Upload Hover Overlay */}
+            <div className="min-w-0">
+              <span className="text-[11px] font-semibold text-white leading-tight block">Profile Photo</span>
+              <span className="text-[9px] text-zinc-400 leading-tight block truncate">Optional avatar preview</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
-              title="Upload photo"
+              className="px-2 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-medium text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <Camera className="w-4 h-4" />
+              <Camera className="w-3 h-3" />
+              <span>{avatarUrl ? 'Change' : 'Upload'}</span>
             </button>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <span className="text-xs font-bold text-white block">Profile Picture</span>
-            <span className="text-[10px] text-zinc-400 block mb-1.5">
-              Upload your photo or use initial avatar
-            </span>
-            <div className="flex items-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
+            {avatarUrl && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 font-semibold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                onClick={handleRemovePhoto}
+                className="p-1 rounded-lg bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 transition-colors cursor-pointer"
+                title="Remove photo"
               >
-                <Camera className="w-3 h-3" />
-                <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+                <X className="w-3 h-3" />
               </button>
-              {avatarUrl && (
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                  <span>Remove</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
         {/* 2 Boxes Side-by-Side Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
           {/* Box 1 (Row 1 Left): Full Name */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Full Name</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Full Name</label>
             <div className="relative">
-              <User className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <User className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter Your Name"
-                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-2.5 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Box 2 (Row 1 Right): Email ID */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Email ID</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Email ID</label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <Mail className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type="text"
                 required
                 value={collegeEmail}
                 onChange={(e) => setCollegeEmail(e.target.value)}
                 placeholder="Enter your College Email"
-                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-2.5 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Box 3 (Row 2 Left): Enrollment Number */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Enrollment Number</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Enrollment Number</label>
             <div className="relative">
-              <Hash className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <Hash className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type="text"
                 value={enrollmentNo}
                 onChange={(e) => setEnrollmentNo(e.target.value)}
                 placeholder="Enter your Enrollment Number"
-                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-2.5 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Box 4 (Row 2 Right): Contact Number */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Contact Number</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Contact Number</label>
             <div className="relative">
-              <Phone className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <Phone className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type="tel"
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
                 placeholder="Enter your Contact Number"
-                className="w-full pl-9 pr-3 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-2.5 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Box 5 (Row 3 Left): Password */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Password</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <Lock className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your Password"
-                className="w-full pl-9 pr-9 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-8 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2.5 top-3 p-0.5 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-2 top-2 sm:top-2.5 p-0.5 text-zinc-500 hover:text-zinc-300 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -294,21 +285,21 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
 
           {/* Box 6 (Row 3 Right): Confirm Password */}
           <div>
-            <label className="block text-zinc-300 font-semibold mb-1">Confirm Password</label>
+            <label className="block text-zinc-300 font-medium text-[11px] mb-0.5">Confirm Password</label>
             <div className="relative">
-              <ShieldCheck className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+              <ShieldCheck className="w-3.5 h-3.5 absolute left-2.5 top-2 sm:top-2.5 text-zinc-500" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your Password"
-                className="w-full pl-9 pr-9 py-2.5 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 outline-none transition-all"
+                className="w-full pl-8 pr-8 py-1.5 sm:py-2 bg-[#080512] border border-[#241a3d] focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 rounded-xl text-white placeholder-zinc-500 text-xs outline-none transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2.5 top-3 p-0.5 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-2 top-2 sm:top-2.5 p-0.5 text-zinc-500 hover:text-zinc-300 cursor-pointer"
               >
                 {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -316,25 +307,25 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </div>
         </div>
 
-        {/* Notice on Approval */}
-        <p className="text-[11px] text-amber-300/80 bg-amber-950/20 border border-amber-900/30 p-2.5 rounded-xl">
-          ℹ️ <strong>Account Approval:</strong> After submitting, your registration request will be routed to the Admin Portal. An administrator must approve your account before you can log in.
+        {/* Notice on Approval - Compact */}
+        <p className="text-[10px] text-amber-300/80 bg-amber-950/20 border border-amber-900/30 py-1.5 px-2.5 rounded-xl leading-snug">
+          ℹ️ <strong>Account Approval:</strong> Registration request will be routed to Admin Portal for administrator approval before login.
         </p>
 
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="btn-purple-glow w-full py-3.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-50"
+          className="btn-purple-glow w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all shadow-md"
         >
-          <span className="text-base font-light leading-none">+</span>
+          <span className="text-sm font-light leading-none">+</span>
           <span>{loading ? 'Submitting Request...' : 'Submit Registration Request'}</span>
         </button>
       </form>
 
       {/* Footer Switcher */}
-      <div className="text-center mt-4">
-        <p className="text-xs text-zinc-400">
+      <div className="text-center mt-2.5">
+        <p className="text-[11px] text-zinc-400">
           Already have an account?{' '}
           <button
             type="button"
