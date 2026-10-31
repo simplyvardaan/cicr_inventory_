@@ -3,12 +3,14 @@ import { CicrLogo } from '../common/CicrLogo';
 import { NotificationBell, Notification } from '../ui/notification-bell';
 import { LiquidToggle } from '../ui/liquid-toggle';
 import { ActiveView } from '../layout/BottomNavbar';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ShoppingBag } from 'lucide-react';
 
 interface TopNavbarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
   isLeadOrAdmin: boolean;
+  cartCount?: number;
+  onOpenCart?: () => void;
   notifications: Notification[];
   onMarkNotificationRead: (id: string) => void;
   onMarkAllNotificationsRead: () => void;
@@ -20,6 +22,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeView,
   setActiveView,
   isLeadOrAdmin,
+  cartCount,
+  onOpenCart,
   notifications,
   onMarkNotificationRead,
   onMarkAllNotificationsRead,
@@ -91,6 +95,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             >
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>{lowReservesCount} Low</span>
+            </button>
+          )}
+
+          {/* Cart Button: Visible strictly and only on the inventory page */}
+          {activeView === 'inventory' && onOpenCart && (
+            <button
+              type="button"
+              onClick={onOpenCart}
+              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+              title={`View Hardware Cart (${cartCount ?? 0} items)`}
+              aria-label="View hardware requisition cart"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Cart</span>
+              {(cartCount ?? 0) > 0 && (
+                <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-white/20 text-white font-mono font-black text-[10px]">
+                  {cartCount}
+                </span>
+              )}
             </button>
           )}
 
