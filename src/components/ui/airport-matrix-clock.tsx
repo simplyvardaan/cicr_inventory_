@@ -234,12 +234,12 @@ const AirportMatrixClockRow = memo(function AirportMatrixClockRow({
       onPointerEnter={handlePointerEnter}
       className={`flex items-center justify-between gap-4 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#0c0c16]/90 hover:bg-[#141422] transition-colors ${rowIndex < rowCount - 1 ? 'border-b border-zinc-800/80' : ''}`}
     >
-      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-        <div className="min-w-0 text-[#2ee59d] text-base sm:text-lg font-bold font-mono tracking-wider drop-shadow-[0_0_8px_rgba(46,229,157,0.35)]">
+      <div className="flex items-center gap-4 sm:gap-7 min-w-0">
+        <div className="min-w-0 text-[#2ee59d] text-base sm:text-xl font-bold font-mono tracking-wider drop-shadow-[0_0_8px_rgba(46,229,157,0.4)] shrink-0">
           <MatrixText text={row.time.matrix} label={`${row.time.accessible}, ${row.name}`} reduceMotion={reduceMotion} rebuildId={rebuildId} />
         </div>
         <div className="min-w-0">
-          <div className="text-white text-xs sm:text-sm font-black tracking-widest uppercase font-mono">
+          <div className="text-white text-xs sm:text-base font-black tracking-widest uppercase font-mono drop-shadow-[0_0_6px_rgba(255,255,255,0.25)]">
             <MatrixText text={row.name} label={row.name} reduceMotion={reduceMotion} rebuildId={rebuildId} />
           </div>
           {showCountry && <CountryLabel country={row.country} rebuildId={rebuildId} reduceMotion={reduceMotion} />}
@@ -322,19 +322,49 @@ export function AirportMatrixClock({
     return { id, ...city, time: formatCityTime(new Date(now), city.timeZone, format, showSeconds) };
   }), [selectedCities, now, format, showSeconds]);
 
+  const dateObj = useMemo(() => new Date(now), [now]);
+  const dayName = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(dateObj).toUpperCase();
+    } catch {
+      return '';
+    }
+  }, [dateObj]);
+
+  const dateStr = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(dateObj).toUpperCase();
+    } catch {
+      return '';
+    }
+  }, [dateObj]);
+
   return (
     <section
       aria-label={`World times: ${rows.map((row) => `${row.time.accessible} ${row.name}`).join(', ')}`}
-      className={`relative w-full overflow-hidden rounded-2xl border border-zinc-800 bg-[#0c0c16] text-white shadow-2xl ${className}`}
+      className={`relative w-full overflow-hidden rounded-2xl border border-[#1e1e2c] bg-[#0c0c16] text-white shadow-2xl ${className}`}
     >
       <div>
         <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-2 sm:px-5 bg-[#08080e]">
-          <p className="font-mono text-[10px] font-bold tracking-[0.2em] text-purple-400">FLIGHT MATRIX LIVE CLOCK</p>
-          <span className="text-[9px] font-mono font-bold text-zinc-400 uppercase tracking-widest">IST (UTC+05:30)</span>
+          <p className="font-mono text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-[#c084fc]">
+            FLIGHT MATRIX LIVE CLOCK
+          </p>
+          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#60a5fa] uppercase tracking-widest">
+            IST (UTC+05:30)
+          </span>
         </header>
         <ul className="m-0 list-none p-0 divide-y divide-zinc-800/80">
           {rows.map((row, rowIndex) => (
-            <AirportMatrixClockRow key={row.id} row={row} rowIndex={rowIndex} rowCount={rows.length} showCountry={showCountry} showControls={controlsVisible} reduceMotion={reduceMotion} onRemove={handleRemoveCity} />
+            <AirportMatrixClockRow
+              key={row.id}
+              row={row}
+              rowIndex={rowIndex}
+              rowCount={rows.length}
+              showCountry={showCountry}
+              showControls={controlsVisible}
+              reduceMotion={reduceMotion}
+              onRemove={handleRemoveCity}
+            />
           ))}
         </ul>
         {controlsVisible && (
@@ -383,8 +413,13 @@ export function AirportMatrixClock({
           </div>
         )}
         {!controlsVisible && (
-          <footer className="border-t border-zinc-800/80 px-3 py-1.5 font-mono text-[9px] tracking-[0.12em] text-zinc-500 sm:px-4 bg-[#08080e]">
-            {rows.length} LOCATION <span className="px-1.5 opacity-50">/</span> ASIA/KOLKATA TIME
+          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/80 px-4 py-2 font-mono text-[9px] sm:text-[10px] tracking-[0.14em] text-zinc-400 bg-[#08080e]">
+            <span className="text-zinc-300 font-bold">
+              {dayName}{dayName && dateStr ? ', ' : ''}{dateStr}
+            </span>
+            <span>
+              {rows.length} {rows.length === 1 ? 'LOCATION' : 'LOCATIONS'} <span className="px-1.5 opacity-40">/</span> ASIA/KOLKATA TIME
+            </span>
           </footer>
         )}
       </div>

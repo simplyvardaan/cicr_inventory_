@@ -112,7 +112,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none select-none">
       {/* Docked Centered Floating Navbar with EasyUI Pill Navigation Design */}
       <nav className="relative flex justify-center px-2 py-2 sm:p-3 pointer-events-none" ref={navContainerRef}>
-        <div className="pointer-events-auto relative flex items-center justify-between gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-full bg-[#0c0c14]/95 backdrop-blur-2xl border border-[#252538] shadow-[0_10px_35px_-5px_rgba(0,0,0,0.85)] max-w-4xl w-full">
+        <div className="pointer-events-auto relative flex items-center justify-between gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-full bg-[#0c0c14]/95 backdrop-blur-2xl border border-[#252538] shadow-[0_10px_35px_-5px_rgba(0,0,0,0.85)] max-w-4xl lg:max-w-5xl w-full">
           
           {/* Main Segmented Pill Tabs */}
           <div role="tablist" className="flex items-center gap-1 sm:gap-1.5 min-w-0">

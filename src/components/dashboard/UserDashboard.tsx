@@ -578,7 +578,7 @@ export const UserDashboard: React.FC = () => {
     <div className="min-h-screen bg-[#07070a] text-slate-100 flex flex-col relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
       
       {/* Top Floating Island Header Bar (Permanently Fixed on All Mobile & Desktop Screens on Scroll) */}
-      <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-6xl mx-auto px-2 sm:px-6 pointer-events-none">
+      <div className="fixed top-2 sm:top-3 inset-x-0 z-40 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 xl:px-10 pointer-events-none">
         <header className="pointer-events-auto rounded-full bg-[#0f0f16]/95 backdrop-blur-2xl border border-[#222230] px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-2xl shadow-black/80 gap-2">
           {/* Left: Breadcrumbs Capsule */}
           <div className="flex items-center min-w-0">
@@ -657,8 +657,8 @@ export const UserDashboard: React.FC = () => {
         </header>
       </div>
 
-      {/* Main Workspace Body - Padded so content scrolls smoothly between fixed top header and bottom dock */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 pt-16 sm:pt-20 pb-36 sm:pb-44 space-y-8 animate-in fade-in duration-300">
+      {/* Main Workspace Body - Responsively fills wide monitors while keeping comfortable margins */}
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 pt-16 sm:pt-20 pb-36 sm:pb-44 space-y-8 animate-in fade-in duration-300">
         
         {/* ============================================================== */}
         {/* VIEW 1: DASHBOARD (Matching Screenshot 1) */}
@@ -678,21 +678,22 @@ export const UserDashboard: React.FC = () => {
                 </p>
               </div>
 
-              {/* EasyUI Airport Matrix Departure Board Clock */}
-              <div className="shrink-0 w-full md:w-auto max-w-full">
+              {/* EasyUI Airport Matrix Departure Board Clock (Screenshot 2 Live Departure Format) */}
+              <div className="shrink-0 w-full lg:w-auto max-w-full">
                 <AirportMatrixClock
                   cities={['new-delhi']}
                   format="24h"
                   showSeconds={true}
                   updateInterval={1000}
                   showCountry={true}
-                  className="w-full md:min-w-[320px]"
+                  showControls={false}
+                  className="w-full sm:min-w-[340px] md:min-w-[420px]"
                 />
               </div>
             </div>
 
-            {/* 4 Interactive Hub Cards (2x2 Grid from Screenshot 1) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* 4 Interactive Hub Cards (Auto-fills wide screens: 4 columns on desktop, 2x2 on tablet, 1 on mobile) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               
               {/* Card 1: Component Vault */}
               <div
@@ -1062,7 +1063,7 @@ export const UserDashboard: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5">
                 {filteredItems.map((item) => {
                   const isAvailable = item.available_qty > 0;
                   const isLow = item.available_qty > 0 && (item.total_qty > 0 ? item.available_qty / item.total_qty <= 0.5 : false);
@@ -1353,7 +1354,7 @@ export const UserDashboard: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-3.5">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                       {filteredList.map((req) => (
                         <div
                           key={req.id}
@@ -1784,7 +1785,7 @@ export const UserDashboard: React.FC = () => {
                     }
 
                     return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                         {filteredMembers.map((member) => {
                           const memberRequests = requests.filter(
                             (r) =>
@@ -2147,8 +2148,8 @@ export const UserDashboard: React.FC = () => {
                     }
 
                     return (
-                      <div className="space-y-2.5">
-                        <div className="text-[11px] text-zinc-500 font-mono pb-1">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
+                        <div className="text-[11px] text-zinc-500 font-mono pb-1 col-span-full">
                           Showing {filteredLogs.length} events logged in timeline
                         </div>
 
@@ -2326,7 +2327,7 @@ export const UserDashboard: React.FC = () => {
                       <p className="text-xs text-zinc-400">All member signups are currently approved and active.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                       {pendingAccounts.map((account) => (
                         <div
                           key={account.id}

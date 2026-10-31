@@ -7,33 +7,11 @@ const serviceRoleKey =
   import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
   supabaseAnonKey;
 
-const originalFetch = globalThis.fetch.bind(globalThis);
-const databaseGatewayFetch: typeof fetch = (input, init) => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-  if (!supabaseUrl || !url.startsWith(`${supabaseUrl}/rest/v1/`)) {
-    return originalFetch(input, init);
-  }
-
-  const parsed = new URL(url);
-  const gatewayParams = new URLSearchParams(parsed.search);
-  gatewayParams.set('route', parsed.pathname);
-  const gatewayUrl = `/api/db?${gatewayParams.toString()}`;
-  const headers = new Headers(input instanceof Request ? input.headers : init?.headers);
-  if (init?.headers) {
-    new Headers(init.headers).forEach((value, key) => headers.set(key, value));
-  }
-  return originalFetch(gatewayUrl, {
-    ...init,
-    headers,
-  });
-};
-
 // Standard client for authenticated user sessions
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder',
   {
-    global: { fetch: databaseGatewayFetch },
     auth: {
       persistSession: true,
       autoRefreshToken: true,
