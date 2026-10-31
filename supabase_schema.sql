@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT NOT NULL,
     roll_number TEXT,
     role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin')),
+    status TEXT NOT NULL DEFAULT 'approved' CHECK (status IN ('pending', 'approved', 'rejected')),
     phone TEXT,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -41,6 +42,17 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
 ALTER TABLE public.inventory_items
   ADD COLUMN IF NOT EXISTS sku TEXT,
   ADD COLUMN IF NOT EXISTS condition TEXT DEFAULT 'Good';
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'approved';
+
+UPDATE public.profiles
+SET status = CASE
+  WHEN avatar_url = 'status:pending' THEN 'pending'
+  WHEN avatar_url = 'status:rejected' THEN 'rejected'
+  ELSE COALESCE(status, 'approved')
+END
+WHERE status IS NULL OR avatar_url IN ('status:pending', 'status:rejected');
 
 DO $$
 BEGIN
@@ -92,18 +104,20 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, role, roll_number)
+  INSERT INTO public.profiles (id, full_name, email, role, roll_number, status)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'role', 'member'),
-    COALESCE(NEW.raw_user_meta_data->>'roll_number', '')
+    COALESCE(NEW.raw_user_meta_data->>'roll_number', ''),
+    COALESCE(NEW.raw_user_meta_data->>'status', 'approved')
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     email = EXCLUDED.email,
     role = EXCLUDED.role,
+    status = EXCLUDED.status,
     roll_number = EXCLUDED.roll_number,
     updated_at = NOW();
   RETURN NEW;

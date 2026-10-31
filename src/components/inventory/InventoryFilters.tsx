@@ -49,7 +49,7 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               viewMode === 'grid'
                 ? 'bg-purple-950 text-purple-200 border border-purple-500/40'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
             }`}
             title="Grid View"
           >
@@ -60,7 +60,7 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               viewMode === 'table'
                 ? 'bg-purple-950 text-purple-200 border border-purple-500/40'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
             }`}
             title="Table View"
           >

@@ -15,11 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Service-role credentials must stay in server-side API routes. Keep this
-// export temporarily for existing call sites without exposing that secret.
 export const supabaseAdmin = supabase;
 
 export const SUPABASE_PROJECT_URL = supabaseUrl;
-export const SUPABASE_PROJECT_REF = supabaseUrl
-  ? supabaseUrl.split('//')[1]?.split('.')[0] || ''
-  : '';
+export const SUPABASE_PROJECT_REF = supabaseUrl.split('//')[1]?.split('.')[0] || '';

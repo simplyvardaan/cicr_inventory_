@@ -1,6 +1,24 @@
 import http from 'node:http';
+import fs from 'node:fs';
 import { parse } from 'node:url';
 import { createServer } from 'vite';
+
+function loadLocalEnvironment() {
+  const envPath = new URL('../.env', import.meta.url);
+  if (!fs.existsSync(envPath)) return;
+
+  for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (!match || match[1] in process.env) continue;
+    let value = match[2];
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] = value;
+  }
+}
+
+loadLocalEnvironment();
 
 const routes = {
   '/api/accounts': './api/accounts.ts',
@@ -77,5 +95,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(3000, () => {
   console.log('CICR local app: http://localhost:3000');
-  console.log('API routes are served natively without Vercel.');
+  console.log('API routes available at: http://localhost:3000/api');
 });

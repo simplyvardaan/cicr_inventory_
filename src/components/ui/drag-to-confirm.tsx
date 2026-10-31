@@ -236,11 +236,11 @@ export const DragToConfirm: React.FC<DragToConfirmProps> = ({
         };
       case 'info':
         return {
-          fill: 'bg-blue-500/10 dark:bg-blue-500/15 border-r border-blue-500/25',
-          confirmedTrack: 'bg-blue-500/[0.08] border-blue-500/35 dark:bg-blue-500/15 dark:border-blue-500/30',
-          confirmedHandle: 'bg-blue-600 text-white dark:bg-blue-500 dark:text-white border-blue-600 dark:border-blue-500 shadow-xs',
-          confirmedText: 'text-blue-600 dark:text-blue-400 font-semibold',
-          iconColor: 'text-blue-500 dark:text-blue-400',
+          fill: 'bg-blue-500/10 dark:bg-purple-500/15 border-r border-blue-500/25',
+          confirmedTrack: 'bg-blue-500/[0.08] border-blue-500/35 dark:bg-purple-500/15 dark:border-purple-500/30',
+          confirmedHandle: 'bg-blue-600 dark:bg-purple-600 text-white dark:bg-purple-500 dark:text-white border-blue-600 dark:border-purple-500 shadow-xs',
+          confirmedText: 'text-blue-600 dark:text-purple-400 font-semibold',
+          iconColor: 'text-blue-500 dark:text-purple-400',
         };
       default:
         return {

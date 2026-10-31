@@ -2,32 +2,28 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CheckCheck, X } from 'lucide-react';
+import { Bell, CheckCheck, X, ExternalLink } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motionTransitions } from '../../lib/motion-tokens';
 
 export interface Notification {
   id: string;
+  title?: string;
   message: string;
+  type?: 'info' | 'warning' | 'error' | 'success';
   timestamp: Date | string;
   read: boolean;
   action?: () => void;
 }
 
 export interface NotificationBellProps {
-  /** List of notifications. */
   notifications: Notification[];
-  /** Handler when an item is marked as read. */
   onMarkAsRead: (id: string) => void;
-  /** Optional handler to mark all as read. */
   onMarkAllAsRead?: () => void;
-  /** Controlled open state of notification drawer/panel. */
+  onClearAll?: () => void;
   isOpen?: boolean;
-  /** Open state change handler. */
   onOpenChange?: (isOpen: boolean) => void;
-  /** Show numeric counter inside red badge. Default is true. */
   showCount?: boolean;
-  /** Custom CSS class names. */
   className?: string;
 }
 
@@ -35,6 +31,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   notifications,
   onMarkAsRead,
   onMarkAllAsRead,
+  onClearAll,
   isOpen: controlledIsOpen,
   onOpenChange,
   showCount = true,
@@ -102,13 +99,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             : 'Notifications'
         }
         className={cn(
-          'relative p-2.5 rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer',
+          'relative p-2 sm:p-2.5 rounded-full border-2 transition-all focus-visible:outline-none cursor-pointer',
           isPanelOpen
-            ? 'bg-[#141414] border-[#4A4A4A] text-[#FAFAFA]'
-            : 'bg-[#0E0E0E] border-[#1F1F1F] text-[#525252] hover:text-[#FAFAFA] hover:border-[#4A4A4A]'
+            ? 'bg-blue-50 border-blue-600 dark:border-purple-600 text-blue-600 dark:text-purple-400 dark:bg-purple-950/60 dark:border-purple-500 dark:text-purple-300'
+            : 'bg-slate-100 dark:bg-[#151520] border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-zinc-700'
         )}
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
 
         {/* Unread Badge / Red Dot */}
         <AnimatePresence>
@@ -119,9 +116,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
               exit={{ scale: 0, opacity: 0 }}
               transition={motionTransitions.springSnappy}
               className={cn(
-                'absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-rose-500 text-white font-mono font-bold border-2 border-[#0E0E0E]',
+                'absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-red-600 text-white font-mono font-black border-2 border-white dark:border-[#0f0f16]',
                 showCount
-                  ? 'min-w-[18px] h-[18px] px-1 text-[9px]'
+                  ? 'min-w-[18px] h-[18px] px-1 text-[10px]'
                   : 'w-2.5 h-2.5'
               )}
             >
@@ -139,25 +136,27 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={motionTransitions.springSnappy}
-            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-4rem)] max-w-[320px] sm:max-w-none sm:w-96 rounded-2xl bg-[#0E0E0E]/95 backdrop-blur-xl border border-[#1F1F1F] shadow-[0_16px_40px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+            className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 mt-2 w-[calc(100vw-2rem)] max-w-[340px] sm:max-w-none sm:w-96 rounded-3xl bg-white dark:bg-[#0c0c14] border-2 border-slate-300 dark:border-zinc-800 shadow-2xl shadow-black/40 z-[100] overflow-hidden text-slate-900 dark:text-slate-100 opacity-100"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F1F1F] bg-[#141414]">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#101018]">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[#FAFAFA]">Notifications</span>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  Notifications
+                </span>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-800 text-[10px] font-mono font-bold">
                     {unreadCount} new
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {unreadCount > 0 && onMarkAllAsRead && (
                   <button
                     type="button"
                     onClick={onMarkAllAsRead}
-                    className="p-1 rounded-lg text-[10px] text-[#525252] hover:text-white hover:bg-[#141414] transition-colors flex items-center gap-1 cursor-pointer"
+                    className="p-1 px-2 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 dark:text-purple-400 dark:hover:text-purple-400 dark:text-zinc-400 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
                     title="Mark all as read"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
@@ -167,26 +166,34 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 <button
                   type="button"
                   onClick={() => setPanelOpen(false)}
-                  className="p-1 rounded-lg text-[#525252] hover:text-white hover:bg-[#141414] transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   aria-label="Close notifications"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-[#1F1F1F]">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/80 bg-white dark:bg-[#07070a]">
               {notifications.length === 0 ? (
-                <div className="py-8 px-4 text-center">
-                  <Bell className="w-6 h-6 text-[#6B6B6B] mx-auto mb-2" />
-                  <p className="text-xs text-[#6B6B6B]">No notifications right now</p>
+                <div className="py-10 px-4 text-center">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-600 flex items-center justify-center mx-auto mb-2">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700 dark:text-zinc-400">No notifications right now</p>
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">You're all caught up!</p>
                 </div>
               ) : (
                 notifications.map((item) => {
                   const dateString =
                     typeof item.timestamp === 'string'
-                      ? item.timestamp
+                      ? new Date(item.timestamp).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                       : item.timestamp.toLocaleDateString();
 
                   return (
@@ -195,31 +202,51 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className={cn(
-                        'p-3 flex items-start gap-3 transition-colors hover:bg-white/[0.02]',
-                        !item.read && 'bg-[#141414]'
+                        'p-3.5 flex items-start gap-3 transition-colors text-xs cursor-pointer',
+                        item.read
+                          ? 'bg-white dark:bg-[#07070a] hover:bg-slate-50 dark:hover:bg-[#0f0f16]'
+                          : 'bg-blue-50/90 dark:bg-[#150d24] hover:bg-blue-100 dark:hover:bg-[#1e1333]'
                       )}
+                      onClick={() => {
+                        if (!item.read) onMarkAsRead(item.id);
+                        if (item.action) {
+                          item.action();
+                          setPanelOpen(false);
+                        }
+                      }}
                     >
                       <span
                         className={cn(
                           'w-2 h-2 rounded-full mt-1.5 shrink-0',
-                          item.read ? 'bg-transparent' : 'bg-rose-500 animate-pulse'
+                          item.read ? 'bg-transparent' : 'bg-red-600 animate-pulse'
                         )}
                       />
 
                       <div className="flex-1 min-w-0">
-                        <p className={cn('text-xs text-[#A1A1A1] leading-relaxed', !item.read && 'font-medium text-[#FAFAFA]')}>
+                        <p className={cn('text-xs leading-relaxed', item.read ? 'text-slate-600 dark:text-zinc-400 font-normal' : 'text-slate-900 dark:text-white font-bold')}>
                           {item.message}
                         </p>
-                        <span className="text-[10px] font-mono text-[#6B6B6B] mt-1 block">
-                          {dateString}
-                        </span>
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
+                            {dateString}
+                          </span>
+                          {item.action && (
+                            <span className="text-[10px] text-blue-600 dark:text-purple-400 font-bold flex items-center gap-0.5">
+                              <span>Open</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {!item.read && (
                         <button
                           type="button"
-                          onClick={() => onMarkAsRead(item.id)}
-                          className="p-1 rounded text-[#525252] hover:text-white hover:bg-[#0E0E0E] transition-colors shrink-0 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMarkAsRead(item.id);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-blue-600 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
                           title="Mark as read"
                           aria-label="Mark notification as read"
                         >

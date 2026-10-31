@@ -69,7 +69,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setItems(normalizedItems);
 
         // 2. Fetch real borrow requests from Supabase
-        const { data: dbRequests } = await supabase
+        const { data: dbRequests } = await supabaseAdmin
           .from('borrow_requests')
           .select('*')
           .order('created_at', { ascending: false });
@@ -115,7 +115,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data) {
         setItems((prev) => [data as InventoryItem, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Admin',
@@ -196,7 +196,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const { data: dbData, error } = await supabase
+      const { data: dbData, error } = await supabaseAdmin
         .from('borrow_requests')
         .insert([
           {
@@ -219,7 +219,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (dbData) {
         setRequests((prev) => [dbData as BorrowRequest, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Member',
@@ -265,7 +265,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (newStatus === 'approved') {
         updatePayload.borrow_date = new Date().toISOString().split('T')[0];
         
-        // Decrement available quantity in Supabase backend
+        // Decrement available quantity in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -273,11 +273,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const statusLabel =
               newAvail <= 0
                 ? 'Out of Stock'
-                : newAvail <= targetItem.min_threshold
+                : newAvail < targetItem.total_qty && (newAvail <= (targetItem.min_threshold ?? 2) || (targetItem.total_qty > 0 && newAvail / targetItem.total_qty <= 0.5))
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -285,20 +285,33 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 updated_at: new Date().toISOString(),
               })
               .eq('id', targetItem.id);
+
+            // Immediately update local items state
+            setItems((prev) =>
+              prev.map((it) =>
+                it.id === targetItem.id
+                  ? { ...it, available_qty: newAvail, status: statusLabel }
+                  : it
+              )
+            );
           }
         }
       } else if (newStatus === 'returned') {
         updatePayload.actual_return_date = new Date().toISOString().split('T')[0];
 
-        // Increment available quantity back in Supabase backend
+        // Increment available quantity back in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
             const newAvail = Math.min(targetItem.total_qty, targetItem.available_qty + targetReq.quantity);
             const statusLabel =
-              newAvail <= targetItem.min_threshold ? 'Low Stock' : 'In Stock';
+              newAvail <= 0
+                ? 'Out of Stock'
+                : newAvail < targetItem.total_qty && (newAvail <= (targetItem.min_threshold ?? 2) || (targetItem.total_qty > 0 && newAvail / targetItem.total_qty <= 0.5))
+                ? 'Low Stock'
+                : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -306,21 +319,35 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 updated_at: new Date().toISOString(),
               })
               .eq('id', targetItem.id);
+
+            // Immediately update local items state
+            setItems((prev) =>
+              prev.map((it) =>
+                it.id === targetItem.id
+                  ? { ...it, available_qty: newAvail, status: statusLabel }
+                  : it
+              )
+            );
           }
         }
       }
 
-      // Update borrow request in Supabase
-      const { error } = await supabase
+      // Update borrow request in Supabase via supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update(updatePayload)
         .eq('id', requestId);
 
       if (error) return { success: false, error: error.message };
 
+      // Immediately update local requests state
+      setRequests((prev) =>
+        prev.map((r) => (r.id === requestId ? { ...r, ...updatePayload, status: newStatus } : r))
+      );
+
       // Log activity in Supabase
       if (targetReq) {
-        await supabase.from('activity_logs').insert([
+        await supabaseAdmin.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: profile?.full_name || 'Admin',

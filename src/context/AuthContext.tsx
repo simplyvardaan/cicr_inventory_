@@ -35,15 +35,51 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   approveUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
   rejectUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
+
+const getInitialAuth = (): { user: User | null; profile: UserProfile | null } => {
+  if (typeof window === 'undefined') return { user: null, profile: null };
+  try {
+    const cachedUser = localStorage.getItem('cicr-active-user');
+    const cachedProfile = localStorage.getItem('cicr-active-profile');
+    if (cachedUser) {
+      return {
+        user: JSON.parse(cachedUser),
+        profile: cachedProfile ? JSON.parse(cachedProfile) : null,
+      };
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const parsed = JSON.parse(item);
+          const u = parsed.user || parsed.currentSession?.user;
+          if (u) return { user: u, profile: null };
+        }
+      }
+    }
+
+    const fallbackUser = localStorage.getItem('neon-fallback-user');
+    if (fallbackUser) {
+      return { user: JSON.parse(fallbackUser), profile: null };
+    }
+  } catch {
+    // ignore
+  }
+  return { user: null, profile: null };
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const initialAuth = getInitialAuth();
+  const [user, setUser] = useState<User | null>(initialAuth.user);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profile, setProfile] = useState<UserProfile | null>(initialAuth.profile);
+  const [loading, setLoading] = useState<boolean>(!initialAuth.user);
 
   const loadProfile = async (currentUser: User) => {
     try {
@@ -54,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (!error && data) {
-        setProfile({
+        const resolvedProfile: UserProfile = {
           id: data.id,
           email: data.email || currentUser.email || '',
           full_name: data.full_name || currentUser.user_metadata?.full_name || 'Member',
@@ -66,7 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar_url: data.avatar_url && !data.avatar_url.startsWith('status:') ? data.avatar_url : (currentUser.user_metadata?.avatar_url || ''),
           created_at: data.created_at || currentUser.created_at,
           last_sign_in: currentUser.last_sign_in_at,
-        });
+        };
+        setProfile(resolvedProfile);
+        try {
+          localStorage.setItem('cicr-active-user', JSON.stringify(currentUser));
+          localStorage.setItem('cicr-active-profile', JSON.stringify(resolvedProfile));
+        } catch {}
         return;
       }
     } catch {
@@ -101,7 +142,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
         setSession(session);
         const storedFallback = localStorage.getItem('neon-fallback-user');
-        const fallbackUser = storedFallback ? JSON.parse(storedFallback) as User : null;
+        let fallbackUser: User | null = null;
+        if (storedFallback) {
+          try {
+            fallbackUser = JSON.parse(storedFallback) as User;
+          } catch {
+            fallbackUser = null;
+          }
+        }
         const currentUser = session?.user ?? fallbackUser;
         setUser(currentUser);
         if (currentUser) {
@@ -146,47 +194,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailToAuth = `${emailToAuth.toLowerCase()}@mail.jiit.ac.in`;
       }
 
-      let res = await supabase.auth.signInWithPassword({
-        email: emailToAuth,
-        password,
-      });
+      let res: any = { data: null, error: null };
+      try {
+        const authRes = await supabase.auth.signInWithPassword({
+          email: emailToAuth,
+          password,
+        });
+        res = authRes;
 
-      // Handle unconfirmed email automatically using service role admin
-      if (res.error && res.error.message.toLowerCase().includes('not confirmed')) {
-        try {
-          const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-          const target = usersData?.users?.find(
-            (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
-          );
-          if (target) {
-            await supabaseAdmin.auth.admin.updateUserById(target.id, {
-              email_confirm: true,
-            });
-            // Retry login now that email is confirmed!
-            res = await supabase.auth.signInWithPassword({
-              email: emailToAuth,
-              password,
-            });
+        // Handle unconfirmed email automatically using service role admin
+        if (res.error && res.error.message?.toLowerCase().includes('not confirmed')) {
+          try {
+            const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+            const target = usersData?.users?.find(
+              (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
+            );
+            if (target) {
+              await supabaseAdmin.auth.admin.updateUserById(target.id, {
+                email_confirm: true,
+              });
+              res = await supabase.auth.signInWithPassword({
+                email: emailToAuth,
+                password,
+              });
+            }
+          } catch (adminErr) {
+            console.warn('Auto-confirm attempt error:', adminErr);
           }
-        } catch (adminErr) {
-          console.warn('Auto-confirm attempt error:', adminErr);
         }
+      } catch (networkErr) {
+        console.warn('Supabase sign-in network error:', networkErr);
+        res = { data: null, error: networkErr };
       }
 
+      // If Supabase failed or threw network error, attempt Neon failover
       if (res.error) {
-        const fallback = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: emailToAuth, password }),
-        });
-        if (!fallback.ok) return { success: false, error: res.error.message };
-        const fallbackData = await fallback.json();
-        const fallbackUser = fallbackData.user as User;
-        setUser(fallbackUser);
-        setSession(null);
-        await loadProfile(fallbackUser);
-        localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
-        return { success: true };
+        try {
+          const fallback = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: emailToAuth, password }),
+          });
+          if (fallback.ok) {
+            const fallbackData = await fallback.json();
+            if (fallbackData?.user) {
+              const fallbackUser = fallbackData.user as User;
+              setUser(fallbackUser);
+              setSession(null);
+              await loadProfile(fallbackUser);
+              localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
+              return { success: true };
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn('Neon auth failover error:', fallbackErr);
+        }
+
+        const errMsg = res.error?.message || (res.error instanceof Error ? res.error.message : String(res.error));
+        if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('failed to fetch')) {
+          return {
+            success: false,
+            error: 'Authentication server connection timeout. Please check your internet connection or try again shortly.',
+          };
+        }
+        return { success: false, error: errMsg || 'Invalid login credentials. Please verify your email and password.' };
       }
 
       if (res.data.user) {
@@ -687,12 +758,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      localStorage.removeItem('cicr-active-user');
+      localStorage.removeItem('cicr-active-profile');
       localStorage.removeItem('neon-fallback-user');
     }
   };
 
   const refreshProfile = async () => {
     if (user) await loadProfile(user);
+  };
+
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Password update failed';
+      return { success: false, error: msg };
+    }
   };
 
   const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
@@ -714,6 +800,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         approveUserAccount,
         rejectUserAccount,
+        updatePassword,
       }}
     >
       {children}

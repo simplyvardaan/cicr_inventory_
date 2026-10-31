@@ -5,7 +5,8 @@ A modern, high-performance web dashboard and robotics hardware management platfo
 
 🌐 **Live Production App**: [https://cicr-inventory.vercel.app/](https://cicr-inventory.vercel.app/)  
 📦 **Repository**: [https://github.com/simplyvardaan/cicr_inventory_](https://github.com/simplyvardaan/cicr_inventory_)  
-🏷️ **Current Version**: `v2.0.0`
+🏷️ **Current Version**: `v2.2.0`  
+📜 **Release Notes & History**: [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
@@ -242,6 +243,19 @@ Run `npm run dev` for the full local app. It serves the Vite frontend and `/api/
 npm run build
 npm run preview
 ```
+
+---
+
+## 🏷️ Version History & Releases
+
+| Version | Release Date | Key Highlights |
+| :--- | :--- | :--- |
+| **`v2.2.0`** | Oct 31, 2026 | macOS-inspired team window showcase (KPH style), persistent session hydration on refresh, scoped inventory cart button, removed role badges, zero preloader delays |
+| **`v2.1.0`** | Oct 31, 2026 | Dual-theme system (high-contrast light & dark modes), solid notifications drawer, secondary Neon database mirror |
+| **`v2.0.0`** | Oct 31, 2026 | Production launch: 172 synchronized robotics hardware assets, digital issue pass generator, dynamic RBAC |
+| **`v1.0.0`** | Sep 15, 2026 | Initial prototype release and laboratory inventory tracking foundation |
+
+For the complete release history, see [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 

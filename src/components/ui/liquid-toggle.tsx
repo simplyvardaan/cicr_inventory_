@@ -128,7 +128,7 @@ export const LiquidToggle: React.FC<LiquidToggleProps> = ({
   height = 32,
 }) => {
   const reducedMotion = useReducedMotion();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
   const uniqueId = useId();
   const labelId = `liquid-toggle-label-${uniqueId}`;
@@ -137,16 +137,20 @@ export const LiquidToggle: React.FC<LiquidToggleProps> = ({
   // black track), near-black in light mode (so it pops on the white track).
   const blobColor = accentColor ?? (isDark ? '#FAFAFA' : '#0A0A0A');
 
-  const [internalValue, setInternalValue] = React.useState(defaultValue);
   const isControlled = controlledValue !== undefined;
-  const isOn = isControlled ? Boolean(controlledValue) : internalValue;
+  const isOn = isControlled ? Boolean(controlledValue) : isDark;
 
   const setValue = useCallback(
     (next: boolean) => {
-      if (!isControlled) setInternalValue(next);
-      onChange?.(next);
+      if (isControlled) {
+        onChange?.(next);
+      } else if (onChange) {
+        onChange(next);
+      } else {
+        toggleTheme();
+      }
     },
-    [isControlled, onChange]
+    [isControlled, onChange, toggleTheme]
   );
 
   // Drive the blob position with a MotionValue so we can sample it on
