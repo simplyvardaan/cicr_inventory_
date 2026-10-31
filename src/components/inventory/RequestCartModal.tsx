@@ -272,37 +272,19 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                   </strong>
                 </div>
 
-                <div className="pt-2 space-y-3">
-                  <div className="w-full">
-                    <DragToConfirm
-                      size="md"
-                      label={isSubmitting ? 'Dispatching Requisition...' : 'Slide to Dispatch Requisition'}
-                      confirmedLabel="Requisition Dispatched!"
-                      actionType="submit"
-                      variant="default"
-                      disabled={isSubmitting || cart.length === 0}
-                      onConfirm={() => {
-                        handleDispatch();
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-zinc-500">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="hover:text-zinc-300 transition-colors cursor-pointer"
-                    >
-                      Keep Browsing
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || cart.length === 0}
-                      className="text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
-                    >
-                      Or click here to submit
-                    </button>
-                  </div>
+                <div className="pt-4 flex justify-center items-center w-full">
+                  <DragToConfirm
+                    size="md"
+                    label={isSubmitting ? 'Dispatching Requisition...' : 'Slide to Dispatch Requisition'}
+                    confirmedLabel="Requisition Dispatched!"
+                    actionType="submit"
+                    variant="default"
+                    className="w-full max-w-sm mx-auto"
+                    disabled={isSubmitting || cart.length === 0}
+                    onConfirm={() => {
+                      handleDispatch();
+                    }}
+                  />
                 </div>
               </form>
             </div>
