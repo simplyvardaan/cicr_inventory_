@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.0] : 2026-10-31
+
+### Added
+* Personalized Member Active Loans Filter: Configured active loans metric and status filter in Component Vault to display strictly personalized loan counts for normal members, while administrators retain full visibility over all member loans across the lab.
+* Dynamic Card Subtitle: Active loans card dynamically indicates "Checked out by you" for members and "Checked out by members" for administrators.
+
+### Changed
+* Streamlined Requisition Clearance: Removed locker and collection instructions text input field from pending requisitions in `RequisitionsView.tsx` for a cleaner, one-click authorization workflow.
+
+### Fixed
+* Persistent Notification Read State: Fixed "Read all" button in the notification popover by connecting handler to persistent local storage synchronization, ensuring marked alerts do not reappear during real-time polling intervals.
+* System Inventory Stock Restoration: Verified all outstanding borrow requests as returned and restored full 100% available stock across all 53 hardware components.
+
+***
+
 ## [2.17.0] : 2026-10-31
 
 ### Added

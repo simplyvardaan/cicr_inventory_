@@ -155,7 +155,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 {unreadCount > 0 && onMarkAllAsRead && (
                   <button
                     type="button"
-                    onClick={onMarkAllAsRead}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMarkAllAsRead();
+                    }}
                     className="p-1 px-2 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 dark:text-purple-400 dark:hover:text-purple-400 dark:text-zinc-400 dark:hover:text-purple-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
                     title="Mark all as read"
                   >

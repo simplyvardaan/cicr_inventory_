@@ -283,19 +283,10 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                               <Clock className="w-3 h-3" />
                               <span>Awaiting Admin Approval to Issue</span>
                             </div>
-                            <input
-                              type="text"
-                              value={adminNote[req.id] || ''}
-                              onChange={(e) =>
-                                setAdminNote((prev) => ({ ...prev, [req.id]: e.target.value }))
-                              }
-                              placeholder="Locker / collection instructions..."
-                              className="w-full sm:w-56 px-2.5 py-1 text-[11px] bg-slate-50 dark:bg-[#0c0c12] border-2 border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-500 dark:focus:border-purple-500"
-                            />
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => onBorrowAction(req.id, 'approved', adminNote[req.id])}
+                                onClick={() => onBorrowAction(req.id, 'approved')}
                                 className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-md transition-colors flex items-center justify-center gap-1.5"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -303,7 +294,7 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => onBorrowAction(req.id, 'rejected', adminNote[req.id])}
+                                onClick={() => onBorrowAction(req.id, 'rejected')}
                                 className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-md transition-colors flex items-center justify-center gap-1.5"
                               >
                                 <XCircle className="w-3.5 h-3.5" />

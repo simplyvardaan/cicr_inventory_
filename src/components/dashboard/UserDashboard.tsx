@@ -375,13 +375,9 @@ export const UserDashboard: React.FC = () => {
         cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
         onOpenCart={() => setCartModalOpen(true)}
         notifications={notifications}
-        onMarkNotificationRead={(id) =>
-          setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
-        }
-        onMarkAllNotificationsRead={() =>
-          setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-        }
-        onClearNotifications={() => setNotifications([])}
+        onMarkNotificationRead={handleMarkNotificationRead}
+        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+        onClearNotifications={handleClearNotifications}
         lowReservesCount={lowReservesCount}
       />
 
@@ -403,6 +399,8 @@ export const UserDashboard: React.FC = () => {
             requests={requests}
             isAdmin={isAdmin}
             isLeadOrAdmin={isLeadOrAdmin}
+            currentUserEmail={user?.email}
+            currentUserId={user?.id}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             categoryFilter={categoryFilter}

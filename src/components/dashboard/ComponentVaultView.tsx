@@ -23,6 +23,8 @@ interface ComponentVaultViewProps {
   requests: BorrowRequest[];
   isAdmin?: boolean;
   isLeadOrAdmin: boolean;
+  currentUserEmail?: string;
+  currentUserId?: string;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   categoryFilter: string;
@@ -48,6 +50,8 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   requests,
   isAdmin,
   isLeadOrAdmin,
+  currentUserEmail,
+  currentUserId,
   searchQuery,
   setSearchQuery,
   categoryFilter,
@@ -61,15 +65,24 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   cartCount,
   onOpenCart,
 }) => {
-  // Mapping active loans: item_id -> count of loaned units
-  const activeLoansByItem = requests
-    .filter((r) => r.status === 'approved')
-    .reduce((acc, curr) => {
-      acc[curr.item_id] = (acc[curr.item_id] || 0) + curr.quantity;
-      return acc;
-    }, {} as Record<string, number>);
+  // Active loans calculation:
+  // For administrators: displays active loans across all members.
+  // For normal members: strictly personalized to display only their own active checkouts.
+  const relevantApprovedRequests = isLeadOrAdmin
+    ? requests.filter((r) => r.status === 'approved')
+    : requests.filter((r) => {
+        if (r.status !== 'approved') return false;
+        const matchesEmail = Boolean(currentUserEmail && r.user_email?.toLowerCase() === currentUserEmail.toLowerCase());
+        const matchesId = Boolean(currentUserId && r.user_id === currentUserId);
+        return matchesEmail || matchesId;
+      });
 
-  const totalActiveLoansCount = requests.filter((r) => r.status === 'approved').length;
+  const activeLoansByItem = relevantApprovedRequests.reduce((acc, curr) => {
+    acc[curr.item_id] = (acc[curr.item_id] || 0) + curr.quantity;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalActiveLoansCount = relevantApprovedRequests.length;
   const totalAssetsCount = items.reduce((acc, curr) => acc + curr.total_qty, 0);
   const totalAvailableCount = items.reduce((acc, curr) => acc + curr.available_qty, 0);
   const lowReservesCount = items.filter((i) => isLowReserveItem(i)).length;
@@ -232,7 +245,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
             </span>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-cyan-400">{totalActiveLoansCount}</div>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-0.5 truncate">Checked out by members</p>
+          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-0.5 truncate">{isLeadOrAdmin ? "Checked out by members" : "Checked out by you"}</p>
         </div>
 
         {/* Low Reserves */}
