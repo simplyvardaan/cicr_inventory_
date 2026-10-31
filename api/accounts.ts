@@ -6,11 +6,31 @@ function response(res: VercelResponse, status: number, body: unknown) {
   return res.status(status).json(body);
 }
 
+function requireDatabaseSuccess(error: { message: string } | null, operation: string) {
+  if (error) throw new Error(`${operation} failed: ${error.message}`);
+}
+
 function getAdminClient() {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('Supabase server configuration is incomplete.');
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getAdminClient>) {
+  const authorization = req.headers.authorization;
+  if (!authorization?.startsWith('Bearer ')) throw new Error('Authentication is required.');
+  const { data, error } = await supabase.auth.getUser(authorization.slice(7));
+  if (error || !data.user) throw new Error('Authentication is required.');
+  const role = data.user.user_metadata?.role;
+  if (role !== 'admin') {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .maybeSingle();
+    if (profileError || profile?.role !== 'admin') throw new Error('Administrator access is required.');
+  }
 }
 
 async function sendAccountEmail(event: 'account_created' | 'account_approved' | 'account_rejected', to: string, data: Record<string, unknown>) {
@@ -27,6 +47,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const supabase = getAdminClient();
     const action = req.body?.action;
+
+    if (action === 'role') {
+      await requireAdmin(req, supabase);
+      const targetId = typeof req.body.target_id === 'string' ? req.body.target_id : '';
+      const role = req.body.role === 'admin' || req.body.role === 'member' ? req.body.role : '';
+      if (!targetId || !role) return response(res, 400, { error: 'A valid user and role are required.' });
+      if (targetId === (await supabase.auth.getUser(req.headers.authorization!.slice(7))).data.user?.id) {
+        return response(res, 400, { error: 'You cannot change your own administrator role.' });
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq('id', targetId);
+      requireDatabaseSuccess(profileError, 'Role update');
+
+      const { error: authError } = await supabase.auth.admin.updateUserById(targetId, {
+        user_metadata: { role },
+      });
+      requireDatabaseSuccess(authError, 'Auth role update');
+
+      const { error: logError } = await supabase.from('activity_logs').insert([{
+        user_id: targetId,
+        user_name: 'Administrator',
+        action: 'ROLE_UPDATED',
+        details: `Account role changed to ${role}.`,
+      }]);
+      requireDatabaseSuccess(logError, 'Role update logging');
+      return response(res, 200, { success: true, role });
+    }
 
     if (action === 'register') {
       const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
@@ -48,17 +98,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const userId = created.user.id;
       const { error: profileError } = await supabase.from('profiles').upsert([{
-        id: userId, full_name: fullName, email, role, roll_number: enrollmentNo, phone,
+        id: userId, full_name: fullName, email, role, status: 'pending', roll_number: enrollmentNo, phone,
         avatar_url: avatarUrl || 'status:pending',
       }]);
-      if (profileError) throw profileError;
+      requireDatabaseSuccess(profileError, 'Profile creation');
 
-      await supabase.from('activity_logs').insert([{
+      const { error: logError } = await supabase.from('activity_logs').insert([{
         user_id: userId,
         user_name: fullName,
         action: 'ACCOUNT_REQUEST',
         details: JSON.stringify({ userId, email, fullName, enrollmentNo, phone, role, status: 'pending', created_at: new Date().toISOString() }),
       }]);
+      requireDatabaseSuccess(logError, 'Account request logging');
       await sendAccountEmail('account_created', email, { name: fullName, email, role, status: 'pending' });
       return response(res, 201, { success: true });
     }
@@ -86,14 +137,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
       if (!existing) return response(res, 404, { error: 'Auth account not found for this registration.' });
       await supabase.auth.admin.updateUserById(existing.id, { email_confirm: true, user_metadata: { ...existing.user_metadata, status } });
-      await supabase.from('profiles').upsert([{ id: existing.id, full_name: fullName, email: email || existing.email, role: details?.role || 'member', roll_number: details?.enrollmentNo || '', phone: details?.phone || '', avatar_url: 'status:approved', updated_at: new Date().toISOString() }]);
+      const { error: profileError } = await supabase.from('profiles').upsert([{ id: existing.id, full_name: fullName, email: email || existing.email, role: details?.role || 'member', status, roll_number: details?.enrollmentNo || '', phone: details?.phone || '', avatar_url: 'status:approved', updated_at: new Date().toISOString() }]);
+      requireDatabaseSuccess(profileError, 'Approved profile update');
     } else {
-      await supabase.auth.admin.updateUserById(targetId, { user_metadata: { status } });
-      await supabase.from('profiles').update({ avatar_url: 'status:rejected' }).eq('id', targetId);
+      const { error: authError } = await supabase.auth.admin.updateUserById(targetId, { user_metadata: { status } });
+      requireDatabaseSuccess(authError, 'Rejected account update');
+      const { error: profileError } = await supabase.from('profiles').update({ status, avatar_url: 'status:rejected' }).eq('id', targetId);
+      requireDatabaseSuccess(profileError, 'Rejected profile update');
     }
 
-    if (targetLog) await supabase.from('activity_logs').update({ details: JSON.stringify({ ...details, status, [`${status}_at`]: new Date().toISOString() }) }).eq('id', targetLog.id);
-    await supabase.from('activity_logs').insert([{ user_id: targetId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
+    if (targetLog) {
+      const { error: targetLogError } = await supabase.from('activity_logs').update({ details: JSON.stringify({ ...details, status, [`${status}_at`]: new Date().toISOString() }) }).eq('id', targetLog.id);
+      requireDatabaseSuccess(targetLogError, 'Account request status update');
+    }
+    const { error: actionLogError } = await supabase.from('activity_logs').insert([{ user_id: targetId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
+    requireDatabaseSuccess(actionLogError, 'Account action logging');
     if (email) await sendAccountEmail(action === 'approve' ? 'account_approved' : 'account_rejected', email, { name: fullName, email, role: details?.role, status });
     return response(res, 200, { success: true });
   } catch (error) {

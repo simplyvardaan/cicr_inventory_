@@ -235,11 +235,17 @@ export const UserDashboard: React.FC = () => {
   // Member Management
   const handlePromoteRole = async (targetUserId: string, newRole: 'admin' | 'member', name: string) => {
     try {
-      const { error } = await supabaseAdmin
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
-      if (error) throw error;
+      const session = (await supabase.auth.getSession()).data.session;
+      const response = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(session?.access_token ? { authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ action: 'role', target_id: targetUserId, role: newRole }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Could not change member role.');
       showToast('success', 'Role Updated', `${name} is now ${newRole.toUpperCase()}.`);
       await fetchAllMembers();
     } catch (err: unknown) {
