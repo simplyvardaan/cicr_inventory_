@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import { UserProfile, UserRole } from '../types/inventory';
 import { notifyEmail } from '../lib/notifications';
-
-const supabaseAdmin = supabase;
 
 export interface SignUpData {
   email: string;
@@ -35,8 +33,9 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
-  approveUserAccount: (userId: string, userEmail?: string) => Promise<{ success: boolean; error?: string }>;
-  rejectUserAccount: (userId: string, userEmail?: string) => Promise<{ success: boolean; error?: string }>;
+  approveUserAccount: (userId: string, email?: string) => Promise<{ success: boolean; error?: string }>;
+  rejectUserAccount: (userId: string, email?: string) => Promise<{ success: boolean; error?: string }>;
+  updateUserRole: (userId: string, newRole: 'admin' | 'member') => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -45,28 +44,22 @@ const getInitialAuth = (): { user: User | null; profile: UserProfile | null } =>
   try {
     const cachedUser = localStorage.getItem('cicr-active-user');
     const cachedProfile = localStorage.getItem('cicr-active-profile');
-    if (cachedUser) {
-      return {
-        user: JSON.parse(cachedUser),
-        profile: cachedProfile ? JSON.parse(cachedProfile) : null,
-      };
-    }
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        const item = localStorage.getItem(key);
-        if (item) {
-          const parsed = JSON.parse(item);
-          const u = parsed.user || parsed.currentSession?.user;
-          if (u) return { user: u, profile: null };
-        }
+    if (cachedUser && cachedProfile) {
+      const u = JSON.parse(cachedUser);
+      const p = JSON.parse(cachedProfile);
+      const isMasterAdmin = Boolean(
+        u?.email &&
+        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(u.email.toLowerCase())
+      );
+      const isAdmin = isMasterAdmin || p.role === 'admin' || u.user_metadata?.role === 'admin';
+      const isPending = p.status === 'pending' || p.avatar_url === 'status:pending' || u.user_metadata?.status === 'pending';
+      const isRejected = p.status === 'rejected' || p.avatar_url === 'status:rejected' || u.user_metadata?.status === 'rejected';
+      if (!isAdmin && (isPending || isRejected)) {
+        localStorage.removeItem('cicr-active-user');
+        localStorage.removeItem('cicr-active-profile');
+        return { user: null, profile: null };
       }
-    }
-
-    const fallbackUser = localStorage.getItem('neon-fallback-user');
-    if (fallbackUser) {
-      return { user: JSON.parse(fallbackUser), profile: null };
+      return { user: u, profile: p };
     }
   } catch {
     // ignore
@@ -92,6 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (!error && data) {
+        const rawStatus =
+          data.status ||
+          (data.avatar_url?.startsWith('status:') ? data.avatar_url.replace('status:', '') : '') ||
+          currentUser.user_metadata?.status ||
+          'approved';
         const resolvedProfile: UserProfile = {
           id: data.id,
           email: data.email || currentUser.email || '',
@@ -100,8 +98,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           enrollment_no: data.roll_number || currentUser.user_metadata?.enrollment_no || '',
           roll_number: data.roll_number || currentUser.user_metadata?.enrollment_no || '',
           role: (data.role as UserRole) || (currentUser.user_metadata?.role as UserRole) || 'member',
+          status: rawStatus as 'pending' | 'approved' | 'rejected',
           phone: data.phone || currentUser.user_metadata?.phone || '',
-          avatar_url: (data.avatar_url && !data.avatar_url.startsWith('status:')) ? data.avatar_url : (currentUser.user_metadata?.avatar_url && !currentUser.user_metadata.avatar_url.startsWith('status:') ? currentUser.user_metadata.avatar_url : ''),
+          avatar_url: data.avatar_url && !data.avatar_url.startsWith('status:') ? data.avatar_url : (currentUser.user_metadata?.avatar_url || ''),
           created_at: data.created_at || currentUser.created_at,
           last_sign_in: currentUser.last_sign_in_at,
         };
@@ -125,8 +124,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       enrollment_no: meta.enrollment_no || meta.roll_number || '',
       roll_number: meta.enrollment_no || meta.roll_number || '',
       role: (meta.role as UserRole) || 'member',
+      status: (meta.status as 'pending' | 'approved' | 'rejected') || 'pending',
       phone: meta.phone || '',
-      avatar_url: meta.avatar_url && !meta.avatar_url.startsWith('status:') ? meta.avatar_url : '',
+      avatar_url: meta.avatar_url || '',
       created_at: currentUser.created_at,
       last_sign_in: currentUser.last_sign_in_at,
     };
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 3. Check activity_logs for unapproved requests
     try {
-      const { data: logs } = await supabase
+      const { data: logs } = await supabaseAdmin
         .from('activity_logs')
         .select('id, details')
         .eq('action', 'ACCOUNT_REQUEST')
@@ -207,7 +207,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initSession() {
       try {
-        // Safe 1200ms race timeout to prevent any stuck loading or blank screens on cold start
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
           setTimeout(() => resolve({ data: { session: null } }), 1200)
@@ -216,7 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: { session },
         } = await Promise.race([sessionPromise, timeoutPromise]);
         if (!mounted) return;
-        setSession(session);
+
         const storedFallback = localStorage.getItem('neon-fallback-user');
         let fallbackUser: User | null = null;
         if (storedFallback) {
@@ -227,10 +226,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         const currentUser = session?.user ?? fallbackUser;
-        setUser(currentUser);
+
         if (currentUser) {
+          const check = await checkUserApproval(currentUser);
+          if (!check.approved) {
+            await supabase.auth.signOut();
+            localStorage.removeItem('cicr-active-user');
+            localStorage.removeItem('cicr-active-profile');
+            localStorage.removeItem('neon-fallback-user');
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            return;
+          }
+          setSession(session);
+          setUser(currentUser);
           await loadProfile(currentUser);
         } else {
+          setSession(null);
+          setUser(null);
           setProfile(null);
         }
       } catch (err) {
@@ -244,15 +258,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await loadProfile(session.user);
-      } else {
+      if (!newSession?.user) {
+        setSession(null);
+        setUser(null);
         setProfile(null);
+        setLoading(false);
+        return;
       }
+
+      // Check approval BEFORE granting access to User state (eliminates dashboard flickering)
+      const check = await checkUserApproval(newSession.user);
+      if (!check.approved) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('cicr-active-user');
+        localStorage.removeItem('cicr-active-profile');
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      setSession(newSession);
+      setUser(newSession.user);
+      await loadProfile(newSession.user);
       setLoading(false);
     });
 
@@ -281,12 +312,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle unconfirmed email automatically using service role admin
         if (res.error && res.error.message?.toLowerCase().includes('not confirmed')) {
           try {
-            const { data: usersData } = await supabase.auth.admin.listUsers();
+            const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
             const target = usersData?.users?.find(
               (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
             );
             if (target) {
-              await supabase.auth.admin.updateUserById(target.id, {
+              await supabaseAdmin.auth.admin.updateUserById(target.id, {
                 email_confirm: true,
               });
               res = await supabase.auth.signInWithPassword({
@@ -315,6 +346,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const fallbackData = await fallback.json();
             if (fallbackData?.user) {
               const fallbackUser = fallbackData.user as User;
+              const check = await checkUserApproval(fallbackUser);
+              if (!check.approved) {
+                return {
+                  success: false,
+                  error:
+                    check.reason === 'rejected'
+                      ? 'Your account request was declined by an administrator. Please contact club leadership.'
+                      : 'Your registration request has been sent to the Admin Portal. Please wait for an administrator to review and approve your account before signing in.',
+                };
+              }
               setUser(fallbackUser);
               setSession(null);
               await loadProfile(fallbackUser);
@@ -342,40 +383,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (res.data.user) {
-        // Fetch user profile from database to determine dynamic role and approval status
-        const { data: profData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', res.data.user.id)
-          .maybeSingle();
-
-        // Check Admin status dynamically from database role or metadata (NO hardcoded email)
-        const isUserAdmin =
-          profData?.role === 'admin' ||
-          res.data.user.user_metadata?.role === 'admin';
-
-        const userStatus =
-          profData?.avatar_url === 'status:pending'
-            ? 'pending'
-            : profData?.avatar_url === 'status:rejected'
-            ? 'rejected'
-            : res.data.user.user_metadata?.status || 'approved';
-
-        if (!isUserAdmin && userStatus === 'pending') {
+        const check = await checkUserApproval(res.data.user);
+        if (!check.approved) {
           await supabase.auth.signOut();
+          localStorage.removeItem('cicr-active-user');
+          localStorage.removeItem('cicr-active-profile');
+          setUser(null);
+          setProfile(null);
+          setSession(null);
           return {
             success: false,
             error:
-              'Your account registration is pending Admin Approval. Please wait for an administrator to review and approve your account in Admin Logs before logging in.',
-          };
-        }
-
-        if (!isUserAdmin && userStatus === 'rejected') {
-          await supabase.auth.signOut();
-          return {
-            success: false,
-            error:
-              'Your account registration request was rejected by the administrator. Please contact club leadership.',
+              check.reason === 'rejected'
+                ? 'Your account request was declined by an administrator. Please contact club leadership.'
+                : 'Your registration request has been sent to the Admin Portal. Please wait for an administrator to review and approve your account before signing in.',
           };
         }
 
@@ -399,14 +420,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               details: `${profData?.full_name || emailToAuth.split('@')[0]} signed in to CICR Inventory Vault`,
             },
           ]);
+
+          await notifyEmail('login', res.data.user.email, {
+            name: profData?.full_name || res.data.user.user_metadata?.full_name,
+            email: res.data.user.email,
+            role: profData?.role || res.data.user.user_metadata?.role,
+          });
         } catch (logErr) {
           console.warn('Sign-in log error:', logErr);
         }
-        await notifyEmail('login', res.data.user.email, {
-          name: profData?.full_name || res.data.user.user_metadata?.full_name,
-          email: res.data.user.email,
-          role: profData?.role || res.data.user.user_metadata?.role,
-        });
       }
 
       return { success: true };
@@ -469,45 +491,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Seamless direct fallback
       let createdUserId: string | null = null;
 
-      // 1. Attempt to create user in Supabase Auth via standard client signUp
+      // 1. Attempt to create user in Supabase Auth via supabaseAdmin
       try {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
           email: emailToRegister,
           password,
-          options: {
-            data: {
-              full_name,
-              enrollment_no,
-              phone,
-              role: enforcedRole,
-              status: initialStatus,
-              avatar_url: avatar_url || undefined,
-            },
+          email_confirm: true,
+          user_metadata: {
+            full_name,
+            enrollment_no,
+            phone,
+            role: enforcedRole,
+            status: initialStatus,
+            avatar_url: avatar_url || undefined,
           },
         });
-        if (!signUpError && signUpData?.user) {
-          createdUserId = signUpData.user.id;
-        } else if (signUpError) {
-          console.warn('Notice from supabase.auth.signUp:', signUpError.message);
+        if (!adminError && adminUser?.user) {
+          createdUserId = adminUser.user.id;
+        } else if (adminError) {
+          console.warn('Notice from auth.admin.createUser:', adminError.message);
         }
       } catch (err) {
-        console.warn('Client signUp fallback warning:', err);
+        console.warn('auth.admin.createUser warning:', err);
       }
 
       // 2. If auth user was created, upsert to profiles table
       if (createdUserId) {
         try {
-          await supabase.from('profiles').upsert([
+          await supabaseAdmin.from('profiles').upsert([
             {
               id: createdUserId,
               full_name,
               email: emailToRegister,
-              role,
+              role: enforcedRole,
               status: initialStatus,
               roll_number: enrollment_no,
               phone,
-              avatar_url: (avatar_url && !avatar_url.startsWith('status:')) ? avatar_url : null,
-              updated_at: new Date().toISOString(),
+              avatar_url: avatar_url || `status:${initialStatus}`,
             },
           ]);
         } catch (profileErr) {
@@ -516,7 +536,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 3. ALWAYS insert ACCOUNT_REQUEST into activity_logs so the Admin Portal displays it
-      await supabase.from('activity_logs').insert([
+      await supabaseAdmin.from('activity_logs').insert([
         {
           user_id: createdUserId,
           user_name: full_name,
@@ -552,57 +572,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const approveUserAccount = async (targetId: string, targetEmail?: string) => {
+  const approveUserAccount = async (targetId: string, email?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
         user?.user_metadata?.role === 'admin' ||
-        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
       if (!isCallerAdmin) {
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
 
-      const normalizedEmail = (targetEmail || '').trim().toLowerCase();
-
+      let apiSuccess = false;
       try {
-        await fetch('/api/accounts', {
+        const response = await fetch('/api/accounts', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({
-            action: 'approve',
-            target_id: targetId,
-            target_email: normalizedEmail || undefined,
-          }),
+          body: JSON.stringify({ action: 'approve', target_id: targetId, email }),
         });
+        if (response.ok) {
+          apiSuccess = true;
+        }
       } catch (apiErr) {
         console.warn('API approve notice:', apiErr);
       }
 
       // Ensure database profile and activity_logs reflect approved status
       try {
-        if (targetId && targetId.length === 36) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
+          .eq('id', targetId);
+
+        if (email) {
           await supabaseAdmin
             .from('profiles')
-            .update({ status: 'approved', updated_at: new Date().toISOString() })
-            .eq('id', targetId);
-
-          try {
-            await supabaseAdmin.auth.admin.updateUserById(targetId, {
-              email_confirm: true,
-              user_metadata: { status: 'approved' },
-            });
-          } catch {}
+            .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
+            .ilike('email', email);
         }
 
-        if (normalizedEmail) {
-          await supabaseAdmin
-            .from('profiles')
-            .update({ status: 'approved', updated_at: new Date().toISOString() })
-            .ilike('email', normalizedEmail);
-        }
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(targetId, {
+            email_confirm: true,
+            user_metadata: { status: 'approved' },
+          });
+        } catch {}
 
         const { data: logs } = await supabaseAdmin
           .from('activity_logs')
@@ -615,13 +636,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
           } catch {}
           const logEmail = (details?.email || '').toLowerCase();
-          const logUserId = details?.userId || log.user_id;
-          const matches =
+          if (
             log.id === targetId ||
-            (targetId && (logUserId === targetId || log.user_id === targetId)) ||
-            (normalizedEmail && logEmail === normalizedEmail);
-
-          if (matches) {
+            log.user_id === targetId ||
+            details?.userId === targetId ||
+            (email && logEmail === email.toLowerCase())
+          ) {
             await supabaseAdmin
               .from('activity_logs')
               .update({
@@ -641,56 +661,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const rejectUserAccount = async (targetId: string, targetEmail?: string) => {
+  const rejectUserAccount = async (targetId: string, email?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
         user?.user_metadata?.role === 'admin' ||
-        Boolean(user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
       if (!isCallerAdmin) {
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
 
-      const normalizedEmail = (targetEmail || '').trim().toLowerCase();
-
+      let apiSuccess = false;
       try {
-        await fetch('/api/accounts', {
+        const response = await fetch('/api/accounts', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({
-            action: 'reject',
-            target_id: targetId,
-            target_email: normalizedEmail || undefined,
-          }),
+          body: JSON.stringify({ action: 'reject', target_id: targetId, email }),
         });
+        if (response.ok) {
+          apiSuccess = true;
+        }
       } catch (apiErr) {
         console.warn('API reject notice:', apiErr);
       }
 
       // Ensure database profile and activity_logs reflect rejected status
       try {
-        if (targetId && targetId.length === 36) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
+          .eq('id', targetId);
+
+        if (email) {
           await supabaseAdmin
             .from('profiles')
-            .update({ status: 'rejected', updated_at: new Date().toISOString() })
-            .eq('id', targetId);
-
-          try {
-            await supabaseAdmin.auth.admin.updateUserById(targetId, {
-              user_metadata: { status: 'rejected' },
-            });
-          } catch {}
+            .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
+            .ilike('email', email);
         }
 
-        if (normalizedEmail) {
-          await supabaseAdmin
-            .from('profiles')
-            .update({ status: 'rejected', updated_at: new Date().toISOString() })
-            .ilike('email', normalizedEmail);
-        }
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(targetId, {
+            user_metadata: { status: 'rejected' },
+          });
+        } catch {}
 
         const { data: logs } = await supabaseAdmin
           .from('activity_logs')
@@ -703,13 +724,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
           } catch {}
           const logEmail = (details?.email || '').toLowerCase();
-          const logUserId = details?.userId || log.user_id;
-          const matches =
+          if (
             log.id === targetId ||
-            (targetId && (logUserId === targetId || log.user_id === targetId)) ||
-            (normalizedEmail && logEmail === normalizedEmail);
-
-          if (matches) {
+            log.user_id === targetId ||
+            details?.userId === targetId ||
+            (email && logEmail === email.toLowerCase())
+          ) {
             await supabaseAdmin
               .from('activity_logs')
               .update({
@@ -830,7 +850,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (user) {
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user.id,
               user_name:
@@ -884,20 +904,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isMasterAdmin = Boolean(
-    user?.email &&
-      ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
-        user.email.toLowerCase()
-      )
-  );
-  const isAdmin =
-    isMasterAdmin ||
-    profile?.role === 'admin' ||
-    user?.user_metadata?.role === 'admin';
-  const isLeadOrAdmin =
-    isAdmin ||
-    profile?.role === 'lead' ||
-    user?.user_metadata?.role === 'lead';
+  const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
+  const isLeadOrAdmin = isAdmin || profile?.role === 'lead';
 
   return (
     <AuthContext.Provider
@@ -915,6 +923,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         approveUserAccount,
         rejectUserAccount,
+        updateUserRole,
         updatePassword,
       }}
     >

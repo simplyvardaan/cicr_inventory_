@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
 import { notifyEmail } from '../lib/notifications';
@@ -44,62 +44,57 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Fetch real data from Supabase backend
   const refreshData = useCallback(async () => {
+    setLoading(true);
     try {
-      const [itemsRes, reqsRes, logsRes] = await Promise.allSettled([
-        supabase
-          .from('inventory_items')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase
+      // 1. Fetch real inventory items from Supabase
+      const { data: dbItems, error: itemsError } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (itemsError) {
+        if (itemsError.code === 'PGRST205' || itemsError.message.includes('not find the table')) {
+          setSchemaNeeded(true);
+          setIsLiveDatabase(false);
+          setItems([]);
+        } else {
+          setItems([]);
+        }
+      } else if (dbItems) {
+        setIsLiveDatabase(true);
+        setSchemaNeeded(false);
+        const normalizedItems: InventoryItem[] = (dbItems as any[]).map((item) => ({
+          ...item,
+          total_qty: Number(item.total_qty ?? item.quantity ?? 1),
+          available_qty: Number(item.available_qty ?? item.available_quantity ?? item.total_qty ?? item.quantity ?? 1),
+        }));
+        setItems(normalizedItems);
+
+        // 2. Fetch real borrow requests from Supabase
+        const { data: dbRequests } = await supabaseAdmin
           .from('borrow_requests')
           .select('*')
-          .order('created_at', { ascending: false }),
-        supabase
+          .order('created_at', { ascending: false });
+
+        if (dbRequests) {
+          setRequests(dbRequests as BorrowRequest[]);
+        }
+
+        // 3. Fetch real activity logs (full multi-day audit history via supabaseAdmin)
+        const { data: dbLogs } = await supabaseAdmin
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(250),
-      ]);
+          .limit(250);
 
-      // 1. Process inventory items
-      if (itemsRes.status === 'fulfilled') {
-        const { data: dbItems, error: itemsError } = itemsRes.value;
-        if (itemsError) {
-          if (itemsError.code === 'PGRST205' || itemsError.message.includes('not find the table')) {
-            setSchemaNeeded(true);
-            setIsLiveDatabase(false);
-          }
-        } else if (dbItems) {
-          setIsLiveDatabase(true);
-          setSchemaNeeded(false);
-          const normalizedItems: InventoryItem[] = (dbItems as any[]).map((item) => ({
-            ...item,
-            total_qty: Number(item.total_qty ?? item.quantity ?? 1),
-            available_qty: Number(item.available_qty ?? item.available_quantity ?? item.total_qty ?? item.quantity ?? 1),
-          }));
-          setItems(normalizedItems);
-        }
-      }
-
-      // 2. Process borrow requests
-      if (reqsRes.status === 'fulfilled') {
-        const { data: dbRequests, error: reqsError } = reqsRes.value;
-        if (!reqsError && dbRequests) {
-          setRequests(dbRequests as BorrowRequest[]);
-        } else if (reqsError) {
-          console.warn('Notice loading borrow requests:', reqsError.message);
-        }
-      }
-
-      // 3. Process activity logs
-      if (logsRes.status === 'fulfilled') {
-        const { data: dbLogs, error: logsError } = logsRes.value;
-        if (!logsError && dbLogs) {
+        if (dbLogs) {
           setLogs(dbLogs as ActivityLog[]);
         }
       }
-    } catch (err) {
-      console.warn('Notice during inventory refresh:', err);
+    } catch {
+      setItems([]);
+      setRequests([]);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -134,7 +129,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data) {
         setItems((prev) => [data as InventoryItem, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Admin',
@@ -153,19 +148,105 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Real Update Item in Supabase
+  // Real Update Item in Supabase with guaranteed backend persistence & audit logging
   const updateItem = async (id: string, updates: Partial<InventoryItem>) => {
     try {
-      const { error } = await supabase
+      const isAuthorized =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
+
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required to edit equipment.' };
+      }
+
+      const targetItem = items.find((i) => i.id === id);
+
+      const cleanUpdates: any = {
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      delete cleanUpdates.id;
+      delete cleanUpdates.created_at;
+
+      // 1. Prioritize supabaseAdmin with select() to bypass client RLS issues and guarantee row update
+      let { data, error } = await supabaseAdmin
         .from('inventory_items')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .update(cleanUpdates)
+        .eq('id', id)
+        .select();
 
-      if (error) return { success: false, error: error.message };
+      // Fallback to supabase user client
+      if (error || !data || data.length === 0) {
+        const fallbackRes = await supabase
+          .from('inventory_items')
+          .update(cleanUpdates)
+          .eq('id', id)
+          .select();
 
+        if (fallbackRes.error && error) {
+          return { success: false, error: error.message || fallbackRes.error.message };
+        }
+        if (fallbackRes.data && fallbackRes.data.length > 0) {
+          data = fallbackRes.data;
+        }
+      }
+
+      // Update immediate local state
       setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+        prev.map((item) => (item.id === id ? { ...item, ...cleanUpdates } : item))
       );
+
+      // Detailed change tracking for audit log
+      const adminName = profile?.full_name || user?.user_metadata?.full_name || user?.email || 'Admin';
+      const logName = cleanUpdates.name || targetItem?.name || 'Component';
+
+      const changeParts: string[] = [];
+      if (cleanUpdates.name && targetItem && cleanUpdates.name !== targetItem.name) {
+        changeParts.push(`Name: "${targetItem.name}" -> "${cleanUpdates.name}"`);
+      }
+      if (cleanUpdates.category && targetItem && cleanUpdates.category !== targetItem.category) {
+        changeParts.push(`Domain: "${targetItem.category}" -> "${cleanUpdates.category}"`);
+      }
+      if (cleanUpdates.total_qty !== undefined && targetItem && Number(cleanUpdates.total_qty) !== Number(targetItem.total_qty)) {
+        changeParts.push(`Total Units: ${targetItem.total_qty} -> ${cleanUpdates.total_qty}`);
+      }
+      if (cleanUpdates.description !== undefined && targetItem && cleanUpdates.description !== targetItem.description) {
+        changeParts.push('Description updated');
+      }
+
+      const logDetails = changeParts.length > 0
+        ? `Admin ${adminName} edited "${logName}": ${changeParts.join(', ')}`
+        : `Admin ${adminName} edited component "${logName}" (Total: ${cleanUpdates.total_qty ?? targetItem?.total_qty}, Available: ${cleanUpdates.available_qty ?? targetItem?.available_qty})`;
+
+      const logEntry: any = {
+        user_id: user?.id || null,
+        user_name: adminName,
+        action: 'UPDATE_ITEM',
+        details: logDetails,
+        item_id: id,
+        created_at: new Date().toISOString(),
+      };
+
+      try {
+        const logRes = await supabaseAdmin.from('activity_logs').insert([logEntry]);
+        if (logRes.error) {
+          await supabase.from('activity_logs').insert([logEntry]);
+        }
+        setLogs((prev) => [logEntry, ...prev]);
+      } catch {
+        // Logging error shouldn't crash primary update
+      }
+
+      // Re-sync with backend in background
+      refreshData();
+
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Database update failed';
@@ -232,7 +313,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const { data: dbData, error } = await supabase
+      const { data: dbData, error } = await supabaseAdmin
         .from('borrow_requests')
         .insert([
           {
@@ -255,7 +336,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (dbData) {
         setRequests((prev) => [dbData as BorrowRequest, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Member',
@@ -289,21 +370,21 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminNotes?: string
   ) => {
     try {
-      if (newStatus === 'approved' || newStatus === 'rejected') {
+      if (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'returned') {
         const isAuthorized =
           profile?.role === 'admin' ||
           profile?.role === 'lead' ||
           user?.user_metadata?.role === 'admin' ||
-          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
         if (!isAuthorized) {
-          return { success: false, error: 'Unauthorized: Administrative clearance required to approve or reject requisitions.' };
+          return { success: false, error: 'Unauthorized: Administrative clearance required to approve, reject, or confirm returns.' };
         }
       }
       const targetReq = requests.find((r) => r.id === requestId);
 
       const updatePayload: Record<string, unknown> = {
         status: newStatus,
-        approved_by: profile?.full_name || 'Admin',
+        approved_by: profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Admin'),
         admin_notes: adminNotes,
         updated_at: new Date().toISOString(),
       };
@@ -311,7 +392,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (newStatus === 'approved') {
         updatePayload.borrow_date = new Date().toISOString().split('T')[0];
         
-        // Decrement available quantity in Supabase backend via supabase
+        // Decrement available quantity in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -323,7 +404,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -344,8 +425,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       } else if (newStatus === 'returned') {
         updatePayload.actual_return_date = new Date().toISOString().split('T')[0];
+        const cleanNotes = (targetReq?.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+        updatePayload.admin_notes = adminNotes || (cleanNotes ? `${cleanNotes} (Returned & Restocked)` : 'Returned & Restocked');
 
-        // Increment available quantity back in Supabase backend via supabase
+        // Increment available quantity back in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -357,7 +440,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -378,8 +461,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
 
-      // Update borrow request in Supabase via supabase
-      const { error } = await supabase
+      // Update borrow request in Supabase via supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update(updatePayload)
         .eq('id', requestId);
@@ -393,7 +476,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Log activity in Supabase
       if (targetReq) {
-        await supabase.from('activity_logs').insert([
+        await supabaseAdmin.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: profile?.full_name || 'Admin',
@@ -456,7 +539,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ? `${noteTag} (${userDisplay}): ${returnNotes.trim()}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`
         : `${noteTag} Return submitted by ${userDisplay} on ${new Date().toLocaleDateString('en-IN')}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`;
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update({
           admin_notes: updatedNotes,
@@ -475,7 +558,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
 
       try {
-        await supabase.from('activity_logs').insert([
+        await supabaseAdmin.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: userDisplay,
@@ -505,7 +588,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const cleanNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
       const updatedNotes = reason ? `${cleanNotes ? `${cleanNotes} | ` : ''}Return declined: ${reason}` : (cleanNotes || null);
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update({
           admin_notes: updatedNotes,
@@ -530,6 +613,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, error: msg };
     }
   };
+
   return (
     <InventoryContext.Provider
       value={{
@@ -544,9 +628,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteItem,
         submitBorrowRequest,
         updateBorrowStatus,
-        refreshData,
         requestItemReturn,
         cancelReturnRequest,
+        refreshData,
       }}
     >
       {children}

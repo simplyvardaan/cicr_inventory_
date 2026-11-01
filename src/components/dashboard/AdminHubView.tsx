@@ -43,7 +43,6 @@ interface AdminHubViewProps {
   onPromoteRole: (userId: string, newRole: 'admin' | 'member', name: string) => void;
   onApproveAccount: (userId: string, name: string, email?: string) => void;
   onRejectAccount: (userId: string, name: string, email?: string) => void;
-  onBorrowAction?: (requestId: string, action: 'approved' | 'rejected' | 'returned', note?: string) => void;
   onRefresh: () => void;
 }
 
@@ -77,13 +76,9 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
   onPromoteRole,
   onApproveAccount,
   onRejectAccount,
-  onBorrowAction,
   onRefresh,
 }) => {
-  const [adminLogsTab, setAdminLogsTab] = useState<'members' | 'logs-7d' | 'requests' | 'requisitions'>('requisitions');
-  const [reqSearch, setReqSearch] = useState('');
-  const [reqStatusFilter, setReqStatusFilter] = useState<'all' | 'pending' | 'approved' | 'returned' | 'rejected'>('all');
-  const [actionBorrowId, setActionBorrowId] = useState<string | null>(null);
+  const [adminLogsTab, setAdminLogsTab] = useState<'members' | 'logs-7d' | 'requests'>('members');
   const [memberSearch, setMemberSearch] = useState('');
   const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
   const [selectedMemberActivityId, setSelectedMemberActivityId] = useState<string | null>(null);
@@ -111,7 +106,6 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
     (l) => new Date(l.created_at).getTime() >= sevenDaysAgoMs
   ).length;
   const activeLoansCount = requests.filter((r) => r.status === 'approved').length;
-  const pendingBorrowCount = requests.filter((r) => r.status === 'pending').length;
 
   return (
     <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
@@ -140,18 +134,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
       {/* 4 Summary Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Club Members */}
-        <button
-          type="button"
-          onClick={() => {
-            setAdminLogsTab('members');
-            setSelectedMemberActivityId(null);
-          }}
-          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
-            adminLogsTab === 'members'
-              ? 'border-blue-500 ring-2 ring-blue-500/20'
-              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
-          } space-y-1`}
-        >
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Club Members</span>
             <Users className="w-4 h-4 text-blue-600 dark:text-purple-400" />
@@ -160,21 +143,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {loadingMembers ? '...' : allMembers.length}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Registered laboratory roster</p>
-        </button>
+        </div>
 
         {/* Card 2: 7-Day Activity */}
-        <button
-          type="button"
-          onClick={() => {
-            setAdminLogsTab('logs-7d');
-            setSelectedMemberActivityId(null);
-          }}
-          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
-            adminLogsTab === 'logs-7d'
-              ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
-          } space-y-1`}
-        >
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Last 7 Days</span>
             <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -183,21 +155,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {sevenDayLogsCount}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Operations logged this week</p>
-        </button>
+        </div>
 
         {/* Card 3: Pending Signups */}
-        <button
-          type="button"
-          onClick={() => {
-            setAdminLogsTab('requests');
-            setSelectedMemberActivityId(null);
-          }}
-          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
-            adminLogsTab === 'requests'
-              ? 'border-amber-500 ring-2 ring-amber-500/20'
-              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
-          } space-y-1`}
-        >
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Pending Signups</span>
             <UserCheck className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -211,21 +172,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             )}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Awaiting admin clearance</p>
-        </button>
+        </div>
 
         {/* Card 4: Active Loans */}
-        <button
-          type="button"
-          onClick={() => {
-            setAdminLogsTab('requisitions');
-            setSelectedMemberActivityId(null);
-          }}
-          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
-            adminLogsTab === 'requisitions'
-              ? 'border-cyan-500 ring-2 ring-cyan-500/20'
-              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
-          } space-y-1`}
-        >
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Active Loans</span>
             <Boxes className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
@@ -234,7 +184,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {activeLoansCount}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Hardware currently borrowed</p>
-        </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -277,30 +227,6 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             <span>Activity Logs</span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 text-[10px] font-extrabold border border-emerald-300/40 dark:border-transparent">
               {sevenDayLogsCount}
-            </span>
-          </button>
-
-          {/* Equipment Requisitions */}
-          <button
-            type="button"
-            onClick={() => {
-              setAdminLogsTab('requisitions');
-              setSelectedMemberActivityId(null);
-            }}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-              adminLogsTab === 'requisitions'
-                ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-md font-bold'
-                : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
-            }`}
-          >
-            <Boxes className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
-            <span>Requisitions</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
-              pendingBorrowCount > 0
-                ? 'bg-blue-500 text-white animate-pulse border-blue-600'
-                : 'bg-slate-200 text-slate-800 dark:bg-zinc-800 dark:text-zinc-400 border-slate-300 dark:border-zinc-700'
-            }`}>
-              {pendingBorrowCount}
             </span>
           </button>
 
@@ -944,209 +870,6 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
           )}
         </div>
       )}
-
-      {/* SUB-TAB 4: EQUIPMENT REQUISITIONS */}
-      {adminLogsTab === 'requisitions' && (() => {
-        const filteredReqs = requests.filter((r) => {
-          let matchesTab = true;
-          if (reqStatusFilter === 'pending') matchesTab = r.status === 'pending';
-          else if (reqStatusFilter === 'approved') matchesTab = r.status === 'approved';
-          else if (reqStatusFilter === 'returned') matchesTab = r.status === 'returned';
-          else if (reqStatusFilter === 'rejected') matchesTab = r.status === 'rejected';
-
-          const q = reqSearch.toLowerCase().trim();
-          const matchesSearch =
-            !q ||
-            r.item_name.toLowerCase().includes(q) ||
-            r.user_name.toLowerCase().includes(q) ||
-            (r.user_email && r.user_email.toLowerCase().includes(q)) ||
-            (r.project_name && r.project_name.toLowerCase().includes(q));
-
-          return matchesTab && matchesSearch;
-        });
-
-        return (
-          <div className="space-y-4">
-            {/* Filter Chips & Search Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 dark:text-zinc-500" />
-                <input
-                  type="text"
-                  placeholder="Search requisitions by item, student, email, or project..."
-                  value={reqSearch}
-                  onChange={(e) => setReqSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {(['all', 'pending', 'approved', 'returned', 'rejected'] as const).map((st) => {
-                  const count = st === 'all' ? requests.length : requests.filter((r) => r.status === st).length;
-                  return (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => setReqStatusFilter(st)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                        reqStatusFilter === st
-                          ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-sm'
-                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#14141c] dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400'
-                      }`}
-                    >
-                      {st.charAt(0).toUpperCase() + st.slice(1)} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {filteredReqs.length === 0 ? (
-              <div className="p-12 text-center bg-slate-50 dark:bg-[#14141c]/50 border border-slate-200 dark:border-zinc-800/80 rounded-2xl space-y-2">
-                <Boxes className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto" />
-                <p className="text-sm font-bold text-slate-900 dark:text-white">No Equipment Requisitions Found</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  {reqStatusFilter === 'all'
-                    ? 'No hardware borrow requests have been submitted yet.'
-                    : `No requisitions match the current "${reqStatusFilter}" filter.`}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredReqs.map((req) => {
-                  const isPending = req.status === 'pending';
-                  const isApproved = req.status === 'approved';
-                  const isReturned = req.status === 'returned';
-                  const isRejected = req.status === 'rejected';
-
-                  return (
-                    <div
-                      key={req.id}
-                      className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
-                    >
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className={`w-10 h-10 rounded-xl font-bold flex items-center justify-center shrink-0 border ${
-                          isPending
-                            ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/40'
-                            : isApproved
-                            ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/40'
-                            : isReturned
-                            ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/40'
-                            : 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/40'
-                        }`}>
-                          <Boxes className="w-5 h-5" />
-                        </div>
-
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
-                              {req.quantity}x {req.item_name}
-                            </h4>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase border ${
-                              isPending
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border-amber-300 dark:border-amber-500/40'
-                                : isApproved
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border-blue-300 dark:border-blue-500/40'
-                                : isReturned
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40'
-                                : 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border-red-300 dark:border-red-500/40'
-                            }`}>
-                              {req.status}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-zinc-400">
-                            <span className="font-semibold text-slate-900 dark:text-white">
-                              {req.user_name}
-                            </span>
-                            {req.user_email && (
-                              <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400">
-                                {req.user_email}
-                              </span>
-                            )}
-                            {req.project_name && (
-                              <span className="text-blue-600 dark:text-purple-400 font-medium">
-                                Project: {req.project_name}
-                              </span>
-                            )}
-                          </div>
-
-                          {req.purpose && (
-                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 italic">
-                              "{req.purpose}"
-                            </p>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-x-3 text-[10px] text-slate-400 dark:text-zinc-500 pt-0.5">
-                            {req.expected_return_date && (
-                              <span>Due: {req.expected_return_date}</span>
-                            )}
-                            {req.created_at && (
-                              <span>Requested: {new Date(req.created_at).toLocaleDateString('en-IN')}</span>
-                            )}
-                            {req.approved_by && (
-                              <span>By: {req.approved_by}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      {onBorrowAction && (isPending || isApproved) && (
-                        <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-zinc-800/80">
-                          {isPending && (
-                            <>
-                              <button
-                                type="button"
-                                disabled={actionBorrowId === req.id}
-                                onClick={async () => {
-                                  setActionBorrowId(req.id);
-                                  await onBorrowAction(req.id, 'rejected');
-                                  setActionBorrowId(null);
-                                }}
-                                className="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-300 dark:border-red-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                              >
-                                Reject
-                              </button>
-                              <button
-                                type="button"
-                                disabled={actionBorrowId === req.id}
-                                onClick={async () => {
-                                  setActionBorrowId(req.id);
-                                  await onBorrowAction(req.id, 'approved');
-                                  setActionBorrowId(null);
-                                }}
-                                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
-                              >
-                                {actionBorrowId === req.id ? 'Approving...' : 'Approve Requisition'}
-                              </button>
-                            </>
-                          )}
-
-                          {isApproved && (
-                            <button
-                              type="button"
-                              disabled={actionBorrowId === req.id}
-                              onClick={async () => {
-                                setActionBorrowId(req.id);
-                                await onBorrowAction(req.id, 'returned');
-                                setActionBorrowId(null);
-                              }}
-                              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
-                            >
-                              {actionBorrowId === req.id ? 'Restocking...' : 'Confirm Return / Restock'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })()}
     </div>
   );
 };

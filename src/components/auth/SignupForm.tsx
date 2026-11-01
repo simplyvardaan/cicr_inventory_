@@ -162,7 +162,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative group shrink-0">
               <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-black text-sm flex items-center justify-center shadow-md overflow-hidden">
-                {avatarUrl && (avatarUrl.startsWith('data:image') || avatarUrl.startsWith('http')) ? (
+                {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
                 ) : (
                   avatarInitial
