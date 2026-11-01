@@ -351,15 +351,28 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                         <span className="text-slate-600 dark:text-zinc-400 font-semibold">Expected Return: </span>
                         <strong className="text-amber-700 dark:text-amber-300 font-bold">{req.expected_return_date}</strong>
                       </span>
-                      {matchedItem?.location && (
-                        <span className="text-slate-700 dark:text-zinc-300 font-mono break-words">
-                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">Lab Location: </span>
-                          <strong className="text-slate-900 dark:text-zinc-200 font-bold">{matchedItem.location}</strong>
-                        </span>
-                      )}
                       {req.actual_return_date && (
                         <span className="text-blue-600 dark:text-purple-400 font-semibold">
                           Returned: {req.actual_return_date}
+                        </span>
+                      )}
+                      {req.approved_by && (req.status === 'approved' || req.status === 'returned' || req.status === 'rejected') && (
+                        <span className="flex items-center gap-1">
+                          {req.status === 'rejected' ? (
+                            <XCircle className="w-3 h-3 text-rose-500" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500 dark:text-purple-400" />
+                          )}
+                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">
+                            {req.status === 'rejected' ? 'Rejected by:' : 'Approved by:'}{' '}
+                          </span>
+                          <strong className={
+                            req.status === 'rejected'
+                              ? 'text-rose-600 dark:text-rose-400 font-bold'
+                              : 'text-slate-900 dark:text-zinc-200 font-bold'
+                          }>
+                            {req.approved_by}
+                          </strong>
                         </span>
                       )}
                     </div>

@@ -298,7 +298,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const updatePayload: Record<string, unknown> = {
         status: newStatus,
-        approved_by: profile?.full_name || 'Admin',
+        approved_by: profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Admin'),
         admin_notes: adminNotes,
         updated_at: new Date().toISOString(),
       };

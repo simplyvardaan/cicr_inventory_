@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.12] : 2026-11-01
+
+### Added
+* Admin Approval & Rejection Attribution in Requisitions Portal:
+  - Displayed the approving or rejecting administrator's name (`Approved by: <Admin>` / `Rejected by: <Admin>`) on all clearance cards in `RequisitionsView.tsx` with dedicated status indicators.
+  - Enhanced admin attribution fallback resolution in `InventoryContext.tsx` to pull from profile name, auth metadata, or email identifier.
+
+### Removed
+* Redundant Lab Location Field:
+  - Removed the `Lab Location: ...` display from requisition and clearance cards in `RequisitionsView.tsx`, providing a cleaner and focused requisition timeline.
+
+***
+
 ## [2.18.11] : 2026-11-01
 
 ### Changed

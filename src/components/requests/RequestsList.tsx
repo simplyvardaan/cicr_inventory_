@@ -170,6 +170,14 @@ export const RequestsList: React.FC = () => {
                       <span>{req.user_name}</span>
                     </div>
                     <p className="text-slate-400 text-[11px] mt-0.5">{req.user_email}</p>
+                    {req.approved_by && (
+                      <p className="text-slate-300 text-[11px] mt-1 font-semibold">
+                        <span className="text-slate-500 font-normal">
+                          {req.status === 'rejected' ? 'Rejected by:' : 'Approved by:'}{' '}
+                        </span>
+                        {req.approved_by}
+                      </p>
+                    )}
                     {req.admin_notes && (
                       <div className="mt-2 p-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-amber-300">
                         <strong>Admin Note:</strong> {req.admin_notes}
