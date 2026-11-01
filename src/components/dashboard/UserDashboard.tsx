@@ -268,7 +268,7 @@ export const UserDashboard: React.FC = () => {
         list.push({
           id: notifId,
           title: `Low Reserve: ${it.name}`,
-          message: `Only ${it.available_qty} units left in stock (${it.location}).`,
+          message: `Only ${it.available_qty} units left in stock.`,
           type: 'warning',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           read: readNotifIds.has(notifId),
@@ -497,6 +497,10 @@ export const UserDashboard: React.FC = () => {
   };
 
   const handleOpenEditItem = (item: InventoryItem) => {
+    if (!isAdmin) {
+      showToast('error', 'Admin Clearance Required', 'Only administrators can edit components.');
+      return;
+    }
     setEditingItem(item);
     setSelectedItem(null);
     setAddItemModalOpen(true);

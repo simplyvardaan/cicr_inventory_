@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
     sku TEXT UNIQUE,
     category TEXT NOT NULL,
     description TEXT,
-    location TEXT NOT NULL,
+    location TEXT DEFAULT '',
     total_qty INTEGER NOT NULL DEFAULT 1 CHECK (total_qty >= 0),
     available_qty INTEGER NOT NULL DEFAULT 1 CHECK (available_qty >= 0),
     min_threshold INTEGER DEFAULT 2 CHECK (min_threshold >= 0),
@@ -299,3 +299,7 @@ VALUES
 ('Ultrasonic Sensor', 'CICR-SEN-005', 'Sensors & Modules', 'HC-SR04 Ultrasonic Distance Measuring Transceiver Module (range 2cm - 400cm, 5V DC, trigger/echo).', 'Sensors Bay - Rack S3, Box 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
 ('Vibration Sensor', 'CICR-SEN-008', 'Sensors & Modules', 'SW-420 Normally Closed Vibration Sensor Module with LM393 comparator for impact, shake, and tamper detection.', 'Sensors Bay - Rack S2, Box 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL)
 ON CONFLICT (sku) DO NOTHING;
+
+-- Migration: Make location optional
+ALTER TABLE public.inventory_items ALTER COLUMN location DROP NOT NULL;
+ALTER TABLE public.inventory_items ALTER COLUMN location SET DEFAULT '';

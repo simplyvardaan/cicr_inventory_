@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { InventoryItem, ItemCategory, ItemStatus } from '../../types/inventory';
 import { CATEGORIES } from '../../lib/sampleData';
 import { useInventory } from '../../context/InventoryContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
 import { X, Save, AlertCircle, PlusCircle, Pencil, Info } from 'lucide-react';
 
@@ -17,6 +18,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
   initialItem,
 }) => {
   const { addItem, updateItem } = useInventory();
+  const { isAdmin } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
@@ -37,7 +39,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
     if (initialItem) {
       setName(initialItem.name);
       setCategory(initialItem.category);
-      setLocation(initialItem.location);
+      setLocation(initialItem.location || '');
       setTotalQty(Number(initialItem.total_qty ?? 0));
       setAvailableQty(Number(initialItem.available_qty ?? 0));
       setMinThreshold(Number(initialItem.min_threshold ?? 2));
@@ -47,7 +49,7 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
     } else {
       setName('');
       setCategory('Microcontrollers & SBCs');
-      setLocation('Lab 2, Cabinet A1');
+      setLocation('');
       setTotalQty(5);
       setAvailableQty(5);
       setMinThreshold(2);
@@ -58,21 +60,22 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
     setErrorMsg('');
   }, [initialItem, isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isAdmin) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    if (!isAdmin) {
+      setErrorMsg('Admin clearance required to edit or create components.');
+      return;
+    }
 
     if (!name.trim()) {
       setErrorMsg('Component name is required.');
       return;
     }
 
-    if (!location.trim()) {
-      setErrorMsg('Please specify lab storage location.');
-      return;
-    }
+    
 
     if (totalQty < 0 || availableQty < 0) {
       setErrorMsg('Stock quantities cannot be negative.');
@@ -202,39 +205,22 @@ export const AddEditItemModal: React.FC<AddEditItemModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {/* Category */}
-            <div>
-              <label className="block font-bold text-slate-800 dark:text-zinc-200 mb-1">
-                Category Domain <span className="text-red-500 font-bold">*</span>
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as ItemCategory)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-500 dark:focus:border-purple-500 rounded-xl text-slate-900 dark:text-white font-semibold outline-none transition-colors"
-              >
-                {CATEGORIES.filter((c) => c !== 'All Categories').map((c) => (
-                  <option key={c} value={c} className="bg-white dark:bg-[#14141c] text-slate-900 dark:text-white">
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Storage Location */}
-            <div>
-              <label className="block font-bold text-slate-800 dark:text-zinc-200 mb-1">
-                Lab Storage Location <span className="text-red-500 font-bold">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Sensors Bay - Rack S3, Box 1"
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-500 dark:focus:border-purple-500 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 font-semibold outline-none transition-colors"
-              />
-            </div>
+          {/* Category */}
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-zinc-200 mb-1">
+              Category Domain <span className="text-red-500 font-bold">*</span>
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as ItemCategory)}
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 focus:border-blue-500 dark:focus:border-purple-500 rounded-xl text-slate-900 dark:text-white font-semibold outline-none transition-colors"
+            >
+              {CATEGORIES.filter((c) => c !== 'All Categories').map((c) => (
+                <option key={c} value={c} className="bg-white dark:bg-[#14141c] text-slate-900 dark:text-white">
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Quantities Card with 0 Support */}

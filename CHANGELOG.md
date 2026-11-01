@@ -8,11 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.18.15] : 2026-11-01
 
+### Added
+* Standalone database migration `supabase_remove_location_migration.sql` to drop or make nullable the component location column.
+* Centered `DragToConfirm` slider at the bottom of the component detail preview.
+
 ### Changed
-* Streamlined Component Preview & Detail Modal:
-  - Re-architected `ItemDetailModal.tsx` into a compact, unified vertical flow: **Name** &rarr; **Description** &rarr; **Category & Specs Badges** &rarr; **Slide to Request Item** &rarr; **Edit Component (Admin)** &rarr; **Recent Activity**.
-  - Eliminated redundant stacked cards and reduced vertical modal height, delivering a shorter, faster, and more aesthetic cybernetic preview interface.
-  - Maintained full return clearance capabilities for active user checkouts and real-time activity tracking.
+* Redesigned Component Preview Modal (`ItemDetailModal.tsx`):
+  - macOS terminal window title bar with authentic `#ff5f56`, `#ffbd2e`, `#27c93f` dots and monospace filename indicator.
+  - Increased width (`max-w-2xl`) with crisp, clean text alignment and no heavy neon shadow borders.
+  - Placed "Slide to Request Item" (`DragToConfirm`) centered at the bottom of the modal.
+  - Strict Admin-only visibility and clearance check for the "Edit Component" option.
+* Completely removed component `location` from:
+  - Database schemas (`supabase_schema.sql`, `neon_schema.sql`)
+  - TypeScript interface (`InventoryItem.location?`)
+  - All inventory UI cards, tables, search filters, and modals (`ItemDetailModal`, `ComponentVaultView`, `InventoryCard`, `InventoryList`, `AddEditItemModal`, `BorrowModal`, `RequestCartModal`, `IssuePassModal`, `UserDashboard`).
 
 ***
 

@@ -124,8 +124,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
       !q ||
       item.name.toLowerCase().includes(q) ||
       item.description?.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q) ||
-      item.location.toLowerCase().includes(q);
+      item.category.toLowerCase().includes(q);
 
     return matchesCategory && matchesStatus && matchesSearch;
   });
@@ -157,7 +156,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
           <IOSSearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search components by name, location, specs..."
+            placeholder="Search components by name, category, specs..."
             className="w-full"
             collapsedWidth="100%"
             expandedWidth="100%"
@@ -393,10 +392,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
                 {/* Bottom specs: Location, Availability & Progress */}
                 <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
                   <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
-                    <span className="flex items-center gap-1 truncate max-w-[150px]" title={item.location}>
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{item.location ? item.location.replace(/\s*-\s*/g, " / ") : ""}</span>
-                    </span>
+                    <span className="font-semibold text-purple-400">Stock Availability</span>
                     <span className="font-bold shrink-0">
                       {item.available_qty} / {item.total_qty} units
                     </span>

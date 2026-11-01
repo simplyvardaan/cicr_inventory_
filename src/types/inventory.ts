@@ -38,7 +38,7 @@ export interface InventoryItem {
   sku?: string;
   category: ItemCategory;
   description: string;
-  location: string;
+  location?: string;
   total_qty: number;
   available_qty: number;
   min_threshold: number;

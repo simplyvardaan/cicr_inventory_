@@ -3,11 +3,9 @@ import { InventoryItem, isReturnRequested } from '../../types/inventory';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
-import { StatusBadge } from '../common/Badge';
 import { DragToConfirm } from '../ui/drag-to-confirm';
 import {
   X,
-  MapPin,
   ExternalLink,
   Layers,
   RotateCcw,
@@ -16,6 +14,7 @@ import {
   AlertCircle,
   PackageCheck,
   Pencil,
+  History,
 } from 'lucide-react';
 
 interface ItemDetailModalProps {
@@ -33,7 +32,10 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   isAdmin,
   onEdit,
 }) => {
-  const { user } = useAuth();
+  const { user, isAdmin: authIsAdmin, profile } = useAuth();
+  const isUserAdmin = Boolean(
+    (isAdmin ?? true) && (profile?.role === 'admin' || user?.user_metadata?.role === 'admin' || authIsAdmin)
+  );
   const { requests, requestItemReturn } = useInventory();
   const { showToast } = useToast();
 
@@ -54,6 +56,14 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
         (user?.email && r.user_email?.toLowerCase() === user.email.toLowerCase()))
   );
 
+  const isAvailable = item.available_qty > 0;
+
+  // Clean filename for terminal title bar
+  const itemFilename = `${item.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .slice(0, 30)}.tsx`;
+
   const handleConfirmReturn = async (requestId: string) => {
     setSubmittingReturnId(requestId);
     const res = await requestItemReturn(requestId, returnNote.trim() || undefined);
@@ -64,8 +74,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
     if (res.success) {
       showToast(
         'success',
-        'Return Request Sent to Admin',
-        'Your return request has been submitted to the Admin Portal. Once an admin approves it, the component will be restocked.'
+        'Return Request Dispatched',
+        'Your clearance request has been forwarded to the Admin Portal.'
       );
     } else {
       showToast('error', 'Return Request Failed', res.error || 'Failed to submit return request');
@@ -73,67 +83,83 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-black/85 backdrop-blur-md animate-in fade-in select-none">
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#0f0e1a] border-2 border-slate-200 dark:border-[#201d33] rounded-3xl p-5 sm:p-6 shadow-2xl shadow-slate-900/20 max-h-[92vh] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100">
-        {/* Top Mini Bar: Status Badge + Stock Count + Close X */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800/60">
-          <div className="flex items-center gap-2 flex-wrap">
-            <StatusBadge status={item.status} />
-            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60">
-              {item.available_qty} / {item.total_qty} Available
-            </span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in select-none">
+      {/* Wide Container with Clean Border & No Neon Glow Shadow */}
+      <div className="relative w-full max-w-xl sm:max-w-2xl bg-[#0c0a17] border border-zinc-800 rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden text-zinc-100">
+        {/* macOS Terminal Title Bar (Symmetrically Balanced) */}
+        <div className="select-none bg-[#131024] border-b border-zinc-800 px-5 py-3 flex items-center justify-between shrink-0">
+          {/* Left: Window Dots */}
+          <div className="flex items-center gap-2 w-16">
+            <span className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] inline-block shadow-sm" />
+            <span className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] inline-block shadow-sm" />
+            <span className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] inline-block shadow-sm" />
+          </div>
+
+          {/* Center: Monospace Filename */}
+          <div className="font-mono text-xs font-semibold text-zinc-300 flex items-center justify-center gap-1.5 truncate flex-1 text-center">
+            <span className="text-purple-400 font-bold">~</span>
+            <span className="truncate">{itemFilename}</span>
+          </div>
+
+          {/* Right: Close Button */}
+          <div className="flex items-center justify-end w-16">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 no-scrollbar">
+          {/* 1. Component Name & Availability Badge */}
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+                {item.name}
+              </h2>
+
+              <span
+                className={`shrink-0 px-3 py-1 rounded-full text-xs font-mono font-medium border mt-0.5 ${
+                  isAvailable
+                    ? 'bg-purple-950/60 border-purple-500/30 text-purple-300'
+                    : 'bg-rose-950/60 border-rose-500/30 text-rose-300'
+                }`}
+              >
+                {isAvailable ? `${item.available_qty} / ${item.total_qty} Available` : 'Out of Stock'}
+              </span>
+            </div>
+
             {myActiveLoans.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-purple-900/50 dark:text-purple-300 border border-blue-200 dark:border-purple-700">
-                <PackageCheck className="w-3 h-3 text-blue-600 dark:text-purple-400" />
-                <span>Issued to You</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                <PackageCheck className="w-3.5 h-3.5 text-purple-400" />
+                <span>Currently Issued to You ({myActiveLoans.reduce((s, l) => s + l.quantity, 0)} units)</span>
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer shrink-0"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Scrollable Content Body in Exact Order: Name -> Description -> Category -> Slide -> Edit -> Activity */}
-        <div className="flex-1 overflow-y-auto py-3 space-y-3.5 pr-1 no-scrollbar text-xs">
-          {/* 1. Component Name */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
-              {item.name}
-            </h2>
-          </div>
 
           {/* 2. Description */}
-          <div className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed font-normal whitespace-pre-line">
-            {item.description || 'Standard laboratory hardware component for robotics projects and experimental prototyping.'}
-          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal whitespace-pre-line text-left">
+            {item.description || 'Standard laboratory hardware component for robotics prototyping and electronic development.'}
+          </p>
 
-          {/* 3. Category & Hardware Specs Metadata */}
-          <div className="flex flex-wrap items-center gap-2 pt-0.5">
-            {/* Category Tag */}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
-              <Layers className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+          {/* 3. Category & Metadata */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              <Layers className="w-3.5 h-3.5 text-purple-400" />
               <span>{item.category}</span>
             </span>
 
-            {/* Storage Location Tag */}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium bg-slate-100 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60">
-              <MapPin className="w-3.5 h-3.5 text-blue-500 dark:text-purple-400 shrink-0" />
-              <span>{item.location}</span>
-            </span>
-
-            {/* Datasheet Link */}
             {item.datasheet_url && (
               <a
                 href={item.datasheet_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 dark:text-cyan-300 border border-blue-200 dark:border-cyan-800/50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08] transition-colors"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Datasheet</span>
@@ -141,17 +167,49 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             )}
           </div>
 
-          {/* User's Active Issued Loans (for return workflow if issued to user) */}
+          {/* 4. Recent Activity */}
+          <div className="pt-2 space-y-2 border-t border-zinc-800">
+            <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-purple-400" />
+                <span>Recent Activity</span>
+              </div>
+              <span className="font-mono text-[11px] text-zinc-500">
+                ({itemRequests.length} logged)
+              </span>
+            </div>
+
+            {itemRequests.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic py-0.5">No recent activity logged for this component.</p>
+            ) : (
+              <div className="space-y-1.5 max-h-24 overflow-y-auto no-scrollbar pr-0.5">
+                {itemRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="p-2.5 rounded-lg bg-white/[0.03] text-xs flex items-center justify-between text-zinc-300"
+                  >
+                    <span className="font-medium truncate pr-2">
+                      {req.user_name} <span className="text-purple-300 font-mono text-[11px]">({req.quantity} units)</span>
+                      <span className="text-zinc-500 text-[11px]"> &bull; {req.project_name}</span>
+                    </span>
+                    <span className="text-[11px] text-zinc-500 font-mono shrink-0">
+                      {new Date(req.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Active Loans Return Tray (if user currently has this item checked out) */}
           {myActiveLoans.length > 0 && (
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-[#16102a] border border-blue-200 dark:border-purple-800/80 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400" />
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                    Your Active Checkout
-                  </span>
+            <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-2 text-xs">
+              <div className="flex items-center justify-between font-semibold text-purple-200">
+                <div className="flex items-center gap-1.5">
+                  <RotateCcw className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Your Active Loans</span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-600/10 text-blue-700 dark:bg-purple-500/20 dark:text-purple-300 border border-blue-300 dark:border-purple-700/60">
+                <span className="text-xs font-mono font-medium bg-purple-500/15 px-2 py-0.5 rounded text-purple-300">
                   {myActiveLoans.reduce((sum, l) => sum + l.quantity, 0)} Units in Possession
                 </span>
               </div>
@@ -161,40 +219,32 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                 const isConfirming = confirmReturnId === loan.id;
 
                 return (
-                  <div
-                    key={loan.id}
-                    className="p-2.5 rounded-xl bg-white dark:bg-[#0d091e] border border-blue-100 dark:border-purple-900/40 space-y-2 text-xs"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div key={loan.id} className="p-2.5 rounded-lg bg-black/40 border border-white/[0.06] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <span>{loan.quantity}x {loan.item_name}</span>
-                          <span className="text-blue-600 dark:text-purple-400 font-semibold font-mono text-[11px]">
-                            ({loan.project_name})
-                          </span>
+                        <div className="font-medium text-white">
+                          {loan.quantity}x {loan.item_name}{' '}
+                          <span className="text-purple-400 font-mono text-[11px]">({loan.project_name})</span>
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-2 mt-0.5">
-                          <span>Issued: {loan.borrow_date || 'Recently'}</span>
-                          <span>&bull;</span>
-                          <span>Expected Return: <strong className="text-slate-700 dark:text-zinc-300">{loan.expected_return_date}</strong></span>
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
+                          Due: {loan.expected_return_date}
                         </div>
                       </div>
 
                       {!isConfirming && (
                         <div>
                           {isReturning ? (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-700 dark:text-purple-300 font-bold text-[10px] animate-pulse">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Return Request Sent (Awaiting Admin)</span>
-                            </div>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium bg-purple-500/20 text-purple-300">
+                              <Clock className="w-3 h-3 text-purple-400" />
+                              <span>Awaiting Admin</span>
+                            </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => setConfirmReturnId(loan.id)}
-                              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                              className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-colors cursor-pointer"
                             >
-                              <RotateCcw className="w-3 h-3" />
-                              <span>Return Component</span>
+                              Return
                             </button>
                           )}
                         </div>
@@ -202,26 +252,26 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                     </div>
 
                     {isConfirming && (
-                      <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 space-y-2">
-                        <div className="flex items-start gap-1.5 text-slate-700 dark:text-zinc-300 text-[11px]">
-                          <AlertCircle className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                      <div className="pt-2 border-t border-white/[0.08] space-y-2">
+                        <div className="flex items-start gap-1.5 text-zinc-300 text-[11px]">
+                          <AlertCircle className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
                           <span>Clearance request will be dispatched to Admin Portal.</span>
                         </div>
                         <input
                           type="text"
                           value={returnNote}
                           onChange={(e) => setReturnNote(e.target.value)}
-                          placeholder="Optional return notes (condition, shelf)..."
-                          className="w-full px-3 py-1.5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none"
+                          placeholder="Optional return notes..."
+                          className="w-full px-2.5 py-1.5 bg-black/60 border border-white/10 rounded-lg text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-500"
                         />
-                        <div className="flex items-center justify-end gap-2 pt-1">
+                        <div className="flex justify-end gap-2 pt-1">
                           <button
                             type="button"
                             onClick={() => {
                               setConfirmReturnId(null);
                               setReturnNote('');
                             }}
-                            className="px-3 py-1 text-slate-600 dark:text-zinc-400 text-xs font-semibold cursor-pointer"
+                            className="px-2.5 py-1 text-zinc-400 hover:text-white text-xs cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -229,10 +279,10 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                             type="button"
                             onClick={() => handleConfirmReturn(loan.id)}
                             disabled={submittingReturnId === loan.id}
-                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer transition-colors shadow-sm flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium cursor-pointer flex items-center gap-1"
                           >
                             <CheckCircle2 className="w-3 h-3" />
-                            <span>{submittingReturnId === loan.id ? 'Submitting...' : 'Send Return Request'}</span>
+                            <span>{submittingReturnId === loan.id ? 'Sending...' : 'Confirm'}</span>
                           </button>
                         </div>
                       </div>
@@ -243,74 +293,47 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             </div>
           )}
 
-          {/* 4. Slide to Request Item */}
-          <div className="pt-1">
-            {item.available_qty > 0 ? (
-              <div className="w-full">
+          {/* 5. Bottom Actions: Centered Slide to Request with Circular Edit Icon Button beside it */}
+          <div className="pt-2 flex items-center justify-center gap-3 w-full max-w-md sm:max-w-lg mx-auto">
+            {isAvailable ? (
+              <div className="flex-1 min-w-0">
                 <DragToConfirm
-                  size="lg"
+                  size="md"
                   label="Slide to Request Item"
-                  confirmedLabel="Item Selected!"
+                  confirmedLabel="Component Selected!"
                   actionType="confirm"
                   variant="default"
                   onConfirm={() => {
                     setTimeout(() => {
                       onClose();
                       onBorrow(item);
-                    }, 350);
+                    }, 300);
                   }}
                 />
               </div>
             ) : (
-              <div className="w-full py-3 px-4 rounded-2xl bg-red-50 dark:bg-rose-950/30 border border-red-200 dark:border-rose-900/60 text-center font-bold text-xs text-red-700 dark:text-rose-300">
-                Out of Stock — 0 Units Currently Available
+              <div className="flex-1 py-3 px-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-center font-medium text-xs text-rose-300">
+                Out of Stock — 0 Units Available
               </div>
             )}
-          </div>
 
-          {/* 5. Edit (Admin Clearance Only) */}
-          {isAdmin && onEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(item)}
-              className="w-full py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-[#18142b] dark:hover:bg-[#231e3b] dark:text-purple-300 border border-slate-300 dark:border-purple-800/60 shadow-sm transition-all cursor-pointer active:scale-98"
-              title="Edit Component (Admin Clearance)"
-            >
-              <Pencil className="w-3.5 h-3.5 text-blue-600 dark:text-purple-400" />
-              <span>Edit Component</span>
-            </button>
-          )}
-
-          {/* 6. Recent Activity */}
-          <div className="pt-2 space-y-2 border-t border-slate-100 dark:border-zinc-800/60">
-            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 font-mono">
-              <span>Recent Activity ({itemRequests.length})</span>
-            </div>
-
-            {itemRequests.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-zinc-500 italic py-1">
-                No requisition records for this component.
-              </p>
-            ) : (
-              <div className="space-y-1.5 max-h-32 overflow-y-auto no-scrollbar pr-1">
-                {itemRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="p-2 rounded-xl bg-slate-50 dark:bg-[#14141c] border border-slate-200 dark:border-zinc-800 text-xs flex items-center justify-between"
-                  >
-                    <div className="truncate min-w-0 pr-2">
-                      <span className="font-bold text-slate-900 dark:text-white truncate">
-                        {req.user_name}
-                      </span>
-                      <span className="text-slate-500 dark:text-zinc-400"> ({req.quantity} units)</span>
-                      <span className="text-slate-400 dark:text-zinc-500"> | {req.project_name}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono shrink-0">
-                      {new Date(req.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* Edit Icon Button beside slider (Strictly Admin Only) */}
+            {isUserAdmin && onEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isUserAdmin) {
+                    showToast('error', 'Admin Clearance Required', 'Only administrators can edit components.');
+                    return;
+                  }
+                  onEdit(item);
+                }}
+                className="w-12 h-12 rounded-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-white border border-purple-500/25 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+                title="Edit Component (Admin Clearance)"
+                aria-label="Edit Component"
+              >
+                <Pencil className="w-4.5 h-4.5 text-purple-400" />
+              </button>
             )}
           </div>
         </div>
