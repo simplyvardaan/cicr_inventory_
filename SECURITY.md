@@ -27,13 +27,11 @@ flowchart LR
     AuthGate["Institutional Auth Guard"]
     StateLayer["Reactive State & Guards"]
     Supabase["Supabase Cloud PostgreSQL"]
-    Neon["Neon Secondary Mirror"]
 
     Attacker -->|Inspect / Tamper| Browser
     Browser -->|API Calls| AuthGate
     AuthGate -->|Role Verification| StateLayer
     StateLayer -->|Parameterized SQL| Supabase
-    Supabase -.->|Automated Sync| Neon
 ```
 
 ### Potential Attack Vectors Audited

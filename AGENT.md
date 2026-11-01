@@ -29,7 +29,6 @@ The platform is designed to:
 | **Icons & VFX** | Lucide React | `^0.477.0` | SVG icons and visual telemetry indicators |
 | **Animation Engine** | Framer Motion | `^14.9.0` | Fluid state transitions |
 | **Primary Cloud Database** | Supabase | `@supabase/supabase-js ^2.49.1` | PostgreSQL 15, Auth, and Realtime Engine |
-| **Secondary Backup Mirror** | Neon PostgreSQL | Serverless | Secondary failover database |
 | **Production Hosting** | Vercel | Edge Network | SPA client hosting and API proxy |
 
 ---
@@ -155,4 +154,3 @@ Before submitting any code changes or releasing new version tags:
    Ensure build completes with zero errors and outputs to `dist/`.
 3. **No Unhandled Promises**: Ensure all Supabase calls contain appropriate try/catch blocks and user-friendly toast alerts.
 4. **Git Synchronization**: Ensure `main` and `UI-UX-Updates` remain fast-forward merged and synchronized with remote repository tags.
-

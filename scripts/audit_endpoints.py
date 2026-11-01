@@ -28,8 +28,6 @@ SECRET_PATTERN = re.compile(
 )
 
 CASES: tuple[dict[str, Any], ...] = (
-    {"name": "auth-method-check", "method": "GET", "path": "/api/auth"},
-    {"name": "auth-invalid-body", "method": "POST", "path": "/api/auth", "body": {}},
     {"name": "accounts-method-check", "method": "GET", "path": "/api/accounts"},
     {"name": "accounts-invalid-body", "method": "POST", "path": "/api/accounts", "body": {}},
     {"name": "database-unauthenticated-read", "method": "GET", "path": "/api/db?route=%2Frest%2Fv1%2Fprofiles"},

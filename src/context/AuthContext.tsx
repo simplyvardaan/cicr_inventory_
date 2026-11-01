@@ -63,10 +63,6 @@ const getInitialAuth = (): { user: User | null; profile: UserProfile | null } =>
       }
     }
 
-    const fallbackUser = localStorage.getItem('neon-fallback-user');
-    if (fallbackUser) {
-      return { user: JSON.parse(fallbackUser), profile: null };
-    }
   } catch {
     // ignore
   }
@@ -216,16 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } = await Promise.race([sessionPromise, timeoutPromise]);
         if (!mounted) return;
         setSession(session);
-        const storedFallback = localStorage.getItem('neon-fallback-user');
-        let fallbackUser: User | null = null;
-        if (storedFallback) {
-          try {
-            fallbackUser = JSON.parse(storedFallback) as User;
-          } catch {
-            fallbackUser = null;
-          }
-        }
-        const currentUser = session?.user ?? fallbackUser;
+        const currentUser = session?.user ?? null;
         setUser(currentUser);
         if (currentUser) {
           await loadProfile(currentUser);
@@ -302,29 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         res = { data: null, error: networkErr };
       }
 
-      // If Supabase failed or threw network error, attempt Neon failover
       if (res.error) {
-        try {
-          const fallback = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ email: emailToAuth, password }),
-          });
-          if (fallback.ok) {
-            const fallbackData = await fallback.json();
-            if (fallbackData?.user) {
-              const fallbackUser = fallbackData.user as User;
-              setUser(fallbackUser);
-              setSession(null);
-              await loadProfile(fallbackUser);
-              localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
-              return { success: true };
-            }
-          }
-        } catch (fallbackErr) {
-          console.warn('Neon auth failover error:', fallbackErr);
-        }
-
         const errMsg = res.error?.message || (res.error instanceof Error ? res.error.message : String(res.error));
         if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('failed to fetch')) {
           return {
@@ -811,7 +776,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       localStorage.removeItem('cicr-active-user');
       localStorage.removeItem('cicr-active-profile');
-      localStorage.removeItem('neon-fallback-user');
     }
   };
 

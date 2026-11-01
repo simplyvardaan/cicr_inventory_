@@ -6,12 +6,11 @@
 
 **Creative & Innovative Cell in Robotics — Hardware Allocation & Laboratory Vault System**
 
-Track, reserve, and deploy microcontrollers, sensors, actuators, and power electronics from JIIT's robotics laboratory vault with a modern full-stack web platform: **React 18 + TypeScript + Vite**, **Tailwind CSS**, **Supabase (PostgreSQL)** real-time engine, **Neon PostgreSQL** secondary backup failover, **Dual Superadmin Security**, and **Real-Time Requisition Telemetry**.
+Track, reserve, and deploy microcontrollers, sensors, actuators, and power electronics from JIIT's robotics laboratory vault with a modern full-stack web platform: **React 18 + TypeScript + Vite**, **Tailwind CSS**, **Supabase (PostgreSQL)** real-time engine, **Dual Superadmin Security**, and **Real-Time Requisition Telemetry**.
 
 [![Live Demo](https://img.shields.io/badge/LIVE-cicr--inventory.vercel.app-00f0ff?style=for-the-badge&logo=vercel&logoColor=white)](https://cicr-inventory.vercel.app/)
 [![GitHub Repo](https://img.shields.io/badge/GITHUB-cicr__inventory_-bd00ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/simplyvardaan/cicr_inventory_)
 [![Database](https://img.shields.io/badge/DATABASE-Supabase%20PostgreSQL-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Secondary Mirror](https://img.shields.io/badge/SECONDARY-Neon%20PostgreSQL-00e599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
 
 </div>
 
@@ -68,18 +67,12 @@ flowchart TD
         LogsTable["activity_logs (7-Day Telemetry)"]
     end
 
-    subgraph Secondary["Secondary Database Redundancy (Neon)"]
-        NeonDB["Neon PostgreSQL (Automated 15-min Mirror)"]
-        BackupScripts["Backup & Sync Workflows"]
-    end
-
     subgraph CDN["Production Edge Hosting"]
         Vercel["Vercel Edge Network (SPA Routing & Proxy)"]
     end
 
     Client --> State
     State --> Cloud
-    Cloud -.-> BackupScripts -.-> Secondary
     Client --> Vercel
 ```
 
@@ -154,7 +147,6 @@ flowchart TD
 | **Styling & Design** | Tailwind CSS 3, Custom Cyberpunk CSS Tokens, Lucide React Icons |
 | **Animation & VFX** | Framer Motion, CSS Keyframe Animations |
 | **Primary Database & Auth** | Supabase (PostgreSQL 15), Supabase Auth, Row-Level Security (RLS) |
-| **Secondary Backup Mirror** | Neon Serverless PostgreSQL (Automated 15-min failover scripts) |
 | **Session & State Management** | React Context (Auth, Inventory, Theme, Toast), Synchronous LocalStorage Hydration |
 | **Deployment & Hosting** | Vercel (Edge SPA Routing, API Rewrites, SSL) |
 
@@ -193,9 +185,7 @@ cicr_inventory_/
 │   ├── App.tsx                 # Root router, ErrorBoundary, branded pulse loader
 │   ├── index.css               # Tailwind directives & theme variables
 │   └── main.tsx                # React DOM mounting
-├── scripts/
-│   ├── backup_to_neon.cjs      # Scheduled secondary PostgreSQL backup mirror
-│   └── initialize_neon.cjs     # Neon DB schema initialization
+├── scripts/                    # Local maintenance and audit utilities
 ├── AGENT.md                    # AI agent guidelines, constraints & system protocols
 ├── CHANGELOG.md                # Official Semantic Versioning release notes
 ├── DEEPDIVE.md                 # Technical deep dive, telemetry logs & version registry
@@ -250,19 +240,9 @@ SUPABASE_ANON_KEY=your-supabase-anon-key
 
 # Server-only secrets
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
 ```
 
-`NEON_DATABASE_URL`, `SUPABASE_DB_URL`, and `SUPABASE_SERVICE_ROLE_KEY` are
-server-side only. They must not be included in frontend deployment variables.
-`SUPABASE_DB_URL` is the direct Supabase Postgres connection string used to copy
-the existing `auth.users.encrypted_password` hashes without exposing them.
-
-The browser always sends database requests through `/api/db`. The gateway tries
-Supabase first and automatically uses the mirrored Neon tables when Supabase
-times out or returns a server error. Use the deployed Vercel app (or `vercel dev`)
-to run the gateway; plain `npm run dev` only serves the frontend and cannot run
-the server-side Neon fallback.
+The browser sends database requests through `/api/db`, which uses Supabase Auth and Supabase PostgREST with the configured server-side service key.
 
 ### Local endpoint audit
 
@@ -277,49 +257,10 @@ The probe defaults to loopback, uses validation-oriented payloads, truncates
 responses, and refuses non-local targets unless `--allow-external` is explicitly
 provided.
 
-### 4. Configure the Neon backup
+### 4. Configure the Supabase schema
 
-Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)
-once in the Neon SQL editor. Then run the backup from a trusted server, CI job, or
-scheduled worker:
-
-```bash
-npm run neon:init
-npm run backup:neon
-```
-
-The GitHub Actions workflow at
-[`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
-automatically every 15 minutes. Add `SUPABASE_URL`,
-`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
-**Settings → Secrets and variables → Actions**. You can also run it immediately
-from the repository's **Actions** tab.
-
-`neon:init` creates the operational Neon tables from
-[`neon_schema.sql`](./neon_schema.sql). Run [`supabase_schema.sql`](./supabase_schema.sql)
-in the Supabase SQL Editor to create the matching Supabase tables. The schema is
-safe to rerun because existing RLS policies are replaced. The Supabase
-REST API cannot execute schema DDL using an anon or service-role key.
-If an existing Supabase project reports that `profiles.status` is missing, rerun
-[`supabase_schema.sql`](./supabase_schema.sql) in the SQL Editor and refresh the
-PostgREST schema cache; account approval workflows require this column.
-
-The command performs a one-way Supabase-to-Neon mirror for profiles, inventoryitems, borrow requests, activity logs, and authentication metadata.
-It replaces each mirrored table's backup snapshot atomically and records each run
-in `backup_runs`. Plaintext passwords, access tokens, and session data are never copied.
-The mirror reads `auth.users.encrypted_password` through `SUPABASE_DB_URL` and
-stores it as `password_hash`, allowing the same password to be verified during
-failover. Without `SUPABASE_DB_URL`, the Supabase API cannot provide password
-hashes and users are marked `password_reset_required`.
-
-### Database failover gateway
-
-Browser database requests now pass through `/api/db`. The Vercel function tries
-Supabase first and routes database reads and writes to Neon when Supabase has a
-network or server failure. Configure `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as Vercel environment
-variables. Supabase Auth remains primary, so login and signup are
-not available if Supabase Auth itself is down.
+Run [supabase_schema.sql](./supabase_schema.sql) in the Supabase SQL Editor.
+The schema is safe to rerun because existing RLS policies are replaced.
 
 ### Email notifications
 
@@ -341,8 +282,6 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
 
-# Secondary Redundancy (Neon PostgreSQL)
-NEON_DATABASE_URL=postgresql://neondb_owner:...@ep-odd-dawn-b5go8elm-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
 ```
 
 ---

@@ -20,14 +20,7 @@ if (renderIdx !== -1) {
   console.log(js.slice(renderIdx - 200, renderIdx + 300));
 }
 
-// Also check for neon.tech
-const neonIdx = js.indexOf('neon.tech');
-if (neonIdx !== -1) {
-  console.log('Context around neon.tech:');
-  console.log(js.slice(neonIdx - 200, neonIdx + 300));
-}
 
 // Check for items endpoint e.g. /components or /inventory or /items
 const endpointMatches = [...js.matchAll(/["'`](\/(api\/)?[a-zA-Z0-9_\-\/]+)["'`]/g)].map(m => m[1]);
 console.log('Endpoints found:', [...new Set(endpointMatches)].filter(e => e.includes('item') || e.includes('comp') || e.includes('inv') || e.includes('product') || e.includes('hardware')));
-

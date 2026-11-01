@@ -30,7 +30,6 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.2.0** | Released | **React 18 + Vite SPA Transformation.** Modern modular frontend, Airport Matrix live departure clock, dynamic category filtering, real-time toast alerts, and dark-theme aesthetic. |
 | **v2.5.0** | Released | **Requisition Clearance Portal & Activity Stream.** Requisition workflow requiring administrator clearance before hardware can be collected; live activity audit logs; responsive bottom navigation dock. |
 | **v2.7.0** | Released | **Database Purge, Master Whitelist & Tamper-Proof Profiles.** Test data wiped; vault reset to authentic inventory; 2-box side-by-side operator profile with security-locked credentials (email, enrollment number, contact). |
-| **v2.10.0** | Released | **Secondary Database Redundancy & 1.5s Auto-Sync.** Automated backup mirror with Neon PostgreSQL; 1.5-second background auto-synchronization; permanent notification read state persistence in localStorage. |
 | **v2.12.0** | Released | **Dual Theme Engine & High-Contrast Visual Polish.** High-contrast Cyber Dark (`#07070a`) and Clean Light (`#f8fafc`) theme switch with LiquidToggle; complete elimination of faint text and dark container patches. |
 | **v2.13.0** | Released | **Cyber Calendar Picker, KPH Team Showcase, <50% Low Reserves & UI Perfection.** Interactive cyber calendar picker with preset shortcuts; macOS terminal window team showcase (Gunjan, Vardaan, Samiksha, Arsh); top-navbar cart strictly scoped to inventory; 100% full stock vault restock; admin-only warnings; branded cold-start pulse loader; and official MIT License. |
 | **v2.14.0** | Released | **Defensive Penetration Hardening, Agent Operational Blueprint & Documentation Restructure.** Full defensive security audit and source-level pentest hardening (RBAC caller guards, master superadmin immutability, integer quantity bounds, registration role lock); AGENT.md AI coding protocol; SECURITY.md threat model and audit matrix; zero-emoji README sanitization; and centralized DEEPDIVE.md telemetry registry. |
@@ -55,7 +54,6 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.2.0** | `v2.2.0` | React SPA & Clocks | Vite + React 18, Airport Matrix HUD |
 | **v2.5.0** | `v2.5.0` | Clearance Workflow | Admin requisition portal & audit ledger |
 | **v2.7.0** | `v2.7.0` | Security Hardening | Locked credentials & database purge |
-| **v2.10.0** | `v2.10.0` | Redundancy & Sync | Neon PostgreSQL mirror, 1.5s auto-sync |
 | **v2.12.0** | `v2.12.0` | Theme Engine | Dual theme contrast & LiquidToggle |
 | **v2.13.0** | `v2.13.0`, `v2.13` | Production Release | KPH Team Showcase, Cyber Calendar, Restock, MIT License |
 | **v2.14.0** | `v2.14.0`, `v2.14` | Security & Docs | Pentest hardening, AGENT.md, SECURITY.md, DEEPDIVE.md |
@@ -100,18 +98,12 @@ flowchart TD
         LogsTable["activity_logs (7-Day Telemetry)"]
     end
 
-    subgraph Secondary["Secondary Database Redundancy (Neon)"]
-        NeonDB["Neon PostgreSQL (Automated 15-min Mirror)"]
-        BackupScripts["Backup & Sync Workflows"]
-    end
-
     subgraph CDN["Production Edge Hosting"]
         Vercel["Vercel Edge Network (SPA Routing & Proxy)"]
     end
 
     Client --> State
     State --> Cloud
-    Cloud -.-> BackupScripts -.-> Secondary
     Client --> Vercel
 ```
 
@@ -121,7 +113,6 @@ flowchart TD
 3. **Primary Supabase Transaction**: The action commits to Supabase PostgreSQL using atomic SQL updates.
 4. **Audit Log Generation**: An event payload is asynchronously written to `public.activity_logs`.
 5. **Background Auto-Sync**: The active polling cycle (every 1.5s) reconciles discrepancies across concurrent clients.
-6. **Secondary Mirror Sync**: Scheduled scripts duplicate recent records to the secondary Neon database.
 
 ---
 
@@ -277,17 +268,7 @@ stateDiagram-v2
 
 ---
 
-## Secondary Redundancy & Synchronization Engine
-
-To guarantee 99.9% uptime during primary cloud service interruptions:
-1. **Primary Database**: Supabase PostgreSQL handles real-time read and write operations.
-2. **Secondary Mirror**: Neon Serverless PostgreSQL stores full schema and transaction backups.
-3. **Backup Workflow**: Executed via `scripts/backup_to_neon.cjs` on scheduled intervals.
-4. **Client Failover**: In the event of primary connection failure, the frontend authentication handler gracefully falls back to secondary verification endpoints.
-
----
-
-## Back-of-the-Envelope (BOTE) Scalability Analysis
+## Database Architecture`r`n`r`nSupabase PostgreSQL is the sole database and authentication provider for the current deployment.`r`n`r`n## Back-of-the-Envelope (BOTE) Scalability Analysis
 
 | Metric | Estimation | Scalability Rationale |
 |:---|:---|:---|
