@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Client } from 'pg';
+import { getSupabaseConfig } from './supabase-config';
 
 const tables = new Set([
   'profiles',
@@ -14,8 +15,7 @@ const SUPABASE_TIMEOUT_MS = 8_000;
 const NEON_CONNECTION_TIMEOUT_MS = 8_000;
 
 async function authenticate(req: VercelRequest) {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const { url, anonKey: key } = getSupabaseConfig();
   const authorization = req.headers.authorization;
   if (!url || !key || !authorization?.startsWith('Bearer ')) throw new Error('Authentication is required.');
   const supabase = createClient(url, key, { auth: { persistSession: false } });
@@ -97,9 +97,8 @@ function jsonResponse(res: VercelResponse, status: number, body: unknown) {
 }
 
 async function supabaseRequest(req: VercelRequest, path: string) {
-  const baseUrl = process.env.VITE_SUPABASE_URL;
+  const { url: baseUrl, anonKey: publicKey } = getSupabaseConfig();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const publicKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
   if (!baseUrl || !serviceKey || !publicKey) throw new Error('Supabase server configuration is incomplete.');
 
   const headers = new Headers();

@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { UserProfile, UserRole } from '../types/inventory';
-import { notifyEmail } from '../lib/notifications';
 
 const supabaseAdmin = supabase;
 
@@ -319,11 +318,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setSession(null);
               await loadProfile(fallbackUser);
               localStorage.setItem('neon-fallback-user', JSON.stringify(fallbackUser));
-              await notifyEmail('login', fallbackUser.email, {
-                name: fallbackUser.user_metadata?.full_name,
-                email: fallbackUser.email,
-                role: fallbackUser.user_metadata?.role,
-              });
               return { success: true };
             }
           }
@@ -402,11 +396,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-in log error:', logErr);
         }
-        await notifyEmail('login', res.data.user.email, {
-          name: profData?.full_name || res.data.user.user_metadata?.full_name,
-          email: res.data.user.email,
-          role: profData?.role || res.data.user.user_metadata?.role,
-        });
       }
 
       return { success: true };
@@ -531,13 +520,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }),
         },
       ]);
-      await notifyEmail('account_created', emailToRegister, {
-        name: full_name,
-        email: emailToRegister,
-        role,
-        status: initialStatus,
-      });
-
       return {
         success: true,
         message:
@@ -819,9 +801,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (logErr) {
           console.warn('Sign-out log error:', logErr);
         }
-        await notifyEmail('logout', user.email, {
-          name: profile?.full_name || user.user_metadata?.full_name,
-        });
       }
       await supabase.auth.signOut();
     } catch (err) {

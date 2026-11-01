@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { supabase } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
-import { notifyEmail } from '../lib/notifications';
 
 interface InventoryContextType {
   items: InventoryItem[];
@@ -268,14 +267,6 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } catch {
           // ignore
         }
-        await notifyEmail('borrow_requested', profile?.email || user?.email, {
-          name: profile?.full_name || user?.email,
-          email: profile?.email || user?.email,
-          item: `${data.quantity}x ${item.name}`,
-          project: data.projectName,
-          status: 'pending',
-          dueDate: data.expectedReturnDate,
-        });
       }
       return { success: true };
     } catch (err: unknown) {
@@ -405,19 +396,6 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             details: `${targetReq.item_name} marked as ${newStatus} (x${targetReq.quantity})`,
           },
         ]);
-        const event = newStatus === 'approved'
-          ? 'borrow_approved'
-          : newStatus === 'rejected'
-          ? 'borrow_rejected'
-          : 'item_returned';
-        await notifyEmail(event, targetReq.user_email, {
-          name: targetReq.user_name,
-          email: targetReq.user_email,
-          item: `${targetReq.quantity}x ${targetReq.item_name}`,
-          status: newStatus,
-          dueDate: targetReq.expected_return_date,
-          notes: adminNotes,
-        });
       }
 
       await refreshData();

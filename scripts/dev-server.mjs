@@ -24,8 +24,6 @@ const routes = {
   '/api/accounts': './api/accounts.ts',
   '/api/auth': './api/auth.ts',
   '/api/db': './api/db.ts',
-  '/api/email': './api/email.ts',
-  '/api/reminders': './api/reminders.ts',
 };
 
 function createResponse(res) {

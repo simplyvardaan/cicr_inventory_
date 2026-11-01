@@ -323,13 +323,8 @@ not available if Supabase Auth itself is down.
 
 ### Email notifications
 
-Configure Google SMTP with a Gmail App Password using `SMTP_HOST`, `SMTP_PORT`,
-`SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`. The server endpoints
-send notifications for login, logout, account registration and decisions, borrow
-requests, approvals, rejections, returns, and return reminders.
-
-`/api/reminders` is available for an external scheduler or manual invocation.
-Vercel cron is intentionally not configured.
+Email notifications are disabled. The application does not configure or use an
+SMTP provider.
 
 
 ### 5. Run Development Server
@@ -345,12 +340,6 @@ npm run preview
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_app_password
-SMTP_FROM=CICR Inventory <your_smtp_user>
 
 # Secondary Redundancy (Neon PostgreSQL)
 NEON_DATABASE_URL=postgresql://neondb_owner:...@ep-odd-dawn-b5go8elm-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require

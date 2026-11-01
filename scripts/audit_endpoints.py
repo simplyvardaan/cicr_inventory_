@@ -33,8 +33,6 @@ CASES: tuple[dict[str, Any], ...] = (
     {"name": "accounts-method-check", "method": "GET", "path": "/api/accounts"},
     {"name": "accounts-invalid-body", "method": "POST", "path": "/api/accounts", "body": {}},
     {"name": "database-unauthenticated-read", "method": "GET", "path": "/api/db?route=%2Frest%2Fv1%2Fprofiles"},
-    {"name": "email-invalid-event", "method": "POST", "path": "/api/email", "body": {"event": "invalid"}},
-    {"name": "reminders-unauthenticated-read", "method": "GET", "path": "/api/reminders"},
 )
 
 

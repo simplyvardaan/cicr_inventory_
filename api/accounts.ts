@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getMailFrom, isSmtpConfigured, mailer, renderEmail } from './_mailer';
 
 function response(res: VercelResponse, status: number, body: unknown) {
   return res.status(status).json(body);
@@ -30,20 +29,6 @@ async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getA
       .eq('id', data.user.id)
       .maybeSingle();
     if (profileError || profile?.role !== 'admin') throw new Error('Administrator access is required.');
-  }
-}
-
-async function sendAccountEmail(event: 'account_created' | 'account_approved' | 'account_rejected', to: string, data: Record<string, unknown>) {
-  if (!isSmtpConfigured()) {
-    return;
-  }
-  try {
-    await Promise.race([
-      mailer.sendMail({ from: getMailFrom(), to, ...renderEmail(event, data) }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP transmission timed out')), 4000)),
-    ]);
-  } catch (err) {
-    console.warn(`Notice from accounts sendAccountEmail (${event}):`, err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -116,7 +101,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         details: JSON.stringify({ userId, email, fullName, enrollmentNo, phone, role, status: 'pending', created_at: new Date().toISOString() }),
       }]);
       requireDatabaseSuccess(logError, 'Account request logging');
-      await sendAccountEmail('account_created', email, { name: fullName, email, role, status: 'pending' });
       return response(res, 201, { success: true });
     }
 
@@ -160,7 +144,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const { error: actionLogError } = await supabase.from('activity_logs').insert([{ user_id: resolvedUserId, user_name: fullName, action: action === 'approve' ? 'ACCOUNT_APPROVED' : 'ACCOUNT_REJECTED', details: `Account for ${fullName} was ${status}.` }]);
     requireDatabaseSuccess(actionLogError, 'Account action logging');
-    if (email) await sendAccountEmail(action === 'approve' ? 'account_approved' : 'account_rejected', email, { name: fullName, email, role: details?.role, status });
     return response(res, 200, { success: true });
   } catch (error) {
     console.error('Account operation failed:', error);
