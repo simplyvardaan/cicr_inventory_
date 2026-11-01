@@ -35,8 +35,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
-  approveUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
-  rejectUserAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  approveUserAccount: (userId: string, userEmail?: string) => Promise<{ success: boolean; error?: string }>;
+  rejectUserAccount: (userId: string, userEmail?: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -469,28 +469,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Seamless direct fallback
       let createdUserId: string | null = null;
 
-      // 1. Attempt to create user in Supabase Auth via supabase
+      // 1. Attempt to create user in Supabase Auth via standard client signUp
       try {
-        const { data: adminUser, error: adminError } = await supabase.auth.admin.createUser({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: emailToRegister,
           password,
-          email_confirm: true,
-          user_metadata: {
-            full_name,
-            enrollment_no,
-            phone,
-            role: enforcedRole,
-            status: initialStatus,
-            avatar_url: avatar_url || undefined,
+          options: {
+            data: {
+              full_name,
+              enrollment_no,
+              phone,
+              role: enforcedRole,
+              status: initialStatus,
+              avatar_url: avatar_url || undefined,
+            },
           },
         });
-        if (!adminError && adminUser?.user) {
-          createdUserId = adminUser.user.id;
-        } else if (adminError) {
-          console.warn('Notice from auth.admin.createUser:', adminError.message);
+        if (!signUpError && signUpData?.user) {
+          createdUserId = signUpData.user.id;
+        } else if (signUpError) {
+          console.warn('Notice from supabase.auth.signUp:', signUpError.message);
         }
       } catch (err) {
-        console.warn('auth.admin.createUser warning:', err);
+        console.warn('Client signUp fallback warning:', err);
       }
 
       // 2. If auth user was created, upsert to profiles table
@@ -502,9 +503,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               full_name,
               email: emailToRegister,
               role,
+              status: initialStatus,
               roll_number: enrollment_no,
               phone,
-              avatar_url: avatar_url || `status:${initialStatus}`,
+              avatar_url: (avatar_url && !avatar_url.startsWith('status:')) ? avatar_url : null,
+              updated_at: new Date().toISOString(),
             },
           ]);
         } catch (profileErr) {
@@ -549,7 +552,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const approveUserAccount = async (targetId: string) => {
+  const approveUserAccount = async (targetId: string, targetEmail?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
@@ -559,36 +562,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
 
-      let apiSuccess = false;
+      const normalizedEmail = (targetEmail || '').trim().toLowerCase();
+
       try {
-        const response = await fetch('/api/accounts', {
+        await fetch('/api/accounts', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({ action: 'approve', target_id: targetId }),
+          body: JSON.stringify({
+            action: 'approve',
+            target_id: targetId,
+            target_email: normalizedEmail || undefined,
+          }),
         });
-        if (response.ok) {
-          apiSuccess = true;
-        }
       } catch (apiErr) {
         console.warn('API approve notice:', apiErr);
       }
 
       // Ensure database profile and activity_logs reflect approved status
       try {
-        await supabaseAdmin
-          .from('profiles')
-          .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
-          .eq('id', targetId);
+        if (targetId && targetId.length === 36) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'approved', updated_at: new Date().toISOString() })
+            .eq('id', targetId);
 
-        try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, {
-            email_confirm: true,
-            user_metadata: { status: 'approved' },
-          });
-        } catch {}
+          try {
+            await supabaseAdmin.auth.admin.updateUserById(targetId, {
+              email_confirm: true,
+              user_metadata: { status: 'approved' },
+            });
+          } catch {}
+        }
+
+        if (normalizedEmail) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'approved', updated_at: new Date().toISOString() })
+            .ilike('email', normalizedEmail);
+        }
 
         const { data: logs } = await supabaseAdmin
           .from('activity_logs')
@@ -600,11 +614,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
           } catch {}
-          if (
+          const logEmail = (details?.email || '').toLowerCase();
+          const logUserId = details?.userId || log.user_id;
+          const matches =
             log.id === targetId ||
-            log.user_id === targetId ||
-            details?.userId === targetId
-          ) {
+            (targetId && (logUserId === targetId || log.user_id === targetId)) ||
+            (normalizedEmail && logEmail === normalizedEmail);
+
+          if (matches) {
             await supabaseAdmin
               .from('activity_logs')
               .update({
@@ -624,7 +641,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const rejectUserAccount = async (targetId: string) => {
+  const rejectUserAccount = async (targetId: string, targetEmail?: string) => {
     try {
       const isCallerAdmin =
         profile?.role === 'admin' ||
@@ -634,35 +651,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'Unauthorized: Administrative privileges required.' };
       }
 
-      let apiSuccess = false;
+      const normalizedEmail = (targetEmail || '').trim().toLowerCase();
+
       try {
-        const response = await fetch('/api/accounts', {
+        await fetch('/api/accounts', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({ action: 'reject', target_id: targetId }),
+          body: JSON.stringify({
+            action: 'reject',
+            target_id: targetId,
+            target_email: normalizedEmail || undefined,
+          }),
         });
-        if (response.ok) {
-          apiSuccess = true;
-        }
       } catch (apiErr) {
         console.warn('API reject notice:', apiErr);
       }
 
       // Ensure database profile and activity_logs reflect rejected status
       try {
-        await supabaseAdmin
-          .from('profiles')
-          .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
-          .eq('id', targetId);
+        if (targetId && targetId.length === 36) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'rejected', updated_at: new Date().toISOString() })
+            .eq('id', targetId);
 
-        try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, {
-            user_metadata: { status: 'rejected' },
-          });
-        } catch {}
+          try {
+            await supabaseAdmin.auth.admin.updateUserById(targetId, {
+              user_metadata: { status: 'rejected' },
+            });
+          } catch {}
+        }
+
+        if (normalizedEmail) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'rejected', updated_at: new Date().toISOString() })
+            .ilike('email', normalizedEmail);
+        }
 
         const { data: logs } = await supabaseAdmin
           .from('activity_logs')
@@ -674,11 +702,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
           } catch {}
-          if (
+          const logEmail = (details?.email || '').toLowerCase();
+          const logUserId = details?.userId || log.user_id;
+          const matches =
             log.id === targetId ||
-            log.user_id === targetId ||
-            details?.userId === targetId
-          ) {
+            (targetId && (logUserId === targetId || log.user_id === targetId)) ||
+            (normalizedEmail && logEmail === normalizedEmail);
+
+          if (matches) {
             await supabaseAdmin
               .from('activity_logs')
               .update({

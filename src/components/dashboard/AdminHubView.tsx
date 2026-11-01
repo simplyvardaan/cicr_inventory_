@@ -140,7 +140,18 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
       {/* 4 Summary Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Club Members */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setAdminLogsTab('members');
+            setSelectedMemberActivityId(null);
+          }}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
+            adminLogsTab === 'members'
+              ? 'border-blue-500 ring-2 ring-blue-500/20'
+              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
+          } space-y-1`}
+        >
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Club Members</span>
             <Users className="w-4 h-4 text-blue-600 dark:text-purple-400" />
@@ -149,10 +160,21 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {loadingMembers ? '...' : allMembers.length}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Registered laboratory roster</p>
-        </div>
+        </button>
 
         {/* Card 2: 7-Day Activity */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setAdminLogsTab('logs-7d');
+            setSelectedMemberActivityId(null);
+          }}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
+            adminLogsTab === 'logs-7d'
+              ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
+          } space-y-1`}
+        >
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Last 7 Days</span>
             <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -161,10 +183,21 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {sevenDayLogsCount}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Operations logged this week</p>
-        </div>
+        </button>
 
         {/* Card 3: Pending Signups */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setAdminLogsTab('requests');
+            setSelectedMemberActivityId(null);
+          }}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
+            adminLogsTab === 'requests'
+              ? 'border-amber-500 ring-2 ring-amber-500/20'
+              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
+          } space-y-1`}
+        >
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Pending Signups</span>
             <UserCheck className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -178,10 +211,21 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             )}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Awaiting admin clearance</p>
-        </div>
+        </button>
 
         {/* Card 4: Active Loans */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800/90 space-y-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setAdminLogsTab('requisitions');
+            setSelectedMemberActivityId(null);
+          }}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 text-left transition-all cursor-pointer shadow-sm ${
+            adminLogsTab === 'requisitions'
+              ? 'border-cyan-500 ring-2 ring-cyan-500/20'
+              : 'border-slate-200 dark:border-zinc-800/90 hover:border-slate-300 dark:hover:border-zinc-700'
+          } space-y-1`}
+        >
           <div className="flex items-center justify-between text-slate-600 dark:text-zinc-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Active Loans</span>
             <Boxes className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
@@ -190,7 +234,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             {activeLoansCount}
           </div>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">Hardware currently borrowed</p>
-        </div>
+        </button>
       </div>
 
       {/* Tabs */}

@@ -156,52 +156,20 @@ export const UserDashboard: React.FC = () => {
       const reqLogs = logsRes.status === 'fulfilled' ? logsRes.value.data || [] : [];
 
       // Resolved accounts: Any account marked approved, rejected, or admin is permanently RESOLVED!
-      const resolvedEmails = new Set(
-        profData
-          .filter(
-            (p) =>
-              p.status === 'approved' ||
-              p.status === 'rejected' ||
-              p.role === 'admin' ||
-              p.avatar_url === 'status:approved' ||
-              p.avatar_url === 'status:rejected'
-          )
-          .map((p) => p.email?.toLowerCase())
-      );
-
-      const resolvedUserIds = new Set(
-        profData
-          .filter(
-            (p) =>
-              p.status === 'approved' ||
-              p.status === 'rejected' ||
-              p.role === 'admin' ||
-              p.avatar_url === 'status:approved' ||
-              p.avatar_url === 'status:rejected'
-          )
-          .map((p) => p.id)
-      );
-
-      const pendingMap = new Map();
+      const resolvedEmails = new Set<string>();
+      const resolvedUserIds = new Set<string>();
 
       profData.forEach((p) => {
         const isResolved =
-          p.role === 'admin' ||
           p.status === 'approved' ||
           p.status === 'rejected' ||
+          p.role === 'admin' ||
           p.avatar_url === 'status:approved' ||
           p.avatar_url === 'status:rejected';
 
-        if (!isResolved) {
-          const isPending =
-            p.status === 'pending' ||
-            p.avatar_url === 'status:pending' ||
-            !p.status;
-
-          const emailKey = p.email?.toLowerCase();
-          if (isPending && emailKey && !resolvedEmails.has(emailKey)) {
-            pendingMap.set(emailKey, p);
-          }
+        if (isResolved) {
+          if (p.email) resolvedEmails.add(p.email.trim().toLowerCase());
+          if (p.id) resolvedUserIds.add(p.id);
         }
       });
 
@@ -212,31 +180,91 @@ export const UserDashboard: React.FC = () => {
         } catch {
           details = {};
         }
-        const email = (details?.email || '').toLowerCase();
-        const userId = details?.userId || log.user_id;
-        const isPending = !details?.status || details?.status === 'pending';
-
-        if (
-          isPending &&
-          email &&
-          !resolvedEmails.has(email) &&
-          (!userId || !resolvedUserIds.has(userId)) &&
-          !pendingMap.has(email)
-        ) {
-          pendingMap.set(email, {
-            id: userId || log.id,
-            full_name: details?.fullName || log.user_name || 'New Member',
-            email: details?.email,
-            roll_number: details?.enrollmentNo || '',
-            phone: details?.phone || '',
-            role: details?.role || 'member',
-            status: 'pending',
-            created_at: log.created_at,
-          });
+        const status = details?.status;
+        if (status === 'approved' || status === 'rejected') {
+          if (details?.email) resolvedEmails.add(details.email.trim().toLowerCase());
+          if (details?.userId) resolvedUserIds.add(details.userId);
+          if (log.user_id) resolvedUserIds.add(log.user_id);
         }
       });
 
-      setPendingAccounts(Array.from(pendingMap.values()));
+      const seenEmails = new Set<string>();
+      const seenUserIds = new Set<string>();
+      const pendingList: any[] = [];
+
+      // 1. Check profiles table for pending users
+      profData.forEach((p) => {
+        const email = (p.email || '').trim().toLowerCase();
+        const id = p.id;
+        const isResolved =
+          p.role === 'admin' ||
+          p.status === 'approved' ||
+          p.status === 'rejected' ||
+          p.avatar_url === 'status:approved' ||
+          p.avatar_url === 'status:rejected' ||
+          (email && resolvedEmails.has(email)) ||
+          (id && resolvedUserIds.has(id));
+
+        if (!isResolved) {
+          const isPending =
+            p.status === 'pending' ||
+            p.avatar_url === 'status:pending' ||
+            !p.status;
+
+          if (isPending) {
+            const alreadySeen =
+              (email && seenEmails.has(email)) ||
+              (id && seenUserIds.has(id));
+
+            if (!alreadySeen) {
+              if (email) seenEmails.add(email);
+              if (id) seenUserIds.add(id);
+              pendingList.push(p);
+            }
+          }
+        }
+      });
+
+      // 2. Check activity_logs for pending registrations
+      reqLogs.forEach((log) => {
+        let details: any = {};
+        try {
+          details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+        } catch {
+          details = {};
+        }
+        const email = (details?.email || '').trim().toLowerCase();
+        const userId = details?.userId || log.user_id;
+        const logStatus = details?.status;
+        const isPending = !logStatus || logStatus === 'pending';
+
+        const isResolved =
+          (email && resolvedEmails.has(email)) ||
+          (userId && resolvedUserIds.has(userId));
+
+        if (isPending && !isResolved) {
+          const alreadySeen =
+            (email && seenEmails.has(email)) ||
+            (userId && seenUserIds.has(userId));
+
+          if (!alreadySeen) {
+            if (email) seenEmails.add(email);
+            if (userId) seenUserIds.add(userId);
+            pendingList.push({
+              id: userId || log.id,
+              full_name: details?.fullName || log.user_name || 'New Member',
+              email: details?.email || email,
+              roll_number: details?.enrollmentNo || '',
+              phone: details?.phone || '',
+              role: details?.role || 'member',
+              status: 'pending',
+              created_at: log.created_at,
+            });
+          }
+        }
+      });
+
+      setPendingAccounts(pendingList);
     } catch {
       // ignore
     }
@@ -439,13 +467,16 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleApproveAccount = async (targetUserId: string, targetName: string) => {
+  const handleApproveAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await approveUserAccount(targetUserId);
+    const res = await approveUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      const normEmail = (targetEmail || '').trim().toLowerCase();
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!normEmail || (a.email || '').trim().toLowerCase() !== normEmail))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();
@@ -454,13 +485,16 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleRejectAccount = async (targetUserId: string, targetName: string) => {
+  const handleRejectAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await rejectUserAccount(targetUserId);
+    const res = await rejectUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      const normEmail = (targetEmail || '').trim().toLowerCase();
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!normEmail || (a.email || '').trim().toLowerCase() !== normEmail))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();
