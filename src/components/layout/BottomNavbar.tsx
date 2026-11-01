@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Boxes,
   Bell,
+  ShieldCheck,
   ScrollText,
   Code2,
   ChevronDown,
@@ -272,8 +273,8 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                     className="absolute inset-0 rounded-full bg-blue-600 dark:bg-purple-600 shadow-md shadow-blue-600/30 dark:shadow-purple-900/40"
                   />
                 )}
-                <ScrollText className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span className="relative z-10 hidden sm:inline">Logs</span>
+                <ShieldCheck className="relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="relative z-10 hidden sm:inline">Management</span>
                 {pendingAccountsCount > 0 && (
                   <span className="relative z-10 px-1.5 py-0.2 rounded-full bg-red-600 text-white font-black text-[10px] shadow-sm">
                     {pendingAccountsCount}

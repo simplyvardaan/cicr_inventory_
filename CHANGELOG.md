@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.13] : 2026-11-01
+
+### Added
+* Tabular Club Members Roster with Admin Priority Ordering:
+  - Replaced the two-column card grid in `AdminHubView.tsx` with a clean, high-clarity table layout maintaining authentic vault theme backgrounds (`dark:bg-[#14141c]`, neutral borders, zero purple background cast).
+  - Implemented strict hierarchical role sorting with dedicated section separators: `Administrators` displayed first, followed by `Club Members` with standard clearance.
+  - Renamed columns to `Enrollment Number` and `Role`, removing extraneous subtitle descriptions for a clean tabular layout.
+  - Added interactive role filter pills with live member counts (`All Roles`, `Admins`, `Members`).
+  - Polished management action controls with muted, non-neon buttons and clear role state badges.
+
+### Changed
+* Dock Navigation Tab Renamed to Management:
+  - Updated `BottomNavbar.tsx` dock navigation tab from `Logs` to `Management` featuring a dedicated `ShieldCheck` icon, aligning seamlessly with the Management Hub breadcrumb.
+* Streamlined Activity History Filters:
+  - Streamlined log timeframe filters to `Last 24 Hours` (default) and `Last 3 Days`, removing legacy 7-day presets and removing the "Real-time Activity Feed" label.
+
+***
+
 ## [2.18.12] : 2026-11-01
 
 ### Added
