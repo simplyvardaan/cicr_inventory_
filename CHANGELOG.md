@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.17] : 2026-11-01
+
+### Added
+* Hardware-Accelerated 120 FPS Auto-Collapsing & Expanding Floating Dock (`BottomNavbar.tsx`):
+  - **Idle Collapsed State**: Clean floating pill showing strictly the active page with its icon, label, and state badges (e.g. `[ 📦 Inventory ▾ ]`, `[ </> Team ]`, `[ 📋 Requests (N) ]`).
+  - **Desktop Mouse Hover Expansion**: Cursor hovering expands the dock instantly (0ms delay) and smoothly using native GPU-composited CSS transitions (`cubic-bezier(0.16, 1, 0.3, 1)`), eliminating all JavaScript FLIP thrashing, dropped frames, and layout lag. Handlers are strictly guarded to `pointerType === 'mouse'`.
+  - **Mobile & iOS Rock-Solid Touch Interactivity**:
+    - **No Phantom Auto-Close Timers**: Tap to open the dock and it stays open until an action is chosen. Completely removed background auto-collapse timers and synthesized touch-leave event bugs.
+    - **Tap-to-Navigate**: Tapping any tab switches pages immediately and collapses back to that page's pill.
+    - **Tap Active to Toggle**: Tapping the active tab toggles the dock or category submenu.
+    - **Outside Tap & Scroll Dismissal**: Tapping anywhere outside or scrolling >35px cleanly dismisses the dock.
+    - **Adaptive Ultra-Compact Mobile Layout (278px total width on mobile)**: 
+      - Active tab displays full label + icon.
+      - Inactive tabs display sleek 28px circular icon touch targets (`w-7 h-7 sm:w-auto`).
+      - Gaps standardized to `gap-0.5 sm:gap-1` on tablist container.
+      - Profile and Sign out icons fit seamlessly with generous 40px margin on narrow 358px phone screens.
+      - Added horizontal endcap clearance (`px-2 py-1`, `pr-1 sm:pr-1.5`) eliminating border collision on `rounded-full` caps.
+  - **Tactile Feedback**: Haptic-style `active:scale-95` on tap for native app feel.
+  - **Active State Persistence**: Keeps dock expanded while category submenus or account profile menus are open.
+
+***
+
 ## [2.18.16] : 2026-11-01
 
 ### Changed
