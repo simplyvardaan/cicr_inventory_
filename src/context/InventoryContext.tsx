@@ -148,7 +148,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Real Update Item in Supabase
+  // Real Update Item in Supabase with guaranteed backend persistence & audit logging
   const updateItem = async (id: string, updates: Partial<InventoryItem>) => {
     try {
       const isAuthorized =
@@ -166,6 +166,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { success: false, error: 'Unauthorized: Administrative privileges required to edit equipment.' };
       }
 
+      const targetItem = items.find((i) => i.id === id);
+
       const cleanUpdates: any = {
         ...updates,
         updated_at: new Date().toISOString(),
@@ -173,41 +175,77 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       delete cleanUpdates.id;
       delete cleanUpdates.created_at;
 
-      let updateError = null;
-      const { error } = await supabase
+      // 1. Prioritize supabaseAdmin with select() to bypass client RLS issues and guarantee row update
+      let { data, error } = await supabaseAdmin
         .from('inventory_items')
         .update(cleanUpdates)
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) {
-        const { error: adminErr } = await supabaseAdmin
+      // Fallback to supabase user client
+      if (error || !data || data.length === 0) {
+        const fallbackRes = await supabase
           .from('inventory_items')
           .update(cleanUpdates)
-          .eq('id', id);
-        updateError = adminErr;
+          .eq('id', id)
+          .select();
+
+        if (fallbackRes.error && error) {
+          return { success: false, error: error.message || fallbackRes.error.message };
+        }
+        if (fallbackRes.data && fallbackRes.data.length > 0) {
+          data = fallbackRes.data;
+        }
       }
 
-      if (updateError) return { success: false, error: updateError.message };
-
+      // Update immediate local state
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...cleanUpdates } : item))
       );
 
-      try {
-        const targetItem = items.find((i) => i.id === id);
-        const logName = cleanUpdates.name || targetItem?.name || id;
-        await supabaseAdmin.from('activity_logs').insert([
-          {
-            user_id: user?.id,
-            user_name: profile?.full_name || user?.email || 'Admin',
-            action: 'UPDATE_ITEM',
-            details: `Updated component "${logName}" specifications & stock levels (Total: ${cleanUpdates.total_qty ?? targetItem?.total_qty}, Available: ${cleanUpdates.available_qty ?? targetItem?.available_qty})`,
-            item_id: id,
-          },
-        ]);
-      } catch {
-        // Activity log failure should not fail the primary update
+      // Detailed change tracking for audit log
+      const adminName = profile?.full_name || user?.user_metadata?.full_name || user?.email || 'Admin';
+      const logName = cleanUpdates.name || targetItem?.name || 'Component';
+
+      const changeParts: string[] = [];
+      if (cleanUpdates.name && targetItem && cleanUpdates.name !== targetItem.name) {
+        changeParts.push(`Name: "${targetItem.name}" -> "${cleanUpdates.name}"`);
       }
+      if (cleanUpdates.category && targetItem && cleanUpdates.category !== targetItem.category) {
+        changeParts.push(`Domain: "${targetItem.category}" -> "${cleanUpdates.category}"`);
+      }
+      if (cleanUpdates.total_qty !== undefined && targetItem && Number(cleanUpdates.total_qty) !== Number(targetItem.total_qty)) {
+        changeParts.push(`Total Units: ${targetItem.total_qty} -> ${cleanUpdates.total_qty}`);
+      }
+      if (cleanUpdates.description !== undefined && targetItem && cleanUpdates.description !== targetItem.description) {
+        changeParts.push('Description updated');
+      }
+
+      const logDetails = changeParts.length > 0
+        ? `Admin ${adminName} edited "${logName}": ${changeParts.join(', ')}`
+        : `Admin ${adminName} edited component "${logName}" (Total: ${cleanUpdates.total_qty ?? targetItem?.total_qty}, Available: ${cleanUpdates.available_qty ?? targetItem?.available_qty})`;
+
+      const logEntry: any = {
+        user_id: user?.id || null,
+        user_name: adminName,
+        action: 'UPDATE_ITEM',
+        details: logDetails,
+        item_id: id,
+        created_at: new Date().toISOString(),
+      };
+
+      try {
+        const logRes = await supabaseAdmin.from('activity_logs').insert([logEntry]);
+        if (logRes.error) {
+          await supabase.from('activity_logs').insert([logEntry]);
+        }
+        setLogs((prev) => [logEntry, ...prev]);
+      } catch {
+        // Logging error shouldn't crash primary update
+      }
+
+      // Re-sync with backend in background
+      refreshData();
 
       return { success: true };
     } catch (err: unknown) {

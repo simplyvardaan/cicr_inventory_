@@ -14,6 +14,7 @@ import {
   XCircle,
   RotateCcw,
   Clock,
+  Pencil,
   LogIn,
   LogOut,
   UserPlus,
@@ -669,6 +670,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                       badgeClass = 'bg-teal-500/20 text-teal-600 dark:text-teal-300 border-teal-500/40';
                       label = 'Returned';
                       ActionIcon = RotateCcw;
+                    } else if (actionUpper === 'UPDATE_ITEM' || actionUpper.includes('UPDATE') || detailsLower.includes('edited') || detailsLower.includes('updated component')) {
+                      badgeClass = 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/40';
+                      label = 'Component Edited';
+                      ActionIcon = Pencil;
                     } else if (actionUpper.includes('ROLE') || detailsLower.includes('role')) {
                       badgeClass = 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40';
                       label = 'Account Operation';
