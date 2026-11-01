@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.11] : 2026-11-01
+
+### Changed
+* Meet the Team Big Screen Layout Refinement:
+  - Shifted the Big Screen developer showcase card upward in `MeetTheDevelopers.tsx` with optimized vertical offsets (`-mt-3 sm:-mt-5 md:-mt-6` and `space-y-3 sm:space-y-4`).
+  - Streamlined card interior padding (`p-5 sm:p-7 md:p-8`) and balanced the avatar ring diameter, granting comfortable clearance from the floating bottom navigation dock without content crowding.
+
+***
+
 ## [2.18.10] : 2026-11-01
 
 ### Fixed
