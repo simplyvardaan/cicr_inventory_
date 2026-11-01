@@ -496,6 +496,12 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
+  const handleOpenEditItem = (item: InventoryItem) => {
+    setEditingItem(item);
+    setSelectedItem(null);
+    setAddItemModalOpen(true);
+  };
+
   const handleDeleteItem = async (id: string, name: string) => {
     if (window.confirm(`Delete "${name}" from inventory?`)) {
       const res = await deleteItem(id);
@@ -578,6 +584,7 @@ export const UserDashboard: React.FC = () => {
               setEditingItem(null);
               setAddItemModalOpen(true);
             }}
+            onEditItem={handleOpenEditItem}
             onDeleteItem={handleDeleteItem}
             onSelectItem={(it) => setSelectedItem(it)}
             cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
@@ -672,12 +679,17 @@ export const UserDashboard: React.FC = () => {
 
       <AddEditItemModal
         isOpen={addItemModalOpen}
-        onClose={() => setAddItemModalOpen(false)}
+        onClose={() => {
+          setAddItemModalOpen(false);
+          setEditingItem(null);
+        }}
         initialItem={editingItem}
       />
 
       <ItemDetailModal
         item={selectedItem}
+        isAdmin={isAdmin}
+        onEdit={handleOpenEditItem}
         onClose={() => setSelectedItem(null)}
         onBorrow={(it) => {
           handleAddToCart(it);

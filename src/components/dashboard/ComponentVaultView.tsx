@@ -16,6 +16,7 @@ import {
   MapPin,
   Clock,
   AlertTriangle,
+  Pencil,
 } from 'lucide-react';
 
 interface ComponentVaultViewProps {
@@ -33,6 +34,7 @@ interface ComponentVaultViewProps {
   setStatusFilter: (s: string) => void;
   onAddToCart: (item: InventoryItem) => void;
   onOpenAddItem: () => void;
+  onEditItem?: (item: InventoryItem) => void;
   onDeleteItem: (id: string, name: string) => void;
   onSelectItem: (item: InventoryItem) => void;
   cartCount?: number;
@@ -60,6 +62,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   setStatusFilter,
   onAddToCart,
   onOpenAddItem,
+  onEditItem,
   onDeleteItem,
   onSelectItem,
   cartCount,
@@ -424,6 +427,21 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
                       <ShoppingBag className="w-3.5 h-3.5" />
                       <span>+ Add to Cart</span>
                     </button>
+
+                    {isAdmin && onEditItem && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditItem(item);
+                        }}
+                        className="p-2 rounded-2xl bg-slate-100 hover:bg-purple-100 dark:bg-[#14141c] dark:hover:bg-purple-950/60 text-slate-600 hover:text-purple-700 dark:text-zinc-400 dark:hover:text-purple-300 border border-slate-200 dark:border-zinc-800 transition-colors cursor-pointer"
+                        title="Edit Component (Admin Clearance)"
+                        aria-label={`Edit ${item.name}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
 
                     {isLeadOrAdmin && (
                       <button

@@ -17,18 +17,23 @@ import {
   CheckCircle2,
   AlertCircle,
   PackageCheck,
+  Pencil,
 } from 'lucide-react';
 
 interface ItemDetailModalProps {
   item: InventoryItem | null;
   onClose: () => void;
   onBorrow: (item: InventoryItem) => void;
+  isAdmin?: boolean;
+  onEdit?: (item: InventoryItem) => void;
 }
 
 export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   item,
   onClose,
   onBorrow,
+  isAdmin,
+  onEdit,
 }) => {
   const { user } = useAuth();
   const { requests, requestItemReturn } = useInventory();
@@ -87,12 +92,25 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{item.name}</h3>
             <p className="text-xs text-blue-600 dark:text-purple-400 font-bold">{item.category}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 text-slate-700 dark:text-purple-300 border border-slate-300 dark:border-purple-800/60 transition-colors cursor-pointer"
+                title="Edit Component (Admin Clearance)"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Edit Component</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Body */}

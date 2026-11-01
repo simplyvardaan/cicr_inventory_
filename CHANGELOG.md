@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.14] : 2026-11-01
+
+### Added
+* Admin Component Editing from Inventory Page:
+  - Added dedicated **Edit Component** action buttons on all catalog component cards in `ComponentVaultView.tsx`, visible exclusively to authenticated Administrator accounts.
+  - Added an **Edit Component** action button within `ItemDetailModal.tsx` for fast editing when inspecting detailed hardware specifications.
+  - Built full interactive editing in `AddEditItemModal.tsx` allowing administrators to modify component name, category, lab storage location, condition, datasheet URL, and specifications.
+  - Added robust support for setting quantity to `0` with automatic re-evaluation of stock status to `Out of Stock (Depleted)` and immediate reflection across all member dashboards.
+  - Backed by Supabase database persistence with service-role fallback (`supabaseAdmin`) and automatic activity logging (`UPDATE_ITEM`).
+
+***
+
 ## [2.18.13] : 2026-11-01
 
 ### Added

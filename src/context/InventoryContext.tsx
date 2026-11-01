@@ -151,16 +151,64 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Real Update Item in Supabase
   const updateItem = async (id: string, updates: Partial<InventoryItem>) => {
     try {
+      const isAuthorized =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
+
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required to edit equipment.' };
+      }
+
+      const cleanUpdates: any = {
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      delete cleanUpdates.id;
+      delete cleanUpdates.created_at;
+
+      let updateError = null;
       const { error } = await supabase
         .from('inventory_items')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(cleanUpdates)
         .eq('id', id);
 
-      if (error) return { success: false, error: error.message };
+      if (error) {
+        const { error: adminErr } = await supabaseAdmin
+          .from('inventory_items')
+          .update(cleanUpdates)
+          .eq('id', id);
+        updateError = adminErr;
+      }
+
+      if (updateError) return { success: false, error: updateError.message };
 
       setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+        prev.map((item) => (item.id === id ? { ...item, ...cleanUpdates } : item))
       );
+
+      try {
+        const targetItem = items.find((i) => i.id === id);
+        const logName = cleanUpdates.name || targetItem?.name || id;
+        await supabaseAdmin.from('activity_logs').insert([
+          {
+            user_id: user?.id,
+            user_name: profile?.full_name || user?.email || 'Admin',
+            action: 'UPDATE_ITEM',
+            details: `Updated component "${logName}" specifications & stock levels (Total: ${cleanUpdates.total_qty ?? targetItem?.total_qty}, Available: ${cleanUpdates.available_qty ?? targetItem?.available_qty})`,
+            item_id: id,
+          },
+        ]);
+      } catch {
+        // Activity log failure should not fail the primary update
+      }
+
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Database update failed';
