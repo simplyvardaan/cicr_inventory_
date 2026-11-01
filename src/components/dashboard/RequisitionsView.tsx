@@ -12,8 +12,12 @@ import {
   User,
   Calendar,
   Ticket,
+  AlertCircle,
+  PackageCheck,
 } from 'lucide-react';
-import { BorrowRequest, InventoryItem } from '../../types/inventory';
+import { BorrowRequest, InventoryItem, isReturnRequested } from '../../types/inventory';
+import { useInventory } from '../../context/InventoryContext';
+import { useToast } from '../common/Toast';
 
 interface RequisitionsViewProps {
   requests: BorrowRequest[];
@@ -36,9 +40,16 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
   onBorrowAction,
   onOpenIssuePass,
 }) => {
-  const [requestStatusTab, setRequestStatusTab] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'returned'>('all');
+  const { requestItemReturn, cancelReturnRequest } = useInventory();
+  const { showToast } = useToast();
+
+  const [requestStatusTab, setRequestStatusTab] = useState<
+    'all' | 'pending' | 'returns' | 'approved' | 'rejected' | 'returned'
+  >('all');
   const [requestSearch, setRequestSearch] = useState('');
-  const [adminNote, setAdminNote] = useState<Record<string, string>>({});
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [confirmReturnId, setConfirmReturnId] = useState<string | null>(null);
+  const [returnNote, setReturnNote] = useState('');
 
   const activeRequestsList = isLeadOrAdmin
     ? requests
@@ -50,12 +61,27 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
       );
 
   const pendingCount = activeRequestsList.filter((r) => r.status === 'pending').length;
-  const approvedCount = activeRequestsList.filter((r) => r.status === 'approved').length;
+  const returnRequestsCount = activeRequestsList.filter((r) => isReturnRequested(r)).length;
+  const normalApprovedCount = activeRequestsList.filter(
+    (r) => r.status === 'approved' && !isReturnRequested(r)
+  ).length;
   const rejectedCount = activeRequestsList.filter((r) => r.status === 'rejected').length;
   const returnedCount = activeRequestsList.filter((r) => r.status === 'returned').length;
 
   const filteredList = activeRequestsList.filter((req) => {
-    const matchesTab = requestStatusTab === 'all' || req.status === requestStatusTab;
+    let matchesTab = true;
+    if (requestStatusTab === 'pending') {
+      matchesTab = req.status === 'pending';
+    } else if (requestStatusTab === 'returns') {
+      matchesTab = isReturnRequested(req);
+    } else if (requestStatusTab === 'approved') {
+      matchesTab = req.status === 'approved' && !isReturnRequested(req);
+    } else if (requestStatusTab === 'rejected') {
+      matchesTab = req.status === 'rejected';
+    } else if (requestStatusTab === 'returned') {
+      matchesTab = req.status === 'returned';
+    }
+
     const q = requestSearch.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -63,8 +89,39 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
       req.project_name.toLowerCase().includes(q) ||
       req.user_name.toLowerCase().includes(q) ||
       req.user_email.toLowerCase().includes(q);
+
     return matchesTab && matchesSearch;
   });
+
+  const handleMemberSubmitReturn = async (requestId: string) => {
+    setActionLoadingId(requestId);
+    const res = await requestItemReturn(requestId, returnNote.trim() || undefined);
+    setActionLoadingId(null);
+    setConfirmReturnId(null);
+    setReturnNote('');
+
+    if (res.success) {
+      showToast(
+        'success',
+        'Return Request Sent',
+        'Component return request submitted to the Admin Portal. An admin will inspect and approve the return.'
+      );
+    } else {
+      showToast('error', 'Return Request Failed', res.error);
+    }
+  };
+
+  const handleAdminDeclineReturn = async (requestId: string) => {
+    setActionLoadingId(requestId);
+    const res = await cancelReturnRequest(requestId, 'Inspected by admin — return cancelled or item still with member');
+    setActionLoadingId(null);
+
+    if (res.success) {
+      showToast('info', 'Return Request Declined', 'Requisition remains in active loan status.');
+    } else {
+      showToast('error', 'Action Failed', res.error);
+    }
+  };
 
   return (
     <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-[#20202c] space-y-6 shadow-sm">
@@ -74,13 +131,13 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5 tracking-tight">
             <Bell className="w-5 h-5 text-blue-600 dark:text-purple-400" />
             {isLeadOrAdmin
-              ? 'Requisition Approval Portal (Admin Clearance)'
+              ? 'Requisition & Return Approval Portal (Admin Clearance)'
               : 'My Hardware Requisitions & Issues'}
           </h2>
           <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
             {isLeadOrAdmin
-              ? 'Authorize member hardware requisitions. Hardware can only be issued and collected after administrator approval.'
-              : 'Track requisition status. Components must be approved by an administrator before they can be issued.'}
+              ? 'Authorize hardware requisitions and inspect returned equipment. Hardware can only be issued and returned after administrator clearance.'
+              : 'Track requisition status. Components must be approved by an administrator before issuing and returning.'}
           </p>
         </div>
 
@@ -102,10 +159,11 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
           <div className="flex flex-wrap items-center gap-1.5 pb-1 sm:pb-0">
             {[
               { key: 'all', label: 'All', count: activeRequestsList.length },
-              { key: 'pending', label: 'Pending', count: pendingCount },
-              { key: 'approved', label: 'Approved', count: approvedCount },
-              { key: 'rejected', label: 'Rejected', count: rejectedCount },
+              { key: 'pending', label: 'Pending Approvals', count: pendingCount, pulse: pendingCount > 0 },
+              { key: 'returns', label: 'Return Requests', count: returnRequestsCount, pulse: returnRequestsCount > 0, highlight: true },
+              { key: 'approved', label: 'Active Loans', count: normalApprovedCount },
               { key: 'returned', label: 'Returned', count: returnedCount },
+              { key: 'rejected', label: 'Rejected', count: rejectedCount },
             ].map((tab) => {
               const isTabActive = requestStatusTab === tab.key;
               return (
@@ -116,6 +174,8 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     isTabActive
                       ? 'bg-blue-600 dark:bg-purple-600 text-white shadow-sm font-bold'
+                      : tab.highlight && tab.count > 0
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-2 border-purple-400 dark:border-purple-600'
                       : 'bg-slate-100 dark:bg-[#151520] text-slate-700 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-200 dark:hover:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-800'
                   }`}
                 >
@@ -124,6 +184,8 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                       isTabActive
                         ? 'bg-white text-blue-600 dark:text-purple-400'
+                        : tab.pulse
+                        ? 'bg-amber-500 text-black animate-pulse'
                         : 'bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-400'
                     }`}
                   >
@@ -155,6 +217,8 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               {requestStatusTab === 'all'
                 ? 'No borrow requests found'
+                : requestStatusTab === 'returns'
+                ? 'No return requests awaiting clearance'
                 : `No ${requestStatusTab} requests found`}
             </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
@@ -177,11 +241,37 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
             {filteredList.map((req) => {
               const matchedItem = items.find((i) => i.id === req.item_id);
+              const returnPending = isReturnRequested(req);
+              const isOwner =
+                (userId && req.user_id === userId) ||
+                (userEmail && req.user_email?.toLowerCase() === userEmail.toLowerCase());
+
               return (
                 <div
                   key={req.id}
-                  className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs shadow-sm"
+                  className={`p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#14141c] border-2 transition-all flex flex-col justify-between gap-4 text-xs shadow-sm ${
+                    returnPending
+                      ? 'border-purple-500/70 dark:border-purple-500/60 shadow-lg shadow-purple-500/10'
+                      : 'border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500'
+                  }`}
                 >
+                  {/* Return Requested Banner for Admin / Member */}
+                  {returnPending && (
+                    <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-[#191032] border border-purple-200 dark:border-purple-800/80 flex items-center justify-between text-xs text-purple-800 dark:text-purple-300">
+                      <div className="flex items-center gap-2">
+                        <RotateCcw className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 animate-spin" />
+                        <span className="font-bold">
+                          {isLeadOrAdmin
+                            ? `Return Submitted by ${req.user_name} — Admin Approval Needed`
+                            : 'Return Request Sent to Admin Portal (Awaiting Clearance)'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-200/60 dark:bg-purple-900/60 font-black">
+                        ACTION REQUIRED
+                      </span>
+                    </div>
+                  )}
+
                   {/* Info Column */}
                   <div className="space-y-2 min-w-0 flex-1">
                     <div className="flex items-center gap-2.5 flex-wrap">
@@ -191,23 +281,32 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                       <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-500/40 text-blue-700 dark:text-purple-300 font-mono text-[11px] font-bold">
                         x{req.quantity}
                       </span>
-                      <span
-                        className={`capitalize px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
-                          req.status === 'approved'
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : req.status === 'pending'
-                            ? 'bg-amber-950 text-amber-400 border border-amber-800 animate-pulse'
-                            : req.status === 'rejected'
-                            ? 'bg-rose-950 text-rose-400 border border-rose-800'
-                            : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                        }`}
-                      >
-                        {req.status === 'approved' && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
-                        {req.status === 'pending' && <Clock className="w-3 h-3 text-amber-400" />}
-                        {req.status === 'rejected' && <XCircle className="w-3 h-3 text-rose-400" />}
-                        {req.status === 'returned' && <RotateCcw className="w-3 h-3 text-blue-600 dark:text-purple-400" />}
-                        {req.status === 'approved' ? 'Approved / Authorized to Issue' : req.status === 'pending' ? 'Pending Admin Clearance' : req.status}
-                      </span>
+
+                      {/* Status Tag */}
+                      {returnPending ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 bg-purple-950 text-purple-300 border border-purple-700 animate-pulse">
+                          <Clock className="w-3 h-3 text-purple-400" />
+                          <span>Return Requested (Pending Approval)</span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`capitalize px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
+                            req.status === 'approved'
+                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                              : req.status === 'pending'
+                              ? 'bg-amber-950 text-amber-400 border border-amber-800 animate-pulse'
+                              : req.status === 'rejected'
+                              ? 'bg-rose-950 text-rose-400 border border-rose-800'
+                              : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                          }`}
+                        >
+                          {req.status === 'approved' && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                          {req.status === 'pending' && <Clock className="w-3 h-3 text-amber-400" />}
+                          {req.status === 'rejected' && <XCircle className="w-3 h-3 text-rose-400" />}
+                          {req.status === 'returned' && <RotateCcw className="w-3 h-3 text-blue-600 dark:text-purple-400" />}
+                          {req.status === 'approved' ? 'Active Loan / Issued' : req.status === 'pending' ? 'Pending Admin Clearance' : req.status}
+                        </span>
+                      )}
                     </div>
 
                     {/* Borrower Info (prominent for Admins) */}
@@ -254,7 +353,8 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                       </span>
                       {matchedItem?.location && (
                         <span className="text-slate-700 dark:text-zinc-300 font-mono break-words">
-                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">Lab Location: </span><strong className="text-slate-900 dark:text-zinc-200 font-bold">{matchedItem.location}</strong>
+                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">Lab Location: </span>
+                          <strong className="text-slate-900 dark:text-zinc-200 font-bold">{matchedItem.location}</strong>
                         </span>
                       )}
                       {req.actual_return_date && (
@@ -268,15 +368,16 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                     {req.admin_notes && (
                       <div className="mt-2 p-2 rounded-xl bg-slate-50 dark:bg-[#1b1b26] border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300">
                         <span className="font-bold text-slate-900 dark:text-white">Admin Note: </span>
-                        {req.admin_notes}
+                        {req.admin_notes.replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').trim() || req.admin_notes}
                       </div>
                     )}
                   </div>
 
                   {/* Action Column for Both Admins & Members */}
-                  <div className="flex flex-col sm:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-200 dark:border-zinc-800">
+                  <div className="flex flex-col sm:items-end gap-2.5 shrink-0 pt-2 border-t border-slate-200 dark:border-zinc-800">
                     {isLeadOrAdmin ? (
-                      <>
+                      /* Admin Actions */
+                      <div className="w-full sm:w-auto space-y-2">
                         {req.status === 'pending' && (
                           <div className="space-y-2 w-full sm:w-auto">
                             <div className="px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -305,16 +406,41 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                         )}
 
                         {req.status === 'approved' && (
-                          <button
-                            type="button"
-                            onClick={() => onBorrowAction(req.id, 'returned')}
-                            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-colors flex items-center justify-center gap-1.5"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5 text-white" />
-                            <span>Mark Returned &amp; Restock</span>
-                          </button>
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            {returnPending ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => onBorrowAction(req.id, 'returned')}
+                                  disabled={actionLoadingId === req.id}
+                                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                  <span>Approve Return &amp; Restock</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAdminDeclineReturn(req.id)}
+                                  disabled={actionLoadingId === req.id}
+                                  className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-bold text-xs cursor-pointer transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>Decline</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onBorrowAction(req.id, 'returned')}
+                                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-md transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5 text-white" />
+                                <span>Mark Returned &amp; Restock</span>
+                              </button>
+                            )}
+                          </div>
                         )}
-                      </>
+                      </div>
                     ) : (
                       /* Regular Member Clearance Actions */
                       <div className="flex flex-col sm:items-end gap-1.5">
@@ -331,18 +457,82 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
                         )}
 
                         {req.status === 'approved' && (
-                          <div className="flex flex-col sm:items-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => onOpenIssuePass(req)}
-                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-emerald-950/40 transition-colors flex items-center gap-2"
-                            >
-                              <Ticket className="w-4 h-4 text-white" />
-                              <span>Issue &amp; Collect Hardware</span>
-                            </button>
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold text-right">
-                              Approved by {req.approved_by || 'Admin'}
-                            </span>
+                          <div className="flex flex-col sm:items-end gap-2 w-full">
+                            {returnPending ? (
+                              <div className="flex flex-col sm:items-end gap-1">
+                                <div className="px-3 py-1.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 animate-pulse">
+                                  <Clock className="w-3.5 h-3.5 text-purple-500" />
+                                  <span>Return Request Sent to Admin</span>
+                                </div>
+                                <span className="text-[10px] text-slate-500 dark:text-zinc-400 text-right max-w-xs">
+                                  Component submitted for return. Awaiting admin clearance to restock.
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenIssuePass(req)}
+                                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors flex items-center gap-1.5"
+                                  title="View Issue Pass"
+                                >
+                                  <Ticket className="w-3.5 h-3.5 text-white" />
+                                  <span>Issue Pass</span>
+                                </button>
+
+                                {/* STRICT: Only the borrower who issued it can return it! */}
+                                {isOwner && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmReturnId(req.id)}
+                                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-blue-600/25 dark:shadow-purple-950/40 transition-colors flex items-center gap-1.5"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 text-white" />
+                                    <span>Return Component</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Inline Confirm Modal/Drawer for Member */}
+                            {confirmReturnId === req.id && (
+                              <div className="w-full mt-2 p-3 rounded-xl bg-slate-50 dark:bg-[#0c081a] border-2 border-blue-200 dark:border-purple-800 space-y-2 text-xs">
+                                <div className="flex items-start gap-2 text-slate-700 dark:text-zinc-300 text-[11px]">
+                                  <AlertCircle className="w-4 h-4 text-blue-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                                  <span>
+                                    Confirm returning <strong>{req.quantity}x {req.item_name}</strong>. Request will be submitted to Admin Portal for clearance.
+                                  </span>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={returnNote}
+                                  onChange={(e) => setReturnNote(e.target.value)}
+                                  placeholder="Optional return notes (e.g., returned to lab drawer)..."
+                                  className="w-full px-3 py-1.5 bg-white dark:bg-black/50 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 dark:focus:border-purple-500"
+                                />
+                                <div className="flex items-center justify-end gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setConfirmReturnId(null);
+                                      setReturnNote('');
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMemberSubmitReturn(req.id)}
+                                    disabled={actionLoadingId === req.id}
+                                    className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>{actionLoadingId === req.id ? 'Submitting...' : 'Send Return Request to Admin'}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 

@@ -26,6 +26,8 @@ interface InventoryContextType {
     status: 'approved' | 'rejected' | 'returned',
     adminNotes?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  requestItemReturn: (requestId: string, returnNotes?: string) => Promise<{ success: boolean; error?: string }>;
+  cancelReturnRequest: (requestId: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
   refreshData: () => Promise<void>;
 }
 
@@ -282,14 +284,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminNotes?: string
   ) => {
     try {
-      if (newStatus === 'approved' || newStatus === 'rejected') {
+      if (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'returned') {
         const isAuthorized =
           profile?.role === 'admin' ||
           profile?.role === 'lead' ||
           user?.user_metadata?.role === 'admin' ||
-          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
         if (!isAuthorized) {
-          return { success: false, error: 'Unauthorized: Administrative clearance required to approve or reject requisitions.' };
+          return { success: false, error: 'Unauthorized: Administrative clearance required to approve, reject, or confirm returns.' };
         }
       }
       const targetReq = requests.find((r) => r.id === requestId);
@@ -337,6 +339,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       } else if (newStatus === 'returned') {
         updatePayload.actual_return_date = new Date().toISOString().split('T')[0];
+        const cleanNotes = (targetReq?.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+        updatePayload.admin_notes = adminNotes || (cleanNotes ? `${cleanNotes} (Returned & Restocked)` : 'Returned & Restocked');
 
         // Increment available quantity back in Supabase backend via supabaseAdmin
         if (targetReq) {
@@ -419,6 +423,111 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const requestItemReturn = async (requestId: string, returnNotes?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      // Strictly ensure only the user who issued it (or an admin) can initiate the return!
+      const isOwner =
+        (user?.id && targetReq.user_id === user.id) ||
+        (user?.email && targetReq.user_email?.toLowerCase() === user.email.toLowerCase());
+      const isAuthorizedAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
+
+      if (!isOwner && !isAuthorizedAdmin) {
+        return { success: false, error: 'Unauthorized: Only the member who issued this component can initiate its return.' };
+      }
+
+      if (targetReq.status !== 'approved') {
+        return { success: false, error: 'Only active issued loans can be submitted for return.' };
+      }
+
+      const noteTag = '[RETURN_REQUESTED]';
+      const cleanExistingNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const userDisplay = profile?.full_name || user?.email || targetReq.user_name || 'Member';
+      const updatedNotes = returnNotes?.trim()
+        ? `${noteTag} (${userDisplay}): ${returnNotes.trim()}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`
+        : `${noteTag} Return submitted by ${userDisplay} on ${new Date().toLocaleDateString('en-IN')}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`;
+
+      const { error } = await supabaseAdmin
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      try {
+        await supabaseAdmin.from('activity_logs').insert([
+          {
+            user_id: user?.id,
+            user_name: userDisplay,
+            action: 'RETURN_REQUEST',
+            target_type: 'borrow_request',
+            target_id: requestId,
+            details: `${userDisplay} requested to return ${targetReq.quantity}x ${targetReq.item_name} for "${targetReq.project_name}". Sent to Admin Portal for clearance.`,
+          },
+        ]);
+      } catch {
+        // ignore log error
+      }
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to submit return request';
+      return { success: false, error: msg };
+    }
+  };
+
+  const cancelReturnRequest = async (requestId: string, reason?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      const cleanNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const updatedNotes = reason ? `${cleanNotes ? `${cleanNotes} | ` : ''}Return declined: ${reason}` : (cleanNotes || null);
+
+      const { error } = await supabaseAdmin
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes || undefined, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to cancel return request';
+      return { success: false, error: msg };
+    }
+  };
+
   return (
     <InventoryContext.Provider
       value={{
@@ -433,6 +542,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteItem,
         submitBorrowRequest,
         updateBorrowStatus,
+        requestItemReturn,
+        cancelReturnRequest,
         refreshData,
       }}
     >

@@ -140,7 +140,7 @@ export const RequestsList: React.FC = () => {
                     <span className="px-2 py-0.5 rounded-md bg-cyan-950 text-cyan-400 font-mono text-xs font-semibold border border-cyan-800">
                       {req.quantity} unit{req.quantity > 1 ? 's' : ''}
                     </span>
-                    <BorrowStatusBadge status={req.status} />
+                    <BorrowStatusBadge status={req.status} adminNotes={req.admin_notes} />
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-slate-400">

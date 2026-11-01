@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
+import { isReturnRequested } from '../../types/inventory';
 import { motionTransitions } from '../../lib/motion-tokens';
 import {
   LayoutGrid,
@@ -58,7 +59,10 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
   const roleName = isAdmin ? 'ADMIN' : isLead ? 'LEAD' : 'MEMBER';
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
-  const pendingCount = requests.filter((r) => r.status === 'pending').length;
+  const isLeadOrAdmin = isAdmin || isLead;
+  const pendingCount = isLeadOrAdmin
+    ? requests.filter((r) => r.status === 'pending' || isReturnRequested(r)).length
+    : requests.filter((r) => (r.user_id === user?.id || r.user_email?.toLowerCase() === user?.email?.toLowerCase()) && (r.status === 'pending' || isReturnRequested(r))).length;
 
   // Auto-close dropdown when clicking or tapping outside
   useEffect(() => {

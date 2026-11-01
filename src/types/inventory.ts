@@ -52,6 +52,10 @@ export interface InventoryItem {
 
 export type BorrowStatus = 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
 
+export function isReturnRequested(req: { status: string; admin_notes?: string | null }): boolean {
+  return req.status === 'approved' && Boolean(req.admin_notes && req.admin_notes.includes('[RETURN_REQUESTED]'));
+}
+
 export interface BorrowRequest {
   id: string;
   item_id: string;
@@ -79,6 +83,7 @@ export type ActivityAction =
   | 'BORROW_REQUEST'
   | 'BORROW_APPROVED'
   | 'BORROW_REJECTED'
+  | 'RETURN_REQUEST'
   | 'ITEM_RETURNED'
   | 'LOGIN';
 

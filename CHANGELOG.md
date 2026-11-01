@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.9] : 2026-11-01
+
+### Added
+* User-Exclusive Component Return Workflow & Admin Clearance Portal:
+  - Added strict ownership validation (`user_id === user.id || user_email === user.email`) ensuring only the member who borrowed a component (or an administrator) can initiate its return. Other members viewing the component modal only see public checkout history and cannot trigger returns.
+  - Added a dedicated "Your Active Checkout" card directly in `ItemDetailModal.tsx` displaying the member's current units in possession, checkout date, expected return date, and an interactive "Return Component" button.
+  - Added return clearance request pipeline: clicking return prompts for optional return notes (e.g., condition or bin location) and submits a return request directly to the Admin Portal (`admin_notes: [RETURN_REQUESTED]`).
+  - Implemented real-time status indication: while return clearance is pending, borrowers and administrators see a pulsing purple `Return Clearance Pending` / `Return Request Sent (Awaiting Admin)` badge.
+  - Added a "Returns" filter tab and counter badge in `RequisitionsView.tsx` with one-click admin clearance actions: "Approve Return & Restock" (which increments inventory stock, updates actual return date, sends email confirmation, and logs to audit history) and "Decline" with reason input.
+  - Added real-time notification alerts in `TopNavbar` and navigation dock badge counters in `BottomNavbar` for pending return clearance requests.
+
+***
+
 ## [2.18.8] : 2026-11-01
 
 ### Fixed

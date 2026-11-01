@@ -14,7 +14,7 @@ import { RequisitionsView } from './RequisitionsView';
 import { AdminHubView } from './AdminHubView';
 import { OperatorProfileView } from './OperatorProfileView';
 import { IssuePassModal } from './IssuePassModal';
-import { InventoryItem, BorrowRequest } from '../../types/inventory';
+import { InventoryItem, BorrowRequest, isReturnRequested } from '../../types/inventory';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { Notification } from '../ui/notification-bell';
@@ -291,6 +291,20 @@ export const UserDashboard: React.FC = () => {
       });
     }
 
+    const returnReqs = requests.filter((r) => isReturnRequested(r));
+    if (isLeadOrAdmin && returnReqs.length > 0) {
+      const notifId = 'pending-returns-alert';
+      list.push({
+        id: notifId,
+        title: `${returnReqs.length} Return Clearance(s) Pending`,
+        message: 'Members have submitted hardware for return awaiting admin check-in.',
+        type: 'warning',
+        timestamp: 'Real-time',
+        read: readNotifIds.has(notifId),
+        action: () => setActiveView('review-requests'),
+      });
+    }
+
     if (isAdmin && pendingAccounts.length > 0) {
       const notifId = 'pending-accounts-alert';
       list.push({
@@ -333,6 +347,22 @@ export const UserDashboard: React.FC = () => {
           message: 'An administrator has reviewed and declined your requisition request.',
           type: 'error',
           timestamp: 'Reviewed',
+          read: readNotifIds.has(notifId),
+          action: () => setActiveView('review-requests'),
+        });
+      }
+
+      const myReturnPending = requests.filter(
+        (r) => (r.user_email?.toLowerCase() === user.email?.toLowerCase() || r.user_id === user.id) && isReturnRequested(r)
+      );
+      if (myReturnPending.length > 0) {
+        const notifId = 'my-return-pending';
+        list.push({
+          id: notifId,
+          title: `${myReturnPending.length} Return Clearance(s) Pending`,
+          message: 'Your hardware return request is submitted and awaiting admin inspection & approval.',
+          type: 'info',
+          timestamp: 'In Review',
           read: readNotifIds.has(notifId),
           action: () => setActiveView('review-requests'),
         });
