@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { rateLimitedFetch } from './rateLimitedFetch';
 
 const decodeFallback = (encoded: string): string => {
   if (typeof atob === 'function') {
@@ -34,6 +35,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+  },
+  global: {
+    fetch: rateLimitedFetch,
   },
 });
 

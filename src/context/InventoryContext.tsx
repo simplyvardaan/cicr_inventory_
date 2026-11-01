@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
@@ -41,9 +41,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [loading, setLoading] = useState<boolean>(true);
   const [isLiveDatabase, setIsLiveDatabase] = useState<boolean>(false);
   const [schemaNeeded, setSchemaNeeded] = useState<boolean>(false);
+  const isRefreshing = useRef(false);
 
   // Fetch real data from Supabase backend
   const refreshData = useCallback(async () => {
+    if (isRefreshing.current) return;
+    isRefreshing.current = true;
     setLoading(true);
     try {
       // 1. Fetch real inventory items from Supabase
@@ -97,6 +100,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setLogs([]);
     } finally {
       setLoading(false);
+      isRefreshing.current = false;
     }
   }, []);
 
@@ -104,7 +108,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     refreshData();
     const timer = setInterval(() => {
       refreshData();
-    }, 1500);
+    }, 30_000);
     return () => clearInterval(timer);
   }, [refreshData]);
 
