@@ -240,12 +240,15 @@ Visit `http://localhost:3000` (or `http://localhost:5173`) in your browser.
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root. These public Supabase values are also
+the names to use in Vercel project settings:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=https://nmwkljtaymujqnmzgyxn.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+# Supabase public configuration
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Server-only secrets
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 NEON_DATABASE_URL=postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
 ```
@@ -274,7 +277,7 @@ npm run backup:neon
 
 The GitHub Actions workflow at
 [`.github/workflows/backup.yml`](./.github/workflows/backup.yml) runs this mirror
-automatically every 15 minutes. Add `VITE_SUPABASE_URL`,
+automatically every 15 minutes. Add `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as repository secrets under
 **Settings → Secrets and variables → Actions**. You can also run it immediately
 from the repository's **Actions** tab.
@@ -300,10 +303,9 @@ hashes and users are marked `password_reset_required`.
 
 Browser database requests now pass through `/api/db`. The Vercel function tries
 Supabase first and routes database reads and writes to Neon when Supabase has a
-network or server failure. Configure `VITE_SUPABASE_URL`,
-`VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as
-Vercel environment variables
-environment variables. Supabase Auth remains primary, so login and signup are
+network or server failure. Configure `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, and `NEON_DATABASE_URL` as Vercel environment
+variables. Supabase Auth remains primary, so login and signup are
 not available if Supabase Auth itself is down.
 
 ### Email notifications
@@ -327,8 +329,8 @@ Run `npm run dev` for the full local app. It serves the Vite frontend and `/api/
 ```bash
 npm run build
 npm run preview
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
@@ -353,7 +355,8 @@ The platform is optimized for **zero-configuration Vercel deployment**:
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-4. Add environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the Vercel project settings.
+4. Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Vercel project settings for
+   the Production environment, then redeploy.
 5. Deployments run on `https://cicr-inventory.vercel.app`.
 
 ---
