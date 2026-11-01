@@ -110,8 +110,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
       setShowReviewPopup(true);
       showToast(
         'success',
-        'Registration Submitted',
-        'Your registration request was sent to the Admin Portal for approval.'
+        'Request Sent to Admin Portal',
+        'Your registration request has been sent to the Admin Portal for administrator approval.'
       );
     } else {
       setErrorMsg(res.error || 'Registration failed.');

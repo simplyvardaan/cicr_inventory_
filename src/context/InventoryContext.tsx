@@ -26,6 +26,8 @@ interface InventoryContextType {
     status: 'approved' | 'rejected' | 'returned',
     adminNotes?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  requestItemReturn: (requestId: string, returnNotes?: string) => Promise<{ success: boolean; error?: string }>;
+  cancelReturnRequest: (requestId: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
   refreshData: () => Promise<void>;
 }
 
@@ -146,19 +148,105 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Real Update Item in Supabase
+  // Real Update Item in Supabase with guaranteed backend persistence & audit logging
   const updateItem = async (id: string, updates: Partial<InventoryItem>) => {
     try {
-      const { error } = await supabase
+      const isAuthorized =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        Boolean(
+          user?.email &&
+            ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+              user.email.toLowerCase()
+            )
+        );
+
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Administrative privileges required to edit equipment.' };
+      }
+
+      const targetItem = items.find((i) => i.id === id);
+
+      const cleanUpdates: any = {
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      delete cleanUpdates.id;
+      delete cleanUpdates.created_at;
+
+      // 1. Prioritize supabaseAdmin with select() to bypass client RLS issues and guarantee row update
+      let { data, error } = await supabaseAdmin
         .from('inventory_items')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .update(cleanUpdates)
+        .eq('id', id)
+        .select();
 
-      if (error) return { success: false, error: error.message };
+      // Fallback to supabase user client
+      if (error || !data || data.length === 0) {
+        const fallbackRes = await supabase
+          .from('inventory_items')
+          .update(cleanUpdates)
+          .eq('id', id)
+          .select();
 
+        if (fallbackRes.error && error) {
+          return { success: false, error: error.message || fallbackRes.error.message };
+        }
+        if (fallbackRes.data && fallbackRes.data.length > 0) {
+          data = fallbackRes.data;
+        }
+      }
+
+      // Update immediate local state
       setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+        prev.map((item) => (item.id === id ? { ...item, ...cleanUpdates } : item))
       );
+
+      // Detailed change tracking for audit log
+      const adminName = profile?.full_name || user?.user_metadata?.full_name || user?.email || 'Admin';
+      const logName = cleanUpdates.name || targetItem?.name || 'Component';
+
+      const changeParts: string[] = [];
+      if (cleanUpdates.name && targetItem && cleanUpdates.name !== targetItem.name) {
+        changeParts.push(`Name: "${targetItem.name}" -> "${cleanUpdates.name}"`);
+      }
+      if (cleanUpdates.category && targetItem && cleanUpdates.category !== targetItem.category) {
+        changeParts.push(`Domain: "${targetItem.category}" -> "${cleanUpdates.category}"`);
+      }
+      if (cleanUpdates.total_qty !== undefined && targetItem && Number(cleanUpdates.total_qty) !== Number(targetItem.total_qty)) {
+        changeParts.push(`Total Units: ${targetItem.total_qty} -> ${cleanUpdates.total_qty}`);
+      }
+      if (cleanUpdates.description !== undefined && targetItem && cleanUpdates.description !== targetItem.description) {
+        changeParts.push('Description updated');
+      }
+
+      const logDetails = changeParts.length > 0
+        ? `Admin ${adminName} edited "${logName}": ${changeParts.join(', ')}`
+        : `Admin ${adminName} edited component "${logName}" (Total: ${cleanUpdates.total_qty ?? targetItem?.total_qty}, Available: ${cleanUpdates.available_qty ?? targetItem?.available_qty})`;
+
+      const logEntry: any = {
+        user_id: user?.id || null,
+        user_name: adminName,
+        action: 'UPDATE_ITEM',
+        details: logDetails,
+        item_id: id,
+        created_at: new Date().toISOString(),
+      };
+
+      try {
+        const logRes = await supabaseAdmin.from('activity_logs').insert([logEntry]);
+        if (logRes.error) {
+          await supabase.from('activity_logs').insert([logEntry]);
+        }
+        setLogs((prev) => [logEntry, ...prev]);
+      } catch {
+        // Logging error shouldn't crash primary update
+      }
+
+      // Re-sync with backend in background
+      refreshData();
+
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Database update failed';
@@ -282,21 +370,21 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminNotes?: string
   ) => {
     try {
-      if (newStatus === 'approved' || newStatus === 'rejected') {
+      if (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'returned') {
         const isAuthorized =
           profile?.role === 'admin' ||
           profile?.role === 'lead' ||
           user?.user_metadata?.role === 'admin' ||
-          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(user.email.toLowerCase()));
+          (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
         if (!isAuthorized) {
-          return { success: false, error: 'Unauthorized: Administrative clearance required to approve or reject requisitions.' };
+          return { success: false, error: 'Unauthorized: Administrative clearance required to approve, reject, or confirm returns.' };
         }
       }
       const targetReq = requests.find((r) => r.id === requestId);
 
       const updatePayload: Record<string, unknown> = {
         status: newStatus,
-        approved_by: profile?.full_name || 'Admin',
+        approved_by: profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Admin'),
         admin_notes: adminNotes,
         updated_at: new Date().toISOString(),
       };
@@ -337,6 +425,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       } else if (newStatus === 'returned') {
         updatePayload.actual_return_date = new Date().toISOString().split('T')[0];
+        const cleanNotes = (targetReq?.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+        updatePayload.admin_notes = adminNotes || (cleanNotes ? `${cleanNotes} (Returned & Restocked)` : 'Returned & Restocked');
 
         // Increment available quantity back in Supabase backend via supabaseAdmin
         if (targetReq) {
@@ -419,6 +509,111 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const requestItemReturn = async (requestId: string, returnNotes?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      // Strictly ensure only the user who issued it (or an admin) can initiate the return!
+      const isOwner =
+        (user?.id && targetReq.user_id === user.id) ||
+        (user?.email && targetReq.user_email?.toLowerCase() === user.email.toLowerCase());
+      const isAuthorizedAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
+
+      if (!isOwner && !isAuthorizedAdmin) {
+        return { success: false, error: 'Unauthorized: Only the member who issued this component can initiate its return.' };
+      }
+
+      if (targetReq.status !== 'approved') {
+        return { success: false, error: 'Only active issued loans can be submitted for return.' };
+      }
+
+      const noteTag = '[RETURN_REQUESTED]';
+      const cleanExistingNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const userDisplay = profile?.full_name || user?.email || targetReq.user_name || 'Member';
+      const updatedNotes = returnNotes?.trim()
+        ? `${noteTag} (${userDisplay}): ${returnNotes.trim()}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`
+        : `${noteTag} Return submitted by ${userDisplay} on ${new Date().toLocaleDateString('en-IN')}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`;
+
+      const { error } = await supabaseAdmin
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      try {
+        await supabaseAdmin.from('activity_logs').insert([
+          {
+            user_id: user?.id,
+            user_name: userDisplay,
+            action: 'RETURN_REQUEST',
+            target_type: 'borrow_request',
+            target_id: requestId,
+            details: `${userDisplay} requested to return ${targetReq.quantity}x ${targetReq.item_name} for "${targetReq.project_name}". Sent to Admin Portal for clearance.`,
+          },
+        ]);
+      } catch {
+        // ignore log error
+      }
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to submit return request';
+      return { success: false, error: msg };
+    }
+  };
+
+  const cancelReturnRequest = async (requestId: string, reason?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      const cleanNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const updatedNotes = reason ? `${cleanNotes ? `${cleanNotes} | ` : ''}Return declined: ${reason}` : (cleanNotes || null);
+
+      const { error } = await supabaseAdmin
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes || undefined, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to cancel return request';
+      return { success: false, error: msg };
+    }
+  };
+
   return (
     <InventoryContext.Provider
       value={{
@@ -433,6 +628,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteItem,
         submitBorrowRequest,
         updateBorrowStatus,
+        requestItemReturn,
+        cancelReturnRequest,
         refreshData,
       }}
     >

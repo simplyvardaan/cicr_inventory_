@@ -49,7 +49,20 @@ export const ConditionBadge: React.FC<{ condition?: string }> = ({ condition }) 
   );
 };
 
-export const BorrowStatusBadge: React.FC<{ status: BorrowStatus }> = ({ status }) => {
+export const BorrowStatusBadge: React.FC<{ status: BorrowStatus; adminNotes?: string | null }> = ({
+  status,
+  adminNotes,
+}) => {
+  const isReturnPending = status === 'approved' && Boolean(adminNotes && adminNotes.includes('[RETURN_REQUESTED]'));
+
+  if (isReturnPending) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-700 animate-pulse">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+        Return Clearance Pending
+      </span>
+    );
+  }
   const styles: Record<BorrowStatus, string> = {
     pending: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse',
     approved: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',

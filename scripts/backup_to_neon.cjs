@@ -16,6 +16,10 @@ if (!neonDatabaseUrl) {
   throw new Error('NEON_DATABASE_URL is required.');
 }
 
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = class DummyWebSocket {};
+}
+
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });

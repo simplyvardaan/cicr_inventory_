@@ -212,7 +212,7 @@ export const MeetTheDevelopers: React.FC = () => {
   }, [handlePrevMember, handleNextMember]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 space-y-4 sm:space-y-6 pb-20 select-none animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 -mt-3 sm:-mt-5 md:-mt-6 space-y-3 sm:space-y-4 pb-20 select-none animate-in fade-in duration-300">
       
       {/* Title Header */}
       <div className="text-center space-y-1">
@@ -274,10 +274,10 @@ export const MeetTheDevelopers: React.FC = () => {
         </div>
 
         {/* Profile Card Body with Big Screen Photo */}
-        <div className="p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-10">
+        <div className="p-5 sm:p-7 md:p-8 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-9">
           {/* Big Screen Photo with Radiant Glow Ring */}
           <div className="shrink-0 relative">
-            <div className={`w-32 h-32 sm:w-44 sm:h-44 md:w-56 md:h-56 rounded-full p-2 bg-gradient-to-br shadow-2xl ${
+            <div className={`w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 rounded-full p-2 bg-gradient-to-br shadow-2xl ${
               currentMember.category === 'mentor'
                 ? 'from-amber-400/40 via-yellow-500/20 to-orange-500/30 ring-2 ring-amber-400/50'
                 : 'from-blue-500/40 via-purple-500/20 to-pink-500/30 ring-2 ring-purple-400/50'

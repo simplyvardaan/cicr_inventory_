@@ -68,11 +68,28 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  // If user is authenticated, show dashboard immediately
-  if (user) {
+  const isApproved =
+    user &&
+    (profile?.role === 'admin' ||
+      user.user_metadata?.role === 'admin' ||
+      Boolean(
+        user.email &&
+          ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+            user.email.toLowerCase()
+          )
+      ) ||
+      (profile?.status !== 'pending' &&
+        profile?.status !== 'rejected' &&
+        profile?.avatar_url !== 'status:pending' &&
+        profile?.avatar_url !== 'status:rejected' &&
+        user.user_metadata?.status !== 'pending' &&
+        user.user_metadata?.status !== 'rejected'));
+
+  // If user is authenticated and authorized, show dashboard
+  if (user && isApproved) {
     return <UserDashboard />;
   }
 

@@ -58,6 +58,7 @@ export const supabaseAdmin = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+      storageKey: 'sb-admin-null-token',
     },
   }
 );

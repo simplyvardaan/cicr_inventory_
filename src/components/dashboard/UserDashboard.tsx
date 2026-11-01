@@ -14,7 +14,7 @@ import { RequisitionsView } from './RequisitionsView';
 import { AdminHubView } from './AdminHubView';
 import { OperatorProfileView } from './OperatorProfileView';
 import { IssuePassModal } from './IssuePassModal';
-import { InventoryItem, BorrowRequest } from '../../types/inventory';
+import { InventoryItem, BorrowRequest, isReturnRequested } from '../../types/inventory';
 import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { Notification } from '../ui/notification-bell';
@@ -34,6 +34,7 @@ export const UserDashboard: React.FC = () => {
     updateProfile,
     approveUserAccount,
     rejectUserAccount,
+    updateUserRole,
   } = useAuth();
   const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
   const { items, requests, logs, deleteItem, updateBorrowStatus, refreshData } = useInventory();
@@ -131,13 +132,103 @@ export const UserDashboard: React.FC = () => {
   // Fetch pending registrations and all members
   const fetchPendingAccounts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profData } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('status', 'pending');
-      if (!error && data) {
-        setPendingAccounts(data);
+        .select('*');
+
+      // Resolved accounts: Any account marked approved, rejected, or admin is permanently RESOLVED!
+      const resolvedEmails = new Set(
+        (profData || [])
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
+          .map((p) => p.email?.toLowerCase())
+      );
+
+      const resolvedUserIds = new Set(
+        (profData || [])
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
+          .map((p) => p.id)
+      );
+
+      const pendingMap = new Map();
+
+      (profData || []).forEach((p) => {
+        const isResolved =
+          p.role === 'admin' ||
+          p.status === 'approved' ||
+          p.status === 'rejected' ||
+          p.avatar_url === 'status:approved' ||
+          p.avatar_url === 'status:rejected';
+
+        if (!isResolved) {
+          const isPending =
+            p.status === 'pending' ||
+            p.avatar_url === 'status:pending' ||
+            !p.status;
+
+          const emailKey = p.email?.toLowerCase();
+          if (isPending && emailKey && !resolvedEmails.has(emailKey)) {
+            pendingMap.set(emailKey, p);
+          }
+        }
+      });
+
+      try {
+        const { data: reqLogs } = await supabaseAdmin
+          .from('activity_logs')
+          .select('*')
+          .eq('action', 'ACCOUNT_REQUEST')
+          .order('created_at', { ascending: false });
+
+        (reqLogs || []).forEach((log) => {
+          let details: any = {};
+          try {
+            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          } catch {
+            details = {};
+          }
+          const email = (details?.email || '').toLowerCase();
+          const userId = details?.userId || log.user_id;
+          const isPending = !details?.status || details?.status === 'pending';
+
+          // Strictly filter out any account whose email or user_id is already resolved (approved OR rejected)!
+          if (
+            isPending &&
+            email &&
+            !resolvedEmails.has(email) &&
+            (!userId || !resolvedUserIds.has(userId)) &&
+            !pendingMap.has(email)
+          ) {
+            pendingMap.set(email, {
+              id: userId || log.id,
+              full_name: details?.fullName || log.user_name || 'New Member',
+              email: details?.email,
+              roll_number: details?.enrollmentNo || '',
+              phone: details?.phone || '',
+              role: details?.role || 'member',
+              status: 'pending',
+              created_at: log.created_at,
+            });
+          }
+        });
+      } catch (logErr) {
+        console.warn('Notice loading request logs:', logErr);
       }
+
+      setPendingAccounts(Array.from(pendingMap.values()));
     } catch {
       // ignore
     }
@@ -151,7 +242,7 @@ export const UserDashboard: React.FC = () => {
         .select('*')
         .order('full_name', { ascending: true });
       if (!error && data) {
-        setAllMembers(data);
+        setAllMembers(data.filter((m) => m.status === 'approved' || m.role === 'admin' || m.avatar_url === 'status:approved'));
       }
     } catch {
       // ignore
@@ -177,7 +268,7 @@ export const UserDashboard: React.FC = () => {
         list.push({
           id: notifId,
           title: `Low Reserve: ${it.name}`,
-          message: `Only ${it.available_qty} units left in stock (${it.location}).`,
+          message: `Only ${it.available_qty} units left in stock.`,
           type: 'warning',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           read: readNotifIds.has(notifId),
@@ -194,6 +285,20 @@ export const UserDashboard: React.FC = () => {
         title: `${pendingReqs.length} Requisition(s) Pending`,
         message: 'Members have requested hardware awaiting admin authorization.',
         type: 'info',
+        timestamp: 'Real-time',
+        read: readNotifIds.has(notifId),
+        action: () => setActiveView('review-requests'),
+      });
+    }
+
+    const returnReqs = requests.filter((r) => isReturnRequested(r));
+    if (isLeadOrAdmin && returnReqs.length > 0) {
+      const notifId = 'pending-returns-alert';
+      list.push({
+        id: notifId,
+        title: `${returnReqs.length} Return Clearance(s) Pending`,
+        message: 'Members have submitted hardware for return awaiting admin check-in.',
+        type: 'warning',
         timestamp: 'Real-time',
         read: readNotifIds.has(notifId),
         action: () => setActiveView('review-requests'),
@@ -242,6 +347,22 @@ export const UserDashboard: React.FC = () => {
           message: 'An administrator has reviewed and declined your requisition request.',
           type: 'error',
           timestamp: 'Reviewed',
+          read: readNotifIds.has(notifId),
+          action: () => setActiveView('review-requests'),
+        });
+      }
+
+      const myReturnPending = requests.filter(
+        (r) => (r.user_email?.toLowerCase() === user.email?.toLowerCase() || r.user_id === user.id) && isReturnRequested(r)
+      );
+      if (myReturnPending.length > 0) {
+        const notifId = 'my-return-pending';
+        list.push({
+          id: notifId,
+          title: `${myReturnPending.length} Return Clearance(s) Pending`,
+          message: 'Your hardware return request is submitted and awaiting admin inspection & approval.',
+          type: 'info',
+          timestamp: 'In Review',
           read: readNotifIds.has(notifId),
           action: () => setActiveView('review-requests'),
         });
@@ -317,31 +438,39 @@ export const UserDashboard: React.FC = () => {
       const targetMember = allMembers.find((m) => m.id === targetUserId);
       if (
         targetMember?.email &&
-        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com'].includes(targetMember.email.toLowerCase())
+        ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(targetMember.email.toLowerCase())
       ) {
         showToast('error', 'Action Restricted', 'Master superadmin roles cannot be modified.');
         return;
       }
-      const { error } = await supabaseAdmin
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
-      if (error) throw error;
+
+      setProcessingUserId(targetUserId);
+      const res = await updateUserRole(targetUserId, newRole);
+      if (!res.success) {
+        showToast('error', 'Role Update Failed', res.error || 'Failed to update member role.');
+        return;
+      }
+
       showToast('success', 'Role Updated', `${name} is now ${newRole.toUpperCase()}.`);
       await fetchAllMembers();
+      await refreshData();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not change member role.';
       showToast('error', 'Role Update Failed', msg);
+    } finally {
+      setProcessingUserId(null);
     }
   };
 
-  const handleApproveAccount = async (targetUserId: string, targetName: string) => {
+  const handleApproveAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await approveUserAccount(targetUserId);
+    const res = await approveUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('success', 'Account Approved', `${targetName} can now sign in.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!targetEmail || a.email?.toLowerCase() !== targetEmail.toLowerCase()))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();
@@ -350,19 +479,31 @@ export const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleRejectAccount = async (targetUserId: string, targetName: string) => {
+  const handleRejectAccount = async (targetUserId: string, targetName: string, targetEmail?: string) => {
     setProcessingUserId(targetUserId);
-    const res = await rejectUserAccount(targetUserId);
+    const res = await rejectUserAccount(targetUserId, targetEmail);
     setProcessingUserId(null);
     if (res.success) {
       showToast('warning', 'Request Rejected', `Account registration for ${targetName} was rejected.`);
-      setPendingAccounts((prev) => prev.filter((a) => a.id !== targetUserId));
+      setPendingAccounts((prev) =>
+        prev.filter((a) => a.id !== targetUserId && (!targetEmail || a.email?.toLowerCase() !== targetEmail.toLowerCase()))
+      );
       await refreshData();
       await fetchPendingAccounts();
       await fetchAllMembers();
     } else {
       showToast('error', 'Rejection Failed', res.error || 'Could not reject account');
     }
+  };
+
+  const handleOpenEditItem = (item: InventoryItem) => {
+    if (!isAdmin) {
+      showToast('error', 'Admin Clearance Required', 'Only administrators can edit components.');
+      return;
+    }
+    setEditingItem(item);
+    setSelectedItem(null);
+    setAddItemModalOpen(true);
   };
 
   const handleDeleteItem = async (id: string, name: string) => {
@@ -447,6 +588,7 @@ export const UserDashboard: React.FC = () => {
               setEditingItem(null);
               setAddItemModalOpen(true);
             }}
+            onEditItem={handleOpenEditItem}
             onDeleteItem={handleDeleteItem}
             onSelectItem={(it) => setSelectedItem(it)}
             cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
@@ -541,12 +683,17 @@ export const UserDashboard: React.FC = () => {
 
       <AddEditItemModal
         isOpen={addItemModalOpen}
-        onClose={() => setAddItemModalOpen(false)}
+        onClose={() => {
+          setAddItemModalOpen(false);
+          setEditingItem(null);
+        }}
         initialItem={editingItem}
       />
 
       <ItemDetailModal
         item={selectedItem}
+        isAdmin={isAdmin}
+        onEdit={handleOpenEditItem}
         onClose={() => setSelectedItem(null)}
         onBorrow={(it) => {
           handleAddToCart(it);

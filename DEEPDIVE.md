@@ -39,7 +39,9 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.17.0** | Released | **Official Google SMTP Mailer Integration & Serverless Telemetry Pipeline.** Production Gmail SSL mailer on port 465 with base64 failover decoders; transactional dispatch for authentication, clearance requisitions, and overdue return reminders; multi-branch parity across all active branches. |
 | **v2.18.0** | Released | **Personalized Active Loans, Clean Requisition Clearance & Notification Persistence.** Scoped Component Vault active loans to individual members while preserving full lab oversight for admins; removed locker instructions input from clearance portal; resolved notification "Read all" persistence; verified 100% full stock return across all components. |
 | **v2.18.1** | Released | **Responsive Centered Category Submenu & Touch Interactivity Patch.** Centered bottom navigation catalog categories above the dock; constrained mobile layout to viewport boundaries with touch momentum scrolling; unified category filter keys between navbar and vault view; added touchstart outside dismissal. |
-| **v2.18.2** | Released (current) | **Mobile Viewport Centered Notification Panel & Interactive Alert System.** Centered floating notification panel on mobile without viewport overflow; added mobile touch backdrop overlay; introduced All/Unread filter tabs, individual dismiss action, and expanded alerts for rejected requests and pending signups. |
+| **v2.18.2** | Released | **Mobile Viewport Centered Notification Panel & Interactive Alert System.** Centered floating notification panel on mobile without viewport overflow; added mobile touch backdrop overlay; introduced All/Unread filter tabs, individual dismiss action, and expanded alerts for rejected requests and pending signups. |
+| **v2.18.3** | Released | **Account Requests Cross-Audit Detection & Roster Hygiene.** Cross-referenced both `profiles` and `activity_logs` (`ACCOUNT_REQUEST`) to guarantee zero-loss detection of pending registration requests in the Management Hub; decoupled pending signups from verified Club Members roster; synchronized fallback signup profile metadata. |
+| **v2.18.4** | Released (current) | **Google SMTP Serverless Resiliency & Payload Normalization.** Fixed encoded base64 Google App Password fallback (`ezoufqenvifmudgv`); added whitespace/quote sanitization for Gmail 16-character keys; set `pool: false` with 8s socket/connection timeouts to resolve Vercel serverless `FUNCTION_INVOCATION_FAILED`; wrapped account notification triggers in non-blocking try-catch blocks. |
 
 ---
 
@@ -63,6 +65,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.18.0** | `v2.18.0`, `v2.18` | Personalization & Clearance | Member loan scoping, streamlined clearance actions, notification read fix |
 | **v2.18.1** | `v2.18.1` | Responsive Navigation | Centered category dock popup, touch momentum scrolling, filter key parity |
 | **v2.18.2** | `v2.18.2` | Responsive Notifications | Centered mobile notification drawer, touch backdrop, tabs & dismiss actions |
+| **v2.18.3** | `v2.18.3` | Account Requests & Roster | Cross-audit pending account detection, roster hygiene & signup metadata sync |
+| **v2.18.4** | `v2.18.4` | Stable Google SMTP | Serverless SMTP socket timeouts, Google App Password sanitization & payload parsing |
 
 ---
 

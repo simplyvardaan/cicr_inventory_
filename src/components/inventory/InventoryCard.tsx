@@ -1,7 +1,7 @@
 import React from 'react';
 import { InventoryItem } from '../../types/inventory';
 import { StatusBadge } from '../common/Badge';
-import { MapPin, Edit, Trash2, ArrowRightCircle, ExternalLink } from 'lucide-react';
+import { Edit, Trash2, ArrowRightCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface InventoryCardProps {
@@ -19,7 +19,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { isLeadOrAdmin } = useAuth();
+  const { isLeadOrAdmin, isAdmin } = useAuth();
   const availablePct = Math.round((item.available_qty / (item.total_qty || 1)) * 100);
 
   return (
@@ -30,12 +30,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
           <span className="text-[10px] font-bold text-blue-700 dark:text-purple-300 uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-900/50">
             {item.category}
           </span>
-          {item.location && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-[#120b24] px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-zinc-800">
-              <MapPin className="w-3 h-3 text-blue-600 dark:text-purple-400 shrink-0" />
-              <span className="truncate max-w-[120px]">{item.location.replace(/\s*-\s*/g, ' / ')}</span>
-            </span>
-          )}
+          
         </div>
         <StatusBadge status={item.status} />
       </div>
@@ -112,7 +107,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({
             <span>{item.available_qty > 0 ? 'Borrow Item' : 'Out of Stock'}</span>
           </button>
 
-          {isLeadOrAdmin && (
+          {isAdmin && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onEdit(item)}

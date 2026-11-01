@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   category TEXT NOT NULL,
   sku TEXT UNIQUE,
   description TEXT,
-  location TEXT NOT NULL,
+  location TEXT DEFAULT '',
   total_qty INTEGER NOT NULL DEFAULT 1 CHECK (total_qty >= 0),
   available_qty INTEGER NOT NULL DEFAULT 1 CHECK (available_qty >= 0),
   min_threshold INTEGER NOT NULL DEFAULT 2 CHECK (min_threshold >= 0),
@@ -102,3 +102,7 @@ ALTER TABLE auth_users
 CREATE INDEX IF NOT EXISTS inventory_items_category_idx ON inventory_items(category);
 CREATE INDEX IF NOT EXISTS borrow_requests_user_id_idx ON borrow_requests(user_id);
 CREATE INDEX IF NOT EXISTS activity_logs_created_at_idx ON activity_logs(created_at DESC);
+
+-- Migration: Make location optional
+ALTER TABLE inventory_items ALTER COLUMN location DROP NOT NULL;
+ALTER TABLE inventory_items ALTER COLUMN location SET DEFAULT '';

@@ -125,7 +125,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
           <div>
             <span className="text-[10px] font-mono text-blue-600 dark:text-purple-400 font-bold block">{item.category}</span>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h4>
-            <span className="text-xs text-slate-500 dark:text-zinc-400">{item.location}</span>
+            
           </div>
           <div className="text-right">
             <span className="text-xs text-slate-500 dark:text-zinc-400 block font-semibold">Available</span>

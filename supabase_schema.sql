@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
     sku TEXT UNIQUE,
     category TEXT NOT NULL,
     description TEXT,
-    location TEXT NOT NULL,
+    location TEXT DEFAULT '',
     total_qty INTEGER NOT NULL DEFAULT 1 CHECK (total_qty >= 0),
     available_qty INTEGER NOT NULL DEFAULT 1 CHECK (available_qty >= 0),
     min_threshold INTEGER DEFAULT 2 CHECK (min_threshold >= 0),
@@ -242,30 +242,64 @@ CREATE POLICY "Activity logs viewable by authenticated users"
 CREATE POLICY "Activity logs insertable by authenticated users" 
   ON public.activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
--- 10. Initial Seed Data for CICR Inventory
+-- 10. Initial Seed Data for CICR Inventory (53 Authentic Components, 172 Total Assets)
 INSERT INTO public.inventory_items (name, sku, category, description, location, total_qty, available_qty, min_threshold, condition, status, image_url, datasheet_url)
 VALUES
-('ESP32-WROOM-32D Development Board', 'CICR-MCU-001', 'Microcontrollers & SBCs', 'Dual-core 240MHz Wi-Fi and Bluetooth MCU board with Type-C connector. Essential for IoT robotics projects.', 'Lab 2 - Cabinet A1', 15, 12, 3, 'New', 'In Stock', 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=600&q=80', 'https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32d_esp32-wroom-32u_datasheet_en.pdf'),
-
-('Arduino Mega 2560 R3', 'CICR-MCU-002', 'Microcontrollers & SBCs', 'ATmega2560 microcontroller board with 54 digital I/O pins, 16 analog inputs, 4 UARTs for complex robotic arms.', 'Lab 2 - Cabinet A1', 8, 5, 2, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=600&q=80', 'https://docs.arduino.cc/resources/datasheets/A000067-datasheet.pdf'),
-
-('Raspberry Pi 4 Model B (4GB)', 'CICR-SBC-001', 'Microcontrollers & SBCs', 'Broadcom BCM2711 quad-core Cortex-A72 (ARM v8) 64-bit SoC @ 1.5GHz. Used for autonomous robot ROS navigation & vision.', 'Lab 2 - Secure Locker 1', 6, 2, 2, 'Good', 'Low Stock', 'https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=600&q=80', 'https://datasheets.raspberrypi.com/rpi4/raspberry-pi-4-datasheet.pdf'),
-
-('RPLIDAR A1M8 360 Degree Laser Scanner', 'CICR-SEN-001', 'Sensors & Modules', 'Low-cost 2D LiDAR 12-meter range, 360-degree laser range scanner for SLAM, obstacle avoidance in autonomous rovers.', 'Lab 2 - Shelf B2', 4, 3, 1, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', 'https://www.slamtec.com/en/Lidar/A1'),
-
-('MPU-6050 6-Axis Gyro & Accelerometer', 'CICR-SEN-002', 'Sensors & Modules', 'I2C 3-axis gyroscope and 3-axis accelerometer sensor module with Digital Motion Processor (DMP).', 'Lab 2 - Component Bin 4', 25, 20, 5, 'New', 'In Stock', 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=600&q=80', 'https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf'),
-
-('NEMA 17 Stepper Motor (1.5A 42BYGH)', 'CICR-MOT-001', 'Motors & Drivers', 'High torque bipolar stepper motor 40N.cm, 1.8 deg step angle. Used for 3D printer and precision CNC plotter.', 'Lab 3 - Heavy Shelf C', 12, 10, 3, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80', 'https://www.omc-stepperonline.com'),
-
-('MG996R Metal Gear Digital High Torque Servo', 'CICR-MOT-002', 'Motors & Drivers', 'Metal gear servo motor with 11kg/cm torque, ideal for robotic arms, steering bipedal walkers.', 'Lab 2 - Bin 12', 18, 14, 4, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80', ''),
-
-('L298N Dual H-Bridge Motor Driver Module', 'CICR-DRV-001', 'Motors & Drivers', 'Stepper and DC dual motor controller board capable of driving up to 2A per channel with onboard 5V regulator.', 'Lab 2 - Bin 8', 20, 16, 5, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=600&q=80', ''),
-
-('LiPo 3S 2200mAh 11.1V 35C Battery Pack', 'CICR-PWR-001', 'Power & Batteries', 'Rechargeable lithium polymer battery pack with XT60 connector for quadcopters and high-load ground robots.', 'Lab 3 - LiPo Safety Box', 8, 4, 2, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1619725002198-6a689b72f41d?auto=format&fit=crop&w=600&q=80', ''),
-
-('Creality Ender-3 V2 3D Printer', 'CICR-FAB-001', 'Tools & Fabrication', 'FDM 3D Printer with silent motherboard, Carborundum glass bed, 220x220x250mm print volume.', 'Lab 3 - 3D Printing Bay', 2, 1, 1, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1631556097152-c39479cbfeab?auto=format&fit=crop&w=600&q=80', 'https://www.creality.com'),
-
-('TS100 Smart Digital Soldering Iron Kit', 'CICR-TOOL-001', 'Tools & Fabrication', 'Portable programmable OLED display soldering iron with B2 tip and DC5525 power jack (12V-24V).', 'Lab 2 - Soldering Bench 1', 4, 3, 1, 'Good', 'In Stock', 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=600&q=80', ''),
-
-('HC-SR04 Ultrasonic Distance Sensor', 'CICR-SEN-003', 'Sensors & Modules', 'Ultrasonic sensor 2cm to 400cm non-contact measurement module for mobile robots.', 'Lab 2 - Bin 5', 30, 26, 6, 'New', 'In Stock', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80', '')
+('5-Channel Infrared Tracking Sensor', 'CICR-SEN-003', 'Sensors & Modules', '5-channel TCRT5000 IR Line Tracking Sensor array module for line-following autonomous robotics.', 'Sensors Bay - Rack S3, Box 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('8×8 LED Matrix', 'CICR-TOOL-008', 'Tools & Fabrication', '8x8 Red LED Dot Matrix Display Module with MAX7219 serial driver IC for text, shapes, and animations.', 'Display & Output Unit - Drawer O1, Tray 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Arduino Cables', 'CICR-TOOL-004', 'Tools & Fabrication', 'USB Type-A to Type-B / Mini-USB programming cables and heavy-duty jumper wire sets for Arduino boards.', 'Mechanical Bay - Bin M2, Rack 1', 12, 12, 2, 'Good', 'In Stock', NULL, NULL),
+('Arduino Nano', 'CICR-MCU-005', 'Microcontrollers & SBCs', 'Compact ATmega328P 16MHz Microcontroller Board with 14 digital I/O, 8 analog inputs, and Mini-USB/Type-C interface.', 'Controllers Bay - Rack C1, Tray 1', 4, 4, 1, 'Good', 'In Stock', NULL, NULL),
+('Arduino Uno R3', 'CICR-MCU-004', 'Microcontrollers & SBCs', 'Arduino Uno R3 ATmega328P Microcontroller Board with 14 digital I/O pins, 6 analog inputs, and 16MHz crystal oscillator.', 'Controllers Bay - Rack C1, Tray 2', 7, 7, 1, 'Good', 'In Stock', NULL, NULL),
+('AVR / 8051 USB ISP Programmer', 'CICR-MCU-001', 'Microcontrollers & SBCs', 'USB-ASP In-System Programmer (ISP) with 10-pin IDC cable for flashing Atmel AVR (ATmega/ATtiny) and 8051 microcontrollers.', 'Controllers Bay - Rack C2, Bin 1', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Batteries', 'CICR-PWR-004', 'Power & Batteries', 'High-Discharge Lithium-Polymer (LiPo) / 18650 Li-Ion rechargeable battery packs for combat robots and aerial drones.', 'Power Station - Cabinet P1, Fireproof Safe', 11, 11, 2, 'Good', 'In Stock', NULL, NULL),
+('Battery Chargers', 'CICR-PWR-005', 'Power & Batteries', 'Smart Microprocessor Balance Charger and Discharger for LiPo, Li-Ion, NiMH, and Lead-Acid robotics batteries.', 'Power Station - Cabinet P1, Shelf 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('BL Helicopter 30A ESC', 'CICR-MOT-001', 'Motors & Drivers', '30A Brushless Helicopter Electronic Speed Controller (ESC) with 5V/2A BEC, soft-start governor, and multi-cell LiPo support.', 'Drivers & ESC Bay - Cabinet D1, Bin 6', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('BLDC Motor — New', 'CICR-MOT-009', 'Motors & Drivers', 'Brand-new high-KV Brushless DC (BLDC) outrunner motor for quadcopter propulsion and high-speed robotic systems.', 'Actuators Bay - Drawer M3, Section 1', 4, 4, 1, 'Good', 'In Stock', NULL, NULL),
+('BLDC Motor — Old', 'CICR-MOT-008', 'Motors & Drivers', 'Bench-tested Brushless DC (BLDC) outrunner motor for lab prototyping, aeromodelling tests, and test-rig experimentation.', 'Actuators Bay - Drawer M3, Section 2', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('BTS7960 Motor Driver', 'CICR-MOT-002', 'Motors & Drivers', 'BTS7960 43A High-Power Semiconductor Dual H-Bridge Motor Driver Module with thermal shutdown and current sensing.', 'Drivers & ESC Bay - Cabinet D1, Bin 5', 9, 9, 2, 'Good', 'In Stock', NULL, NULL),
+('Buck Converter', 'CICR-PWR-003', 'Power & Batteries', 'LM2596 / MP1584 Step-Down DC-DC Buck Converter Module with adjustable output voltage (4V-35V in, 1.23V-30V out).', 'Power Station - Cabinet P2, Bin 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Buzzer Module', 'CICR-TOOL-007', 'Tools & Fabrication', 'Piezoelectric Active/Passive Audible Buzzer Module with transistor driver for alarm beeps and frequency tones.', 'Display & Output Unit - Drawer O1, Tray 4', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('CT6B Remote', 'CICR-TOOL-014', 'Tools & Fabrication', 'FlySky FS-CT6B 2.4GHz 6-Channel Radio Transmitter and matched receiver set for RC aircraft and autonomous rovers.', 'Comms & RF Station - Cabinet R1, Shelf 2', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('DJI BLDC', 'CICR-MOT-007', 'Motors & Drivers', 'Original DJI tuned brushless motor for heavy-lift multirotor propulsion with precision bearings and balanced rotor.', 'Actuators Bay - Drawer M3, Section 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Dual DC Motor Driver — TB6612FNG', 'CICR-MOT-005', 'Motors & Drivers', 'TB6612FNG Dual H-Bridge Motor Driver Carrier module (1.2A continuous / 3.2A peak per channel, high efficiency MOSFET output).', 'Drivers & ESC Bay - Cabinet D1, Bin 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('ESC', 'CICR-MOT-006', 'Motors & Drivers', 'Electronic Speed Controller (ESC) with integrated BEC for brushless DC motor drive and PWM throttle control.', 'Drivers & ESC Bay - Cabinet D1, Bin 1', 7, 7, 1, 'Good', 'In Stock', NULL, NULL),
+('ESP Cables', 'CICR-TOOL-003', 'Tools & Fabrication', 'High-speed shielded Micro-USB and USB-C data synchronization cables for ESP32/ESP8266 development boards.', 'Mechanical Bay - Bin M2, Rack 2', 10, 10, 2, 'Good', 'In Stock', NULL, NULL),
+('ESP32', 'CICR-MCU-003', 'Microcontrollers & SBCs', 'ESP-WROOM-32 32-bit Dual-Core 240MHz Wi-Fi + Bluetooth BLE Microcontroller Development Board.', 'Controllers Bay - Rack C1, Tray 3', 6, 6, 1, 'Good', 'In Stock', NULL, NULL),
+('ESP32-CAM', 'CICR-MCU-002', 'Microcontrollers & SBCs', 'ESP32 Development Board integrated with OV2640 2MP Camera module and TF/microSD card slot for computer vision & IoT streaming.', 'Controllers Bay - Rack C1, Tray 4', 4, 4, 1, 'Good', 'In Stock', NULL, NULL),
+('FlySky FS-i6 Remote', 'CICR-TOOL-013', 'Tools & Fabrication', 'FlySky FS-i6 6-Channel 2.4GHz AFHDS 2A Digital Proportional Radio Control System with LCD telemetry display.', 'Comms & RF Station - Cabinet R1, Shelf 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Gyroscope / Accelerometer', 'CICR-SEN-009', 'Sensors & Modules', 'MPU-6050 6-Axis Motion Tracking Sensor (3-Axis Gyroscope + 3-Axis Accelerometer) with I2C interface.', 'Sensors Bay - Rack S2, Box 1', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('I²C Serial Interface Module', 'CICR-TOOL-002', 'Tools & Fabrication', 'PCF8574 I2C Serial Backpack Interface Module for driving 1602 / 2004 character LCD displays using only 2 MCU pins.', 'Mechanical Bay - Bin M3, Tray 1', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Ignition Wires', 'CICR-TOOL-006', 'Tools & Fabrication', 'Heavy-duty high-temperature silicone insulated ignition and spark-gap wiring set for internal combustion and pyrotechnics.', 'Mechanical Bay - Bin M1, Section 1', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('IR Receivers', 'CICR-SEN-002', 'Sensors & Modules', 'TSOP38238 / VS1838B 38kHz Infrared Remote Control Receiver Sensor modules with integrated demodulator.', 'Sensors Bay - Rack S3, Box 4', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('IR Sensor', 'CICR-SEN-004', 'Sensors & Modules', 'Infrared Obstacle Avoidance Proximity Sensor with IR transmitter, receiver diode, and comparator circuit.', 'Sensors Bay - Rack S3, Box 2', 5, 5, 1, 'Good', 'In Stock', NULL, NULL),
+('IR Wireless Remote — 21 Keys', 'CICR-TOOL-012', 'Tools & Fabrication', '21-Key Infrared Wireless Remote Control transmitter keypad with standard NEC protocol and CR2025/CR2032 coin cell.', 'Comms & RF Station - Cabinet R2, Bin 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Joystick', 'CICR-TOOL-011', 'Tools & Fabrication', 'Dual-Axis Analog PS2 Thumb Joystick Module (X/Y potentiometers + integrated tactile pushbutton).', 'Comms & RF Station - Cabinet R2, Bin 2', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('L293N Motor Driver', 'CICR-MOT-003', 'Motors & Drivers', 'L293 / L293D dual full-bridge push-pull four-channel motor driver board with clamp diodes for inductive loads.', 'Drivers & ESC Bay - Cabinet D1, Bin 4', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('L298D Motor Driver', 'CICR-MOT-004', 'Motors & Drivers', 'High-power dual full-bridge motor driver module with onboard 5V regulator and heat sink for high current DC/stepper loads.', 'Drivers & ESC Bay - Cabinet D1, Bin 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('LDR Sensor', 'CICR-SEN-011', 'Sensors & Modules', 'Light Dependent Resistor (Photoresistor) sensor module with onboard potentiometer for ambient light threshold detection.', 'Sensors Bay - Rack S1, Box 4', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('Light / Hall Effect Sensor', 'CICR-SEN-007', 'Sensors & Modules', 'Combined Hall Effect Magnetic Field and Ambient Light detection module for positional tracking and proximity sensing.', 'Sensors Bay - Rack S2, Box 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('LM35CAZ Temperature Sensor', 'CICR-SEN-006', 'Sensors & Modules', 'Precision Centigrade Temperature Sensor IC in TO-92 package with linear +10.0 mV/°C scale factor (-55°C to 150°C).', 'Sensors Bay - Rack S2, Box 4', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('MG90S Servo', 'CICR-MOT-013', 'Motors & Drivers', 'Micro Metal Gear Servo Motor (180 degree rotation, stall torque 2.2kg-cm at 6V, weight 13.4g) with mounting horns.', 'Actuators Bay - Drawer M1, Section 2', 8, 8, 2, 'Good', 'In Stock', NULL, NULL),
+('MG995 Servo', 'CICR-MOT-014', 'Motors & Drivers', 'High-Torque Metal Gear Standard Servo Motor (180 degree rotation, stall torque 10kg-cm to 13kg-cm at 6V).', 'Actuators Bay - Drawer M1, Section 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Moisture Sensor', 'CICR-SEN-013', 'Sensors & Modules', 'Soil moisture and humidity detection sensor probe with LM393 comparator module for analog/digital reading.', 'Sensors Bay - Rack S1, Box 2', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Neo-6M GPS Module', 'CICR-SEN-001', 'Sensors & Modules', 'u-blox NEO-6M High Sensitivity Satellite GPS Positioning Module with ceramic patch antenna and EEPROM (UART).', 'Sensors Bay - Rack S3, Box 5', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('OLED Display', 'CICR-TOOL-010', 'Tools & Fabrication', '0.96-inch Monochrome 128x64 I2C OLED Display Module (SSD1306 driver, 3.3V/5V compatible, high contrast).', 'Display & Output Unit - Drawer O1, Tray 1', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('PIR Motion Sensor', 'CICR-SEN-014', 'Sensors & Modules', 'HC-SR501 Passive Infrared (PIR) Motion Detector module with adjustable sensitivity and delay time (3.3V-5V DC).', 'Sensors Bay - Rack S1, Box 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Potentiometer', 'CICR-PWR-001', 'Power & Batteries', 'Standard 10k Rotary Precision Potentiometer with knurled shaft for voltage dividing, tuning, and sensor calibration.', 'Power Station - Cabinet P2, Bin 3', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('Pump Motor', 'CICR-MOT-010', 'Motors & Drivers', 'Miniature 3V-6V DC Submersible Fluid / Water Pump Motor for automated dispensing and fluid transfer robotics.', 'Actuators Bay - Drawer M2, Section 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Radio Telemetry Kit — S-CU3E', 'CICR-TOOL-015', 'Tools & Fabrication', 'S-CU3E Long-Range Radio Telemetry Transceiver Kit with paired ground and air modules (433MHz/915MHz) for MAVLink telemetry.', 'Comms & RF Station - Cabinet R1, Shelf 1', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Relay Module', 'CICR-PWR-002', 'Power & Batteries', '5V Optocoupler-Isolated Single/Multi-Channel Relay Module for switching AC 250V/10A or DC 30V/10A high-power circuits.', 'Power Station - Cabinet P2, Bin 2', 5, 5, 1, 'Good', 'In Stock', NULL, NULL),
+('Resistor Box', 'CICR-TOOL-005', 'Tools & Fabrication', 'Comprehensive 1/4W Metal Film Resistor Assortment Kit Box containing common values from 10 ohm to 1M ohm.', 'Mechanical Bay - Bin M1, Section 2', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('RUN CAM', 'CICR-TOOL-001', 'Tools & Fabrication', 'RunCam Micro / Swift High-Resolution Ultra-Low Latency FPV Camera (1/3" Sony CCD sensor, WDR, OSD) for drone piloting.', 'Mechanical Bay - Bin M3, Tray 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('SG90 Servo', 'CICR-MOT-012', 'Motors & Drivers', 'Ultra-lightweight 9g Micro Servo Motor with nylon gear train for aeromodelling, pan-tilt heads, and miniature robotics.', 'Actuators Bay - Drawer M1, Section 3', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Stepper Motor', 'CICR-MOT-011', 'Motors & Drivers', 'Bipolar 4-wire Stepper Motor (NEMA standard) for precise angular positioning and CNC / 3D printer axis propulsion.', 'Actuators Bay - Drawer M2, Section 1', 8, 8, 2, 'Good', 'In Stock', NULL, NULL),
+('Temperature & Humidity Sensor', 'CICR-SEN-012', 'Sensors & Modules', 'DHT11 / DHT22 Digital Temperature and Humidity Sensor with single-bus digital signal output.', 'Sensors Bay - Rack S1, Box 3', 2, 2, 1, 'Good', 'In Stock', NULL, NULL),
+('TFT Display — 2.4 inch', 'CICR-TOOL-009', 'Tools & Fabrication', '2.4-inch Full Color 240x320 SPI TFT LCD Display Module with integrated resistive touch panel and SD card slot.', 'Display & Output Unit - Drawer O1, Tray 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Touch Sensor', 'CICR-SEN-010', 'Sensors & Modules', 'TTP223 Capacitive Touch Switch Sensor Module with low power consumption and momentary/toggle modes.', 'Sensors Bay - Rack S1, Box 5', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),
+('Ultrasonic Sensor', 'CICR-SEN-005', 'Sensors & Modules', 'HC-SR04 Ultrasonic Distance Measuring Transceiver Module (range 2cm - 400cm, 5V DC, trigger/echo).', 'Sensors Bay - Rack S3, Box 1', 3, 3, 1, 'Good', 'In Stock', NULL, NULL),
+('Vibration Sensor', 'CICR-SEN-008', 'Sensors & Modules', 'SW-420 Normally Closed Vibration Sensor Module with LM393 comparator for impact, shake, and tamper detection.', 'Sensors Bay - Rack S2, Box 2', 1, 1, 1, 'Good', 'In Stock', NULL, NULL)
 ON CONFLICT (sku) DO NOTHING;
+
+-- Migration: Make location optional
+ALTER TABLE public.inventory_items ALTER COLUMN location DROP NOT NULL;
+ALTER TABLE public.inventory_items ALTER COLUMN location SET DEFAULT '';
