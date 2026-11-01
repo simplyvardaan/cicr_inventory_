@@ -15,7 +15,7 @@ import { AdminHubView } from './AdminHubView';
 import { OperatorProfileView } from './OperatorProfileView';
 import { IssuePassModal } from './IssuePassModal';
 import { InventoryItem, BorrowRequest, isReturnRequested } from '../../types/inventory';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseAdmin } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { Notification } from '../ui/notification-bell';
 
@@ -187,13 +187,13 @@ export const UserDashboard: React.FC = () => {
       });
 
       try {
-        const { data: reqLogs } = await supabase
+        const { data: reqLogs } = await supabaseAdmin
           .from('activity_logs')
           .select('*')
           .eq('action', 'ACCOUNT_REQUEST')
           .order('created_at', { ascending: false });
 
-        (reqLogs || []).forEach((log: any) => {
+        (reqLogs || []).forEach((log) => {
           let details: any = {};
           try {
             details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;

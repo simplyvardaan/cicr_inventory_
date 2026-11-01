@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
 import { notifyEmail } from '../lib/notifications';
@@ -71,7 +71,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setItems(normalizedItems);
 
         // 2. Fetch real borrow requests from Supabase
-        const { data: dbRequests } = await supabase
+        const { data: dbRequests } = await supabaseAdmin
           .from('borrow_requests')
           .select('*')
           .order('created_at', { ascending: false });
@@ -80,8 +80,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setRequests(dbRequests as BorrowRequest[]);
         }
 
-        // 3. Fetch real activity logs (full multi-day audit history via supabase)
-        const { data: dbLogs } = await supabase
+        // 3. Fetch real activity logs (full multi-day audit history via supabaseAdmin)
+        const { data: dbLogs } = await supabaseAdmin
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
@@ -129,7 +129,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data) {
         setItems((prev) => [data as InventoryItem, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Admin',
@@ -175,8 +175,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       delete cleanUpdates.id;
       delete cleanUpdates.created_at;
 
-      // 1. Prioritize supabase with select() to bypass client RLS issues and guarantee row update
-      let { data, error } = await supabase
+      // 1. Prioritize supabaseAdmin with select() to bypass client RLS issues and guarantee row update
+      let { data, error } = await supabaseAdmin
         .from('inventory_items')
         .update(cleanUpdates)
         .eq('id', id)
@@ -235,7 +235,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
 
       try {
-        const logRes = await supabase.from('activity_logs').insert([logEntry]);
+        const logRes = await supabaseAdmin.from('activity_logs').insert([logEntry]);
         if (logRes.error) {
           await supabase.from('activity_logs').insert([logEntry]);
         }
@@ -313,7 +313,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const { data: dbData, error } = await supabase
+      const { data: dbData, error } = await supabaseAdmin
         .from('borrow_requests')
         .insert([
           {
@@ -336,7 +336,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (dbData) {
         setRequests((prev) => [dbData as BorrowRequest, ...prev]);
         try {
-          await supabase.from('activity_logs').insert([
+          await supabaseAdmin.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Member',
@@ -392,7 +392,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (newStatus === 'approved') {
         updatePayload.borrow_date = new Date().toISOString().split('T')[0];
         
-        // Decrement available quantity in Supabase backend via supabase
+        // Decrement available quantity in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -404,7 +404,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -428,7 +428,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const cleanNotes = (targetReq?.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
         updatePayload.admin_notes = adminNotes || (cleanNotes ? `${cleanNotes} (Returned & Restocked)` : 'Returned & Restocked');
 
-        // Increment available quantity back in Supabase backend via supabase
+        // Increment available quantity back in Supabase backend via supabaseAdmin
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -440,7 +440,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabase
+            await supabaseAdmin
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -461,8 +461,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
 
-      // Update borrow request in Supabase via supabase
-      const { error } = await supabase
+      // Update borrow request in Supabase via supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update(updatePayload)
         .eq('id', requestId);
@@ -476,7 +476,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Log activity in Supabase
       if (targetReq) {
-        await supabase.from('activity_logs').insert([
+        await supabaseAdmin.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: profile?.full_name || 'Admin',
@@ -539,7 +539,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ? `${noteTag} (${userDisplay}): ${returnNotes.trim()}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`
         : `${noteTag} Return submitted by ${userDisplay} on ${new Date().toLocaleDateString('en-IN')}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`;
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update({
           admin_notes: updatedNotes,
@@ -558,7 +558,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
 
       try {
-        await supabase.from('activity_logs').insert([
+        await supabaseAdmin.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: userDisplay,
@@ -588,7 +588,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const cleanNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
       const updatedNotes = reason ? `${cleanNotes ? `${cleanNotes} | ` : ''}Return declined: ${reason}` : (cleanNotes || null);
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('borrow_requests')
         .update({
           admin_notes: updatedNotes,

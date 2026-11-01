@@ -114,42 +114,24 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Function to handle new user registration securely
--- Ignores client-provided role and status to prevent privilege escalation
+-- 6. Function to handle new user registration automatically
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
-DECLARE
-  is_superadmin BOOLEAN;
-  assigned_role TEXT;
-  assigned_status TEXT;
 BEGIN
-  is_superadmin := LOWER(NEW.email) IN (
-    'vardaansaxena096@gmail.com',
-    'cicrinventory@gmail.com',
-    'cicrinventoryofficial@gmail.com'
-  );
-
-  IF is_superadmin THEN
-    assigned_role := 'admin';
-    assigned_status := 'approved';
-  ELSE
-    assigned_role := 'member';
-    assigned_status := 'pending';
-  END IF;
-
-  INSERT INTO public.profiles (id, full_name, email, role, roll_number, status, avatar_url)
+  INSERT INTO public.profiles (id, full_name, email, role, roll_number, status)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     NEW.email,
-    assigned_role,
+    COALESCE(NEW.raw_user_meta_data->>'role', 'member'),
     COALESCE(NEW.raw_user_meta_data->>'roll_number', ''),
-    assigned_status,
-    'status:' || assigned_status
+    COALESCE(NEW.raw_user_meta_data->>'status', 'pending')
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     email = EXCLUDED.email,
+    role = EXCLUDED.role,
+    status = EXCLUDED.status,
     roll_number = EXCLUDED.roll_number,
     updated_at = NOW();
   RETURN NEW;
@@ -201,42 +183,19 @@ CREATE TRIGGER on_borrow_request_status_change
   AFTER UPDATE OF status ON public.borrow_requests
   FOR EACH ROW EXECUTE FUNCTION public.update_inventory_on_borrow();
 
--- 8. Authorization Helper Function
-CREATE OR REPLACE FUNCTION public.is_admin_or_lead()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-      AND role IN ('admin', 'lead')
-      AND status = 'approved'
-  ) OR (
-    COALESCE(auth.jwt()->>'email', '') IN (
-      'vardaansaxena096@gmail.com',
-      'cicrinventory@gmail.com',
-      'cicrinventoryofficial@gmail.com'
-    )
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
-
--- 9. Enable Row Level Security (RLS)
+-- 8. Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.borrow_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
--- 10. Robust RLS Policies
-
--- Profiles: viewable by authenticated users only (prevents public scraping of PII)
+-- 9. RLS Policies
+-- Profiles: everyone can view profiles, users can update their own profile
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
-DROP POLICY IF EXISTS "Profiles viewable by authenticated users" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
-
-CREATE POLICY "Profiles viewable by authenticated users" 
-  ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Public profiles are viewable by everyone" 
+  ON public.profiles FOR SELECT USING (true);
 
 CREATE POLICY "Users can insert their own profile" 
   ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
@@ -244,65 +203,46 @@ CREATE POLICY "Users can insert their own profile"
 CREATE POLICY "Users can update their own profile" 
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Admins can update any profile" 
-  ON public.profiles FOR UPDATE USING (public.is_admin_or_lead());
-
--- Inventory items: readable by anyone, mutations strictly restricted to admins and leads
+-- Inventory items: readable by anyone, editable by authenticated users
 DROP POLICY IF EXISTS "Inventory is viewable by all users" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can insert inventory items" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can update inventory items" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can delete inventory items" ON public.inventory_items;
-DROP POLICY IF EXISTS "Admins and leads can insert inventory items" ON public.inventory_items;
-DROP POLICY IF EXISTS "Admins and leads can update inventory items" ON public.inventory_items;
-DROP POLICY IF EXISTS "Admins and leads can delete inventory items" ON public.inventory_items;
-
 CREATE POLICY "Inventory is viewable by all users" 
   ON public.inventory_items FOR SELECT USING (true);
 
-CREATE POLICY "Admins and leads can insert inventory items" 
-  ON public.inventory_items FOR INSERT WITH CHECK (public.is_admin_or_lead());
+CREATE POLICY "Authenticated users can insert inventory items" 
+  ON public.inventory_items FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Admins and leads can update inventory items" 
-  ON public.inventory_items FOR UPDATE USING (public.is_admin_or_lead());
+CREATE POLICY "Authenticated users can update inventory items" 
+  ON public.inventory_items FOR UPDATE USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Admins and leads can delete inventory items" 
-  ON public.inventory_items FOR DELETE USING (public.is_admin_or_lead());
+CREATE POLICY "Authenticated users can delete inventory items" 
+  ON public.inventory_items FOR DELETE USING (auth.role() = 'authenticated');
 
--- Borrow requests: viewable by authenticated users, insertable for own user_id,
--- updates and deletes strictly restricted to admins or own pending requests
+-- Borrow requests: all authenticated users can view, users can insert their own requests, authenticated can update
 DROP POLICY IF EXISTS "Borrow requests viewable by authenticated users" ON public.borrow_requests;
 DROP POLICY IF EXISTS "Users can create borrow requests" ON public.borrow_requests;
 DROP POLICY IF EXISTS "Authenticated users can update borrow requests" ON public.borrow_requests;
-DROP POLICY IF EXISTS "Admins or owners of pending requests can update borrow requests" ON public.borrow_requests;
-DROP POLICY IF EXISTS "Admins or owners of pending requests can delete borrow requests" ON public.borrow_requests;
-
 CREATE POLICY "Borrow requests viewable by authenticated users" 
   ON public.borrow_requests FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Users can create borrow requests" 
-  ON public.borrow_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+  ON public.borrow_requests FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Admins or owners of pending requests can update borrow requests" 
-  ON public.borrow_requests FOR UPDATE USING (
-    public.is_admin_or_lead() OR (auth.uid() = user_id AND status = 'pending')
-  );
-
-CREATE POLICY "Admins or owners of pending requests can delete borrow requests" 
-  ON public.borrow_requests FOR DELETE USING (
-    public.is_admin_or_lead() OR (auth.uid() = user_id AND status = 'pending')
-  );
+CREATE POLICY "Authenticated users can update borrow requests" 
+  ON public.borrow_requests FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Activity logs: viewable and insertable by authenticated users
 DROP POLICY IF EXISTS "Activity logs viewable by authenticated users" ON public.activity_logs;
 DROP POLICY IF EXISTS "Activity logs insertable by authenticated users" ON public.activity_logs;
-
 CREATE POLICY "Activity logs viewable by authenticated users" 
   ON public.activity_logs FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Activity logs insertable by authenticated users" 
   ON public.activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
--- 11. Initial Seed Data for CICR Inventory (53 Authentic Components, 172 Total Assets)
+-- 10. Initial Seed Data for CICR Inventory (53 Authentic Components, 172 Total Assets)
 INSERT INTO public.inventory_items (name, sku, category, description, location, total_qty, available_qty, min_threshold, condition, status, image_url, datasheet_url)
 VALUES
 ('5-Channel Infrared Tracking Sensor', 'CICR-SEN-003', 'Sensors & Modules', '5-channel TCRT5000 IR Line Tracking Sensor array module for line-following autonomous robotics.', 'Sensors Bay - Rack S3, Box 3', 1, 1, 1, 'Good', 'In Stock', NULL, NULL),

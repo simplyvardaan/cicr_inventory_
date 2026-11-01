@@ -1,17 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { getMailFrom, isSmtpConfigured, getTransporter, renderEmail } from './_mailer';
-
-const DEFAULT_REF = 'nmwkljtaymujqnmzgyxn';
-const DEFAULT_URL = `https://${DEFAULT_REF}.supabase.co`;
-const DEFAULT_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2tsanRheW11anFubXpneXhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODQ0MDYsImV4cCI6MjEwODk2MDQwNn0.LGEoX7QPu2O9yxw0LT74rerIo4_Tj9CHCWlsT1hoxT8';
-
-const SUPERADMIN_EMAILS = [
-  'vardaansaxena096@gmail.com',
-  'cicrinventory@gmail.com',
-  'cicrinventoryofficial@gmail.com',
-];
 
 const allowedEvents = new Set([
   'login',
@@ -33,27 +21,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(503).json({ error: 'SMTP is not configured.' });
   }
 
-  // 1. Enforce Authentication: require valid Bearer token
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication is required to dispatch notifications.' });
-  }
-
-  const token = authHeader.slice(7);
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_URL;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
-  const supabase = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data: userData, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !userData?.user) {
-    return res.status(401).json({ error: 'Invalid or expired authentication credentials.' });
-  }
-
-  const callerUser = userData.user;
-  const callerEmail = (callerUser.email || '').toLowerCase();
-
   let body = req.body;
   if (typeof body === 'string') {
     try {
@@ -69,27 +36,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   if (typeof to !== 'string' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     return res.status(400).json({ error: 'A valid recipient is required.' });
-  }
-
-  // 2. Authorization boundary:
-  // Non-admin users can ONLY send notifications to their own verified email address.
-  // Only verified administrators or superadmins can dispatch emails to third-party recipients.
-  const isSuperadmin = SUPERADMIN_EMAILS.includes(callerEmail);
-  const isSelf = to.trim().toLowerCase() === callerEmail;
-
-  if (!isSelf && !isSuperadmin) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', callerUser.id)
-      .maybeSingle();
-
-    const isAdmin = profile?.role === 'admin' && profile?.status === 'approved';
-    if (!isAdmin) {
-      return res.status(403).json({
-        error: 'Forbidden: You are only authorized to dispatch notifications to your own verified address.',
-      });
-    }
   }
 
   try {

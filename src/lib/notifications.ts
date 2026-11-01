@@ -1,12 +1,9 @@
-import { supabase } from './supabase';
-
 export type NotificationEvent =
   | 'login'
   | 'logout'
   | 'account_created'
   | 'account_approved'
   | 'account_rejected'
-  | 'role_updated'
   | 'borrow_requested'
   | 'borrow_approved'
   | 'borrow_rejected'
@@ -23,19 +20,9 @@ export async function notifyEmail(
     return false;
   }
   try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
-    if (!token) {
-      // If not authenticated, email cannot be dispatched via protected endpoint
-      return false;
-    }
-
     const response = await fetch('/api/email', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ event, to, data }),
     });
     if (!response.ok) {
