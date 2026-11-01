@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.10] : 2026-11-01
+
+### Fixed
+* Complete Component Return & Authentic 53-Component Inventory Restoration:
+  - Pruned 12 legacy mock items that had bloated the database to 65 components and 324 assets, safely re-linking prior loan activity to live components.
+  - Returned 100% of borrowed components across the entire inventory, setting `available_qty = total_qty` (all 172 units in stock, 0 unreturned units) and status `'In Stock'`.
+  - Reconciled all borrow requests to `'returned'` with return dates and cleared notes.
+  - Mirrored the clean 53-component database state to Neon PostgreSQL.
+  - Updated `supabase_schema.sql` seed definitions with the 53 authentic CICR hardware components.
+  - Added repository automation utility `scripts/restore_inventory.cjs` for automated catalog health verification.
+
+***
+
 ## [2.18.9] : 2026-11-01
 
 ### Added
@@ -16,14 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Implemented real-time status indication: while return clearance is pending, borrowers and administrators see a pulsing purple `Return Clearance Pending` / `Return Request Sent (Awaiting Admin)` badge.
   - Added a "Returns" filter tab and counter badge in `RequisitionsView.tsx` with one-click admin clearance actions: "Approve Return & Restock" (which increments inventory stock, updates actual return date, sends email confirmation, and logs to audit history) and "Decline" with reason input.
   - Added real-time notification alerts in `TopNavbar` and navigation dock badge counters in `BottomNavbar` for pending return clearance requests.
-
-### Fixed
-* Complete Component Return & Authentic 53-Component Inventory Restoration:
-  - Pruned 12 legacy mock items that had bloated the database to 65 components and 324 assets, safely re-linking prior loan activity to live components.
-  - Returned 100% of borrowed components across the entire inventory, setting `available_qty = total_qty` (all 172 units in stock, 0 unreturned units) and status `'In Stock'`.
-  - Reconciled all borrow requests to `'returned'` with return dates and cleared notes.
-  - Mirrored the clean 53-component database state to Neon PostgreSQL.
-  - Updated `supabase_schema.sql` seed definitions with the 53 authentic CICR hardware components.
 
 ***
 
