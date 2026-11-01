@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { Client } from 'pg';
 
 const tables = new Set([
@@ -12,49 +11,6 @@ const tables = new Set([
 const identifier = /^[a-z_][a-z0-9_]*$/;
 const SUPABASE_TIMEOUT_MS = 8_000;
 const NEON_CONNECTION_TIMEOUT_MS = 8_000;
-
-async function authenticate(req: VercelRequest) {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_ANON_KEY;
-  const authorization = req.headers.authorization;
-  if (!url || !key || !authorization?.startsWith('Bearer ')) throw new Error('Authentication is required.');
-  const supabase = createClient(url, key, { auth: { persistSession: false } });
-  const { data, error } = await supabase.auth.getUser(authorization.slice(7));
-  if (error || !data.user) throw new Error('Authentication is required.');
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-  return { user: data.user, isAdmin: profile?.role === 'admin' || data.user.user_metadata?.role === 'admin' };
-}
-
-function assertAuthorized(req: VercelRequest, path: string, method: string, userId: string, isAdmin: boolean) {
-  const table = parseTable(path);
-  const query = req.query as Record<string, string | string[] | undefined>;
-  const requestedUserId = Array.isArray(query.user_id) ? query.user_id[0] : query.user_id;
-  if (isAdmin) return;
-  if (table === 'inventory_items' && method !== 'GET') throw new Error('Administrator access is required.');
-  if (table === 'profiles' && (method !== 'GET' || requestedUserId !== userId)) {
-    throw new Error('You may only access your own profile.');
-  }
-  if (table === 'borrow_requests' && method === 'GET' && requestedUserId !== userId) {
-    throw new Error('You may only access your own requests.');
-  }
-  if (table === 'borrow_requests' && method === 'PATCH') {
-    throw new Error('Administrator access is required for request updates.');
-  }
-  if (table === 'borrow_requests' && method === 'POST') {
-    const body = Array.isArray(req.body) ? req.body[0] : req.body;
-    if (!body || body.user_id !== userId) throw new Error('You may only create your own requests.');
-  }
-  if (table === 'borrow_requests' && method === 'DELETE') {
-    throw new Error('Administrator access is required.');
-  }
-  if (table === 'activity_logs' && method === 'GET' && requestedUserId !== userId) {
-    throw new Error('You may only view your own activity.');
-  }
-  if (table === 'activity_logs' && method !== 'GET') {
-    const body = Array.isArray(req.body) ? req.body[0] : req.body;
-    if (body?.user_id !== userId) throw new Error('You may only write your own activity.');
-  }
-}
 
 function quoteIdentifier(value: string) {
   if (!identifier.test(value)) throw new Error('Invalid database identifier.');
@@ -219,8 +175,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method || '')) {
       return jsonResponse(res, 405, { error: 'Method not allowed.' });
     }
-    const { user, isAdmin } = await authenticate(req);
-    assertAuthorized(req, path, req.method || 'GET', user.id, isAdmin);
 
     try {
       const originalQuery = new URLSearchParams();

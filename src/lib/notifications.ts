@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 export type NotificationEvent =
   | 'login'
   | 'logout'
@@ -17,30 +15,24 @@ export async function notifyEmail(
   to: string | undefined,
   data: Record<string, unknown>
 ): Promise<boolean> {
-  if (!to) return false;
+  if (!to) {
+    console.warn(`Email notification skipped for ${event}: recipient is missing.`);
+    return false;
+  }
   try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
-
-    const headers: Record<string, string> = {
-      'content-type': 'application/json',
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch('/api/email', {
       method: 'POST',
-      headers,
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ event, to, data }),
     });
-
     if (!response.ok) {
+      const details = await response.text();
+      console.warn(`Email notification failed for ${event}: ${response.status} ${details}`);
       return false;
     }
-    const result = await response.json().catch(() => ({}));
-    return Boolean(result?.sent);
-  } catch {
+    return true;
+  } catch (error) {
+    console.warn(`Email notification failed for ${event}:`, error);
     return false;
   }
 }

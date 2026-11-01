@@ -6,36 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [2.18.19] - 2026-11-01
-
-### Fixed
-* **Admin Portal Request Reception & Real-Time Sync**:
-  - Integrated a dedicated **Equipment Requisitions** tab into the Admin Management Hub (`AdminHubView.tsx`) with real-time pending badge counter, search, status filters (Pending, Approved, Returned, Rejected), and one-click Approve / Reject / Return clearance actions.
-  - Added live 3-second auto-polling for pending account requests and club members in `UserDashboard.tsx`, ensuring new user registrations and requisitions are received immediately without manual refreshes.
-  - Enabled interactive navigation on summary metrics cards: clicking "Pending Signups" and "Requisitions" jumps directly to the respective approval queues.
-* **Administrative Privilege Resolution**:
-  - Unified `isAdmin` and `isLeadOrAdmin` across `AuthContext.tsx`, `UserDashboard.tsx`, and `RequisitionsView.tsx` to recognize superadmin identities and roles regardless of profile hydration latency.
-  - Ensured `RequisitionsView.tsx` always displays all club requisitions to administrators instead of filtering by personal ID.
-* **Resilient Parallel Data Hydration**:
-  - Refactored `refreshData` in `InventoryContext.tsx` to use `Promise.allSettled`, eliminating blocking dependencies so borrow requests, inventory items, and audit logs load independently.
-
-***
-
-## [2.18.18] - 2026-11-01
-
-### Fixed
-* **Vercel Production Deployment & Resilient Initialization**:
-  - Restored fail-safe public Supabase configuration fallbacks in src/lib/supabase.ts ensuring the frontend bundle never crashes when environment variables are not injected into the client bundle at build time.
-* **Serverless Email Notification Stability (api/email.ts, api/_mailer.ts)**:
-  - Eliminated FUNCTION_INVOCATION_FAILED (500) errors by applying strict 3500ms serverless socket, greeting, and connection timeouts with non-pooling transports.
-  - Added safe fallback responses (200 OK with { sent: false }) when SMTP credentials are unconfigured or connections time out, ensuring background notifications never disrupt user operations.
-  - Hardened api/accounts.ts to ensure account registration and approval workflows continue uninterrupted regardless of email service availability.
-* **Avatar URL Sanitization (net::ERR_UNKNOWN_URL_SCHEME)**:
-  - Enforced strict URI scheme validation (http://, https://, data:image/) on all profile image rendering in BottomNavbar, OperatorProfileView, and SignupForm.
-  - Filtered legacy status:* database indicators from being treated as image sources in AuthContext and user profile views.
-
-***
-
 ## [2.18.17] : 2026-11-01
 
 ### Added
@@ -47,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - **Tap-to-Navigate**: Tapping any tab switches pages immediately and collapses back to that page's pill.
     - **Tap Active to Toggle**: Tapping the active tab toggles the dock or category submenu.
     - **Outside Tap & Scroll Dismissal**: Tapping anywhere outside or scrolling >35px cleanly dismisses the dock.
-    - **Adaptive Ultra-Compact Mobile Layout (278px total width on mobile)**:
+    - **Adaptive Ultra-Compact Mobile Layout (278px total width on mobile)**: 
       - Active tab displays full label + icon.
       - Inactive tabs display sleek 28px circular icon touch targets (`w-7 h-7 sm:w-auto`).
       - Gaps standardized to `gap-0.5 sm:gap-1` on tablist container.
@@ -215,7 +185,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.18.4] : 2026-11-01
 
 ### Fixed
-* Google SMTP Password Fallback & Credentials Sanitization: Removed embedded SMTP credential fallbacks from `api/_mailer.ts` and retained whitespace/quote sanitization for configured 16-character Google App Passwords.
+* Google SMTP Password Fallback & Credentials Sanitization: Corrected the encoded base64 Google App Password fallback in `api/_mailer.ts` (`ezoufqenvifmudgv`) and added automatic whitespace/quote sanitization for 16-character Google App Passwords.
 * Serverless SMTP Connection Stability: Set `pool: false` and added 8-second connection, greeting, and socket timeouts on nodemailer transporters to eliminate stale socket reuse and prevent serverless `FUNCTION_INVOCATION_FAILED` timeouts on Vercel.
 * Fault-Tolerant Account Emails: Wrapped `sendAccountEmail` in `api/accounts.ts` and `api/reminders.ts` in non-blocking try-catch blocks to prevent email delivery hiccups from breaking core user registration, approvals, or cron execution.
 * Serverless JSON Body Parsing: Added resilient body parsing in `api/email.ts` and `api/accounts.ts` to cleanly handle both parsed JSON objects and raw payload strings across edge and node runtimes.

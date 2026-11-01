@@ -107,7 +107,7 @@ export const OperatorProfileView: React.FC<OperatorProfileViewProps> = ({
           <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#14141c] border border-slate-200 dark:border-zinc-800">
             <div className="relative group shrink-0">
               <div className="w-20 h-20 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-black text-3xl flex items-center justify-center shadow-lg ring-4 ring-blue-500/20 dark:ring-purple-500/30 overflow-hidden">
-                {editAvatarUrl && (editAvatarUrl.startsWith('data:image') || editAvatarUrl.startsWith('http')) ? (
+                {editAvatarUrl ? (
                   <img
                     src={editAvatarUrl}
                     alt={editName || userName}
