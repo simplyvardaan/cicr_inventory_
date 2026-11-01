@@ -357,37 +357,35 @@ export const UserDashboard: React.FC = () => {
 
   // Cart operations
   const handleAddToCart = (item: InventoryItem) => {
-    setCart((prev) => {
-      const existing = prev.find((c) => c.item.id === item.id);
-      if (existing) {
-        if (existing.quantity >= item.available_qty) {
-          showToast('warning', 'Max Units Added', `Only ${item.available_qty} items available in vault.`);
-          return prev;
-        }
-        showToast('info', 'Cart Updated', `Increased ${item.name} quantity.`);
-        return prev.map((c) => (c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c));
+    const existing = cart.find((c) => c.item.id === item.id);
+    if (existing) {
+      if (existing.quantity >= item.available_qty) {
+        showToast('warning', 'Max Units Added', `Only ${item.available_qty} items available in vault.`);
+        return;
       }
-      showToast('success', 'Staged in Cart', `${item.name} staged for requisition dispatch.`);
-      return [...prev, { item, quantity: 1 }];
-    });
+      setCart((prev) => prev.map((c) => (c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c)));
+      showToast('info', 'Cart Updated', `Increased ${item.name} quantity.`);
+      return;
+    }
+
+    setCart((prev) => [...prev, { item, quantity: 1 }]);
+    showToast('success', 'Staged in Cart', `${item.name} staged for requisition dispatch.`);
   };
 
   const handleUpdateCartQuantity = (itemId: string, delta: number) => {
+    const current = cart.find((c) => c.item.id === itemId);
+    if (!current) return;
+
+    const newQty = current.quantity + delta;
+    if (newQty > current.item.available_qty) {
+      showToast('warning', 'Limit Reached', `Only ${current.item.available_qty} units available.`);
+      return;
+    }
+
     setCart((prev) =>
-      prev
-        .map((c) => {
-          if (c.item.id === itemId) {
-            const newQty = c.quantity + delta;
-            if (newQty <= 0) return null;
-            if (newQty > c.item.available_qty) {
-              showToast('warning', 'Limit Reached', `Only ${c.item.available_qty} units available.`);
-              return c;
-            }
-            return { ...c, quantity: newQty };
-          }
-          return c;
-        })
-        .filter(Boolean) as CartItem[]
+      newQty <= 0
+        ? prev.filter((c) => c.item.id !== itemId)
+        : prev.map((c) => (c.item.id === itemId ? { ...c, quantity: newQty } : c))
     );
   };
 
