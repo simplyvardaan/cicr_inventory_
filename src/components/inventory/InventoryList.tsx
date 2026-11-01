@@ -24,7 +24,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
   preselectedCategory = 'All Categories',
 }) => {
   const { items, deleteItem } = useInventory();
-  const { isLeadOrAdmin } = useAuth();
+  const { isLeadOrAdmin, isAdmin } = useAuth();
   const { showToast } = useToast();
 
   const [search, setSearch] = useState('');
@@ -38,8 +38,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
       .filter((item) => {
         const matchesSearch =
           item.name.toLowerCase().includes(search.toLowerCase()) ||
-          item.description?.toLowerCase().includes(search.toLowerCase()) ||
-          item.location.toLowerCase().includes(search.toLowerCase());
+          item.description?.toLowerCase().includes(search.toLowerCase());
 
         const matchesCat =
           selectedCategory === 'All Categories' || item.category === selectedCategory;
@@ -95,7 +94,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
           Showing <span className="font-bold text-white">{filteredItems.length}</span> of {items.length} club items
         </div>
 
-        {isLeadOrAdmin && (
+        {isAdmin && (
           <button
             onClick={onOpenAddItem}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 transition-colors font-medium text-xs"
@@ -149,8 +148,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                 <tr>
                   <th className="py-3 px-4">Item Name</th>
                   <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4">Available / Total</th>
+                                    <th className="py-3 px-4">Available / Total</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>

@@ -65,6 +65,8 @@ This document provides a technical deep dive into the architecture, database sch
 | **v2.18.0** | `v2.18.0`, `v2.18` | Personalization & Clearance | Member loan scoping, streamlined clearance actions, notification read fix |
 | **v2.18.1** | `v2.18.1` | Responsive Navigation | Centered category dock popup, touch momentum scrolling, filter key parity |
 | **v2.18.2** | `v2.18.2` | Responsive Notifications | Centered mobile notification drawer, touch backdrop, tabs & dismiss actions |
+| **v2.18.3** | `v2.18.3` | Account Requests & Roster | Cross-audit pending account detection, roster hygiene & signup metadata sync |
+| **v2.18.4** | `v2.18.4` | Stable Google SMTP | Serverless SMTP socket timeouts, Google App Password sanitization & payload parsing |
 
 ---
 

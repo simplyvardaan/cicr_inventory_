@@ -14,6 +14,7 @@ import {
   XCircle,
   RotateCcw,
   Clock,
+  Pencil,
   LogIn,
   LogOut,
   UserPlus,
@@ -40,8 +41,8 @@ interface AdminHubViewProps {
   pendingAccounts: any[];
   processingUserId: string | null;
   onPromoteRole: (userId: string, newRole: 'admin' | 'member', name: string) => void;
-  onApproveAccount: (userId: string, name: string) => void;
-  onRejectAccount: (userId: string, name: string) => void;
+  onApproveAccount: (userId: string, name: string, email?: string) => void;
+  onRejectAccount: (userId: string, name: string, email?: string) => void;
   onRefresh: () => void;
 }
 
@@ -82,9 +83,9 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
   const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
   const [selectedMemberActivityId, setSelectedMemberActivityId] = useState<string | null>(null);
 
-  // 7-day logs state
+  // Activity logs state
   const [logSearch, setLogSearch] = useState('');
-  const [logDaysFilter, setLogDaysFilter] = useState<'24h' | '3d' | '7d' | 'all'>('7d');
+  const [logDaysFilter, setLogDaysFilter] = useState<'24h' | '3d'>('24h');
   const [logCategoryFilter, setLogCategoryFilter] = useState<'all' | 'borrow' | 'return' | 'account' | 'inventory'>('all');
 
   if (!isAdmin) {
@@ -258,9 +259,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
       {/* SUB-TAB 1: MEMBERS ROSTER */}
       {adminLogsTab === 'members' && (
         <div className="space-y-4">
+          {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-500" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 dark:text-zinc-500" />
               <input
                 type="text"
                 value={memberSearch}
@@ -279,98 +281,222 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
               )}
             </div>
 
+            {/* Role Filter Pills with Counts */}
             <div className="flex items-center gap-1.5">
-              {(['all', 'admin', 'member'] as const).map((r) => (
+              {(
+                [
+                  { key: 'all', label: 'All Roles', count: allMembers.length },
+                  { key: 'admin', label: 'Admins', count: allMembers.filter((m) => m.role === 'admin').length },
+                  { key: 'member', label: 'Members', count: allMembers.filter((m) => m.role !== 'admin').length },
+                ] as const
+              ).map((tab) => (
                 <button
-                  key={r}
+                  key={tab.key}
                   type="button"
-                  onClick={() => setMemberRoleFilter(r)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-colors cursor-pointer ${
-                    memberRoleFilter === r
+                  onClick={() => setMemberRoleFilter(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                    memberRoleFilter === tab.key
                       ? 'bg-blue-600 dark:bg-purple-600 text-white'
                       : 'bg-slate-100 dark:bg-[#14141c] text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white border-2 border-slate-200 dark:border-zinc-800'
                   }`}
                 >
-                  {r === 'all' ? 'All Roles' : r}
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                      memberRoleFilter === tab.key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Members List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {allMembers
-              .filter((m) => {
-                const q = memberSearch.toLowerCase().trim();
-                const matchesQ =
-                  !q ||
-                  (m.full_name && m.full_name.toLowerCase().includes(q)) ||
-                  (m.email && m.email.toLowerCase().includes(q)) ||
-                  (m.roll_number && m.roll_number.toLowerCase().includes(q));
-                const matchesR = memberRoleFilter === 'all' || m.role === memberRoleFilter;
-                return matchesQ && matchesR;
-              })
-              .map((member) => {
-                const isAdminMember = member.role === 'admin';
-                return (
-                  <div
-                    key={member.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-[#14141c] border-2 border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-purple-500 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
-                  >
-                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-purple-950/60 border border-blue-200 dark:border-purple-500/40 text-blue-600 dark:text-purple-300 font-bold flex items-center justify-center shrink-0">
-                        {(member.full_name || member.email || 'M').charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
-                            {member.full_name || 'Member'}
-                          </h4>
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase font-mono border ${
-                              isAdminMember
-                                ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-500/40'
-                                : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'
-                            }`}
-                          >
-                            {member.role || 'member'}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-slate-500 dark:text-zinc-400 block font-mono break-all mt-0.5">
-                          {member.email}
+          {/* Members Table */}
+          {(() => {
+            const filteredMembers = allMembers.filter((m) => {
+              const q = memberSearch.toLowerCase().trim();
+              const matchesQ =
+                !q ||
+                (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+                (m.email && m.email.toLowerCase().includes(q)) ||
+                (m.roll_number && m.roll_number.toLowerCase().includes(q));
+              const matchesR = memberRoleFilter === 'all' || m.role === memberRoleFilter;
+              return matchesQ && matchesR;
+            });
+
+            // Split into Admins and Members (Admins first, secondary sort alphabetical)
+            const adminGroup = filteredMembers
+              .filter((m) => m.role === 'admin')
+              .sort((a, b) => (a.full_name || a.email || '').localeCompare(b.full_name || b.email || ''));
+
+            const memberGroup = filteredMembers
+              .filter((m) => m.role !== 'admin')
+              .sort((a, b) => (a.full_name || a.email || '').localeCompare(b.full_name || b.email || ''));
+
+            if (filteredMembers.length === 0) {
+              return (
+                <div className="p-12 text-center rounded-2xl bg-slate-50 dark:bg-[#14141c] border-2 border-dashed border-slate-200 dark:border-zinc-800 space-y-2">
+                  <Users className="w-8 h-8 text-slate-400 mx-auto" />
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">No members found</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">
+                    {memberSearch ? `No roster entries matching "${memberSearch}".` : 'No members found in roster.'}
+                  </p>
+                </div>
+              );
+            }
+
+            const renderMemberRow = (member: any, isAdminMember: boolean) => (
+              <tr
+                key={member.id}
+                className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
+              >
+                {/* Member Avatar + Name */}
+                <td className="py-3.5 px-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 border ${
+                        isAdminMember
+                          ? 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-[#1e1730] dark:text-purple-300 dark:border-purple-800/60'
+                          : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                      }`}
+                    >
+                      {(member.full_name || member.email || 'M').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                          {member.full_name || 'Member'}
                         </span>
-                        {member.roll_number && (
-                          <span className="text-[10px] text-slate-400 dark:text-zinc-500 block font-mono mt-0.5">
-                            Roll: {member.roll_number}
-                          </span>
+                        {isAdminMember && (
+                          <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
                         )}
                       </div>
-                    </div>
-
-                    {/* Role Promotion / Demotion Action */}
-                    <div className="sm:shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-zinc-800/80 flex sm:block justify-end">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onPromoteRole(
-                            member.id,
-                            isAdminMember ? 'member' : 'admin',
-                            member.full_name || member.email
-                          )
-                        }
-                        className={`w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-center ${
-                          isAdminMember
-                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-slate-300 dark:border-zinc-700'
-                            : 'bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600'
-                        }`}
-                      >
-                        {isAdminMember ? 'Demote to Member' : 'Promote to Admin'}
-                      </button>
+                      <span className="text-[10px] text-slate-500 dark:text-zinc-400 md:hidden font-mono block truncate">
+                        {member.email}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-          </div>
+                </td>
+
+                {/* Email Address */}
+                <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600 dark:text-zinc-300 whitespace-nowrap">
+                  {member.email}
+                </td>
+
+                {/* Roll Number */}
+                <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                  {member.roll_number || '—'}
+                </td>
+
+                {/* Clearance Role */}
+                <td className="py-3.5 px-4 whitespace-nowrap">
+                  {isAdminMember ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400" />
+                      ADMIN
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-zinc-500" />
+                      MEMBER
+                    </span>
+                  )}
+                </td>
+
+                {/* Management Action Button */}
+                <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
+                  {isAdminMember ? (
+                    <button
+                      type="button"
+                      disabled={processingUserId === member.id}
+                      onClick={() =>
+                        onPromoteRole(member.id, 'member', member.full_name || member.email)
+                      }
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-slate-300 dark:border-zinc-700"
+                    >
+                      {processingUserId === member.id ? 'Updating...' : 'Demote to Member'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={processingUserId === member.id}
+                      onClick={() =>
+                        onPromoteRole(member.id, 'admin', member.full_name || member.email)
+                      }
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-[#1b152b] dark:hover:bg-[#261c3d] dark:text-purple-300 border-purple-300 dark:border-purple-800/70"
+                    >
+                      {processingUserId === member.id ? 'Updating...' : 'Promote to Admin'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+
+            return (
+              <div className="overflow-x-auto rounded-2xl border-2 border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#14141c] shadow-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 dark:border-zinc-800 bg-slate-100/70 dark:bg-[#181824] text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                      <th className="py-3 px-4 sm:px-6">Member</th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Enrollment Number</th>
+                      <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4 sm:px-6 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80 text-xs">
+                    {/* Section 1: Administrators (Shown First) */}
+                    {adminGroup.length > 0 && (
+                      <>
+                        <tr className="bg-slate-50 dark:bg-[#171722] border-y border-slate-200 dark:border-zinc-800/80">
+                          <td colSpan={5} className="py-2.5 px-4 sm:px-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">
+                                  Administrators
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
+                                  {adminGroup.length}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {adminGroup.map((member) => renderMemberRow(member, true))}
+                      </>
+                    )}
+
+                    {/* Section 2: Club Members (Shown After Admins) */}
+                    {memberGroup.length > 0 && (
+                      <>
+                        <tr className="bg-slate-50 dark:bg-[#171722] border-y border-slate-200 dark:border-zinc-800/80">
+                          <td colSpan={5} className="py-2.5 px-4 sm:px-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
+                                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-zinc-200">
+                                  Club Members
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700">
+                                  {memberGroup.length}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {memberGroup.map((member) => renderMemberRow(member, false))}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -392,10 +518,8 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
 
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {[
-                  { key: '7d', label: 'Last 7 Days (Default)' },
                   { key: '24h', label: 'Last 24 Hours' },
                   { key: '3d', label: 'Last 3 Days' },
-                  { key: 'all', label: 'All Records' },
                 ].map((tf) => (
                   <button
                     key={tf.key}
@@ -443,8 +567,6 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
             const cutoffMs = {
               '24h': now - 24 * 60 * 60 * 1000,
               '3d': now - 3 * 24 * 60 * 60 * 1000,
-              '7d': now - 7 * 24 * 60 * 60 * 1000,
-              all: 0,
             }[logDaysFilter];
 
             const filteredLogs = logs.filter((log) => {
@@ -509,7 +631,6 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
               <div className="space-y-2">
                 <div className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono pb-1 flex items-center justify-between">
                   <span>Showing {filteredLogs.length} events logged in chronological timeline</span>
-                  <span className="hidden sm:inline">Real-time Activity Feed</span>
                 </div>
 
                 <div className="rounded-2xl bg-white dark:bg-[#0f0f15] border-2 border-slate-200 dark:border-zinc-800/90 divide-y divide-slate-100 dark:divide-zinc-800/80 overflow-hidden shadow-sm">
@@ -549,6 +670,10 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                       badgeClass = 'bg-teal-500/20 text-teal-600 dark:text-teal-300 border-teal-500/40';
                       label = 'Returned';
                       ActionIcon = RotateCcw;
+                    } else if (actionUpper === 'UPDATE_ITEM' || actionUpper.includes('UPDATE') || detailsLower.includes('edited') || detailsLower.includes('updated component')) {
+                      badgeClass = 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/40';
+                      label = 'Component Edited';
+                      ActionIcon = Pencil;
                     } else if (actionUpper.includes('ROLE') || detailsLower.includes('role')) {
                       badgeClass = 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40';
                       label = 'Account Operation';
@@ -725,7 +850,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     <button
                       type="button"
                       disabled={processingUserId === account.id}
-                      onClick={() => onRejectAccount(account.id, account.full_name || account.email)}
+                      onClick={() => onRejectAccount(account.id, account.full_name || account.email, account.email)}
                       className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-300 dark:border-red-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 text-center"
                     >
                       Reject
@@ -733,7 +858,7 @@ export const AdminHubView: React.FC<AdminHubViewProps> = ({
                     <button
                       type="button"
                       disabled={processingUserId === account.id}
-                      onClick={() => onApproveAccount(account.id, account.full_name || account.email)}
+                      onClick={() => onApproveAccount(account.id, account.full_name || account.email, account.email)}
                       className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 text-center"
                     >
                       {processingUserId === account.id ? 'Approving...' : 'Approve Account'}

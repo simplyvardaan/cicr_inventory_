@@ -35,7 +35,7 @@ export const IssuePassModal: React.FC<IssuePassModalProps> = ({
             price: `${request.quantity}x unit`,
           },
         ]}
-        merchantName={item?.location ? `CICR Lab Storage (${item.location})` : 'CICR Robotics Lab'}
+        merchantName="CICR Robotics Lab"
         primaryActionLabel="Close Gate Pass"
         onClose={onClose}
       />

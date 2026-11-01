@@ -215,7 +215,7 @@ export const RequestCartModal: React.FC<RequestCartModalProps> = ({
                       </span>
                     </div>
                     <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{item.name}</h4>
-                    <p className="text-slate-500 dark:text-zinc-400 text-[11px] truncate">{item.location}</p>
+                    
                   </div>
 
                   {/* Quantity Stepper */}

@@ -16,6 +16,7 @@ import {
   MapPin,
   Clock,
   AlertTriangle,
+  Pencil,
 } from 'lucide-react';
 
 interface ComponentVaultViewProps {
@@ -33,6 +34,7 @@ interface ComponentVaultViewProps {
   setStatusFilter: (s: string) => void;
   onAddToCart: (item: InventoryItem) => void;
   onOpenAddItem: () => void;
+  onEditItem?: (item: InventoryItem) => void;
   onDeleteItem: (id: string, name: string) => void;
   onSelectItem: (item: InventoryItem) => void;
   cartCount?: number;
@@ -60,6 +62,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
   setStatusFilter,
   onAddToCart,
   onOpenAddItem,
+  onEditItem,
   onDeleteItem,
   onSelectItem,
   cartCount,
@@ -121,8 +124,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
       !q ||
       item.name.toLowerCase().includes(q) ||
       item.description?.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q) ||
-      item.location.toLowerCase().includes(q);
+      item.category.toLowerCase().includes(q);
 
     return matchesCategory && matchesStatus && matchesSearch;
   });
@@ -154,7 +156,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
           <IOSSearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search components by name, location, specs..."
+            placeholder="Search components by name, category, specs..."
             className="w-full"
             collapsedWidth="100%"
             expandedWidth="100%"
@@ -390,10 +392,7 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
                 {/* Bottom specs: Location, Availability & Progress */}
                 <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
                   <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
-                    <span className="flex items-center gap-1 truncate max-w-[150px]" title={item.location}>
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{item.location ? item.location.replace(/\s*-\s*/g, " / ") : ""}</span>
-                    </span>
+                    <span className="font-semibold text-purple-400">Stock Availability</span>
                     <span className="font-bold shrink-0">
                       {item.available_qty} / {item.total_qty} units
                     </span>
@@ -424,6 +423,21 @@ export const ComponentVaultView: React.FC<ComponentVaultViewProps> = ({
                       <ShoppingBag className="w-3.5 h-3.5" />
                       <span>+ Add to Cart</span>
                     </button>
+
+                    {isAdmin && onEditItem && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditItem(item);
+                        }}
+                        className="p-2 rounded-2xl bg-slate-100 hover:bg-purple-100 dark:bg-[#14141c] dark:hover:bg-purple-950/60 text-slate-600 hover:text-purple-700 dark:text-zinc-400 dark:hover:text-purple-300 border border-slate-200 dark:border-zinc-800 transition-colors cursor-pointer"
+                        title="Edit Component (Admin Clearance)"
+                        aria-label={`Edit ${item.name}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
 
                     {isLeadOrAdmin && (
                       <button
