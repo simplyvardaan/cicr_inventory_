@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.15] : 2026-11-01
+
+### Changed
+* Streamlined Component Preview & Detail Modal:
+  - Re-architected `ItemDetailModal.tsx` into a compact, unified vertical flow: **Name** &rarr; **Description** &rarr; **Category & Specs Badges** &rarr; **Slide to Request Item** &rarr; **Edit Component (Admin)** &rarr; **Recent Activity**.
+  - Eliminated redundant stacked cards and reduced vertical modal height, delivering a shorter, faster, and more aesthetic cybernetic preview interface.
+  - Maintained full return clearance capabilities for active user checkouts and real-time activity tracking.
+
+***
+
 ## [2.18.14] : 2026-11-01
 
 ### Added
