@@ -296,4 +296,3 @@ To guarantee 99.9% uptime during primary cloud service interruptions:
 | **Audit Log Volume** | ~2,500 logs / week | 7-day rolling window retains database index size < 2 MB. |
 | **Background Polling** | 1.5s interval | Lightweight diff querying (`HEAD` and status counters) prevents server strain. |
 | **Vercel Edge Delivery** | Global Anycast | Static assets and bundled chunks cached at CDN edge with sub-50ms TTFB. |
-

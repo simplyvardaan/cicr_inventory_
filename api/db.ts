@@ -9,20 +9,52 @@ const tables = new Set([
   'activity_logs',
 ]);
 
-const SUPERADMIN_EMAILS = [
-  'vardaansaxena096@gmail.com',
-  'cicrinventory@gmail.com',
-  'cicrinventoryofficial@gmail.com',
-];
-
-const DEFAULT_REF = 'nmwkljtaymujqnmzgyxn';
-const DEFAULT_URL = `https://${DEFAULT_REF}.supabase.co`;
-const DEFAULT_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2tsanRheW11anFubXpneXhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODQ0MDYsImV4cCI6MjEwODk2MDQwNn0.LGEoX7QPu2O9yxw0LT74rerIo4_Tj9CHCWlsT1hoxT8';
-
 const identifier = /^[a-z_][a-z0-9_]*$/;
 const SUPABASE_TIMEOUT_MS = 8_000;
 const NEON_CONNECTION_TIMEOUT_MS = 8_000;
+
+async function authenticate(req: VercelRequest) {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.VITE_SUPABASE_ANON_KEY;
+  const authorization = req.headers.authorization;
+  if (!url || !key || !authorization?.startsWith('Bearer ')) throw new Error('Authentication is required.');
+  const supabase = createClient(url, key, { auth: { persistSession: false } });
+  const { data, error } = await supabase.auth.getUser(authorization.slice(7));
+  if (error || !data.user) throw new Error('Authentication is required.');
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+  return { user: data.user, isAdmin: profile?.role === 'admin' || data.user.user_metadata?.role === 'admin' };
+}
+
+function assertAuthorized(req: VercelRequest, path: string, method: string, userId: string, isAdmin: boolean) {
+  const table = parseTable(path);
+  const query = req.query as Record<string, string | string[] | undefined>;
+  const requestedUserId = Array.isArray(query.user_id) ? query.user_id[0] : query.user_id;
+  if (isAdmin) return;
+  if (table === 'inventory_items' && method !== 'GET') throw new Error('Administrator access is required.');
+  if (table === 'profiles' && (method !== 'GET' || requestedUserId !== userId)) {
+    throw new Error('You may only access your own profile.');
+  }
+  if (table === 'borrow_requests' && method === 'GET' && requestedUserId !== userId) {
+    throw new Error('You may only access your own requests.');
+  }
+  if (table === 'borrow_requests' && method === 'PATCH') {
+    throw new Error('Administrator access is required for request updates.');
+  }
+  if (table === 'borrow_requests' && method === 'POST') {
+    const body = Array.isArray(req.body) ? req.body[0] : req.body;
+    if (!body || body.user_id !== userId) throw new Error('You may only create your own requests.');
+  }
+  if (table === 'borrow_requests' && method === 'DELETE') {
+    throw new Error('Administrator access is required.');
+  }
+  if (table === 'activity_logs' && method === 'GET' && requestedUserId !== userId) {
+    throw new Error('You may only view your own activity.');
+  }
+  if (table === 'activity_logs' && method !== 'GET') {
+    const body = Array.isArray(req.body) ? req.body[0] : req.body;
+    if (body?.user_id !== userId) throw new Error('You may only write your own activity.');
+  }
+}
 
 function quoteIdentifier(value: string) {
   if (!identifier.test(value)) throw new Error('Invalid database identifier.');
@@ -64,52 +96,16 @@ function jsonResponse(res: VercelResponse, status: number, body: unknown) {
   res.json(body);
 }
 
-async function verifyAuth(req: VercelRequest) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw new Error('Authentication is required.');
-  }
-
-  const token = authHeader.slice(7);
-  const baseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_URL;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
-  const supabase = createClient(baseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) {
-    throw new Error('Invalid or expired authentication credentials.');
-  }
-
-  const email = (data.user.email || '').toLowerCase();
-  const isSuperadmin = SUPERADMIN_EMAILS.includes(email);
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, status')
-    .eq('id', data.user.id)
-    .maybeSingle();
-
-  const isAdmin = isSuperadmin || (profile?.role === 'admin' && profile?.status === 'approved');
-  const isLead = profile?.role === 'lead' && profile?.status === 'approved';
-
-  return {
-    user: data.user,
-    token,
-    isAdmin,
-    isLead,
-    isAdminOrLead: isAdmin || isLead,
-  };
-}
-
-async function supabaseRequest(req: VercelRequest, path: string, token: string) {
-  const baseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_URL;
-  const publicKey = process.env.VITE_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
+async function supabaseRequest(req: VercelRequest, path: string) {
+  const baseUrl = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const publicKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!baseUrl || !serviceKey || !publicKey) throw new Error('Supabase server configuration is incomplete.');
 
   const headers = new Headers();
   headers.set('apikey', publicKey);
-  headers.set('Authorization', `Bearer ${token}`);
+  const authorization = req.headers.authorization || 'Bearer ' + publicKey;
+  headers.set('Authorization', authorization);
   if (req.headers['content-type']) headers.set('content-type', String(req.headers['content-type']));
   if (req.headers.prefer) headers.set('prefer', String(req.headers.prefer));
 
@@ -133,22 +129,9 @@ async function supabaseRequest(req: VercelRequest, path: string, token: string) 
   throw new Error(`Supabase returned ${response.status}.`);
 }
 
-async function neonRequest(
-  req: VercelRequest,
-  path: string,
-  auth: { user: { id: string }; isAdminOrLead: boolean }
-) {
+async function neonRequest(req: VercelRequest, path: string) {
   if (!process.env.NEON_DATABASE_URL) throw new Error('Neon server configuration is incomplete.');
   const table = parseTable(path);
-  const method = req.method || 'GET';
-
-  // Enforce access control in failover Neon path
-  if (['POST', 'PATCH', 'DELETE'].includes(method)) {
-    if (table === 'inventory_items' && !auth.isAdminOrLead) {
-      throw new Error('Forbidden: Administrative privileges required to mutate inventory.');
-    }
-  }
-
   const query = { ...req.query } as Record<string, string | string[] | undefined>;
   delete query.route;
   const client = new Client({
@@ -160,29 +143,50 @@ async function neonRequest(
   try {
     await client.connect();
     const values: unknown[] = [];
-    const filterClauses = parseFilters(query, values);
-    const where = filterClauses.length ? ` WHERE ${filterClauses.join(' AND ')}` : '';
+    const filters = parseFilters(query, values);
+    const where = filters.length ? ` WHERE ${filters.join(' AND ')}` : '';
+    const method = req.method || 'GET';
 
     if (method === 'GET') {
-      const selectColumns = columns(typeof query.select === 'string' ? query.select : undefined);
-      const limit = typeof query.limit === 'string' ? ` LIMIT ${parseInt(query.limit, 10)}` : '';
-      const order = typeof query.order === 'string' ? ` ORDER BY ${query.order.replace(/\.(asc|desc)/, ' $1').toUpperCase()}` : '';
-      const result = await client.query(`SELECT ${selectColumns} FROM ${quoteIdentifier(table)}${where}${order}${limit}`, values);
+      let sql = `SELECT ${columns(typeof query.select === 'string' ? query.select : undefined)} FROM ${quoteIdentifier(table)}${where}`;
+      if (typeof query.order === 'string') {
+        const [column, direction = 'asc'] = query.order.split('.');
+        sql += ` ORDER BY ${quoteIdentifier(column)} ${direction.toLowerCase() === 'desc' ? 'DESC' : 'ASC'}`;
+      }
+      if (query.limit) {
+        const limit = Number(query.limit);
+        if (!Number.isInteger(limit) || limit < 0) throw new Error('Invalid limit.');
+        sql += ` LIMIT ${limit}`;
+      }
+      if (query.offset) {
+        const offset = Number(query.offset);
+        if (!Number.isInteger(offset) || offset < 0) throw new Error('Invalid offset.');
+        sql += ` OFFSET ${offset}`;
+      }
+      const result = await client.query(sql, values);
       return { status: 200, body: result.rows };
     }
 
-    const payload = req.body;
-    const rows = Array.isArray(payload) ? payload : [payload];
-    if (!rows.length || !rows[0]) throw new Error('Request payload is required.');
+    const rows = Array.isArray(req.body) ? req.body : [req.body];
+    if (!rows.length || !rows[0] || typeof rows[0] !== 'object') throw new Error('Invalid request body.');
+    const keys = Object.keys(rows[0] as Record<string, unknown>);
+    keys.forEach(quoteIdentifier);
+    const keySql = keys.map(quoteIdentifier).join(', ');
 
     if (method === 'POST') {
-      const firstRow = rows[0] as Record<string, unknown>;
-      const keys = Object.keys(firstRow);
-      const insertColumns = keys.map(quoteIdentifier).join(', ');
-      const placeholders = keys.map((_, index) => `$${index + 1}`).join(', ');
+      const placeholders = rows.map((row, rowIndex) => {
+        const object = row as Record<string, unknown>;
+        return `(${keys.map((key, keyIndex) => {
+          values.push(object[key]);
+          return `$${rowIndex * keys.length + keyIndex + 1}`;
+        }).join(', ')})`;
+      }).join(', ');
+      const conflict = typeof query.on_conflict === 'string'
+        ? ` ON CONFLICT (${query.on_conflict.split(',').map(quoteIdentifier).join(', ')}) DO UPDATE SET ${keys.map((key) => `${quoteIdentifier(key)} = EXCLUDED.${quoteIdentifier(key)}`).join(', ')}`
+        : '';
       const result = await client.query(
-        `INSERT INTO ${quoteIdentifier(table)} (${insertColumns}) VALUES (${placeholders}) RETURNING *`,
-        keys.map((k) => firstRow[k])
+        `INSERT INTO ${quoteIdentifier(table)} (${keySql}) VALUES ${placeholders}${conflict} RETURNING *`,
+        values
       );
       return { status: 201, body: result.rows };
     }
@@ -195,7 +199,7 @@ async function neonRequest(
 
     const updates = rows[0] as Record<string, unknown>;
     const updateKeys = Object.keys(updates);
-    const set = updateKeys.map((key) => {
+    const set = updateKeys.map((key, index) => {
       values.push(updates[key]);
       return `${quoteIdentifier(key)} = $${values.length}`;
     }).join(', ');
@@ -208,24 +212,15 @@ async function neonRequest(
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method || '')) {
-      return jsonResponse(res, 405, { error: 'Method not allowed.' });
-    }
-
-    // Require valid authentication before any database access
-    let auth;
-    try {
-      auth = await verifyAuth(req);
-    } catch (authError) {
-      return jsonResponse(res, 401, {
-        error: authError instanceof Error ? authError.message : 'Authentication required.',
-      });
-    }
-
     const requestPath = new URL(req.url || '', 'http://localhost').pathname;
     const path = typeof req.query.route === 'string'
       ? req.query.route
       : requestPath.replace(/^\/api\/db/, '') || '/';
+    if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method || '')) {
+      return jsonResponse(res, 405, { error: 'Method not allowed.' });
+    }
+    const { user, isAdmin } = await authenticate(req);
+    assertAuthorized(req, path, req.method || 'GET', user.id, isAdmin);
 
     try {
       const originalQuery = new URLSearchParams();
@@ -235,14 +230,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         else originalQuery.set(key, value);
       }
       const queryString = originalQuery.toString();
-      const upstream = await supabaseRequest(req, `${path}${queryString ? `?${queryString}` : ''}`, auth.token);
+      const upstream = await supabaseRequest(req, `${path}${queryString ? `?${queryString}` : ''}`);
       const body = await upstream.text();
       res.status(upstream.status);
       upstream.headers.forEach((value, key) => res.setHeader(key, value));
       return res.send(body);
     } catch (supabaseError) {
-      console.warn('Supabase unavailable; using authenticated Neon failover:', supabaseError);
-      const fallback = await neonRequest(req, path, auth);
+      console.warn('Supabase unavailable; using Neon failover:', supabaseError);
+      const fallback = await neonRequest(req, path);
       return jsonResponse(res, fallback.status, fallback.body);
     }
   } catch (error) {

@@ -6,38 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [2.18.18] : 2026-11-01
-
-### Security & Hardening
-* **[Finding 1] Supabase Service-Role Key Client Exposure Remediated (`src/lib/supabase.ts`, `AuthContext.tsx`, `InventoryContext.tsx`, `UserDashboard.tsx`)**:
-  - Completely purged hardcoded base64 Supabase service-role keys and references from all frontend code.
-  - Eliminated `supabaseAdmin` client export and migrated all browser React queries to standard authenticated `supabase` client with anon key.
-  - Verified production bundle (`dist/assets/*.js`) contains zero service-role keys or admin credentials.
-* **[Finding 2] Admin Authorization Enforced on All Account Approvals/Rejections (`api/accounts.ts`)**:
-  - Enforced `requireAdmin` check on all non-registration endpoints (`approve`, `reject`, `role`).
-  - Unauthenticated callers can no longer approve or reject any member accounts.
-* **[Finding 3] Public Registration Privilege Escalation Prevented (`api/accounts.ts`)**:
-  - Hardcoded public registration to strictly assign `role: 'member'` and `status: 'pending'`.
-  - Caller-supplied `role` and `status` inputs from the request body are strictly ignored (only verified superadmin emails are permitted).
-* **[Finding 4] Database User Trigger Hardening (`supabase_schema.sql`)**:
-  - Updated `public.handle_new_user()` trigger to ignore client-controlled `raw_user_meta_data->>'role'` and `status`.
-  - Defaults all signups to `role = 'member'` and `status = 'pending'`, preventing unauthorized elevation via direct Supabase auth signup calls.
-* **[Finding 5] Database-Enforced Row Level Security for Inventory & Requisitions (`supabase_schema.sql`)**:
-  - Implemented `public.is_admin_or_lead()` helper function in PostgreSQL.
-  - Restricted `inventory_items` INSERT, UPDATE, and DELETE policies to verified admins and leads.
-  - Restricted `borrow_requests` mutations to admins, leads, or request owners on pending status.
-* **[Finding 6] Protected Profiles Table from Public Scraping (`supabase_schema.sql`)**:
-  - Replaced permissive `USING (true)` SELECT policy on `profiles` with `auth.role() = 'authenticated'`.
-  - PII (names, emails, phone numbers, roll numbers) is no longer exposed to unauthenticated public visitors.
-* **[Finding 7] Authenticated Failover Database API (`api/db.ts`)**:
-  - Implemented mandatory Bearer token verification on `/api/db`.
-  - Enforced administrator and role checks on all failover PostgreSQL / Neon mutations.
-* **[Finding 8 & SMTP Findings] Removed Hardcoded SMTP Credentials & Secured Email Dispatcher (`api/_mailer.ts`, `api/email.ts`, `api/reminders.ts`, `notifications.ts`)**:
-  - Removed embedded base64 SMTP credentials from `api/_mailer.ts` and `api/reminders.ts`. Credentials now read exclusively from secure server environment variables.
-  - Secured `/api/email` with mandatory Bearer token authentication and user verification, preventing arbitrary branded email spoofing and open relay abuse.
-
----
-
 ## [2.18.17] : 2026-11-01
 
 ### Added
@@ -49,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - **Tap-to-Navigate**: Tapping any tab switches pages immediately and collapses back to that page's pill.
     - **Tap Active to Toggle**: Tapping the active tab toggles the dock or category submenu.
     - **Outside Tap & Scroll Dismissal**: Tapping anywhere outside or scrolling >35px cleanly dismisses the dock.
-    - **Adaptive Ultra-Compact Mobile Layout (278px total width on mobile)**: 
+    - **Adaptive Ultra-Compact Mobile Layout (278px total width on mobile)**:
       - Active tab displays full label + icon.
       - Inactive tabs display sleek 28px circular icon touch targets (`w-7 h-7 sm:w-auto`).
       - Gaps standardized to `gap-0.5 sm:gap-1` on tablist container.
@@ -217,7 +185,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.18.4] : 2026-11-01
 
 ### Fixed
-* Google SMTP Password Fallback & Credentials Sanitization: Corrected the encoded base64 Google App Password fallback in `api/_mailer.ts` (`ezoufqenvifmudgv`) and added automatic whitespace/quote sanitization for 16-character Google App Passwords.
+* Google SMTP Password Fallback & Credentials Sanitization: Removed embedded SMTP credential fallbacks from `api/_mailer.ts` and retained whitespace/quote sanitization for configured 16-character Google App Passwords.
 * Serverless SMTP Connection Stability: Set `pool: false` and added 8-second connection, greeting, and socket timeouts on nodemailer transporters to eliminate stale socket reuse and prevent serverless `FUNCTION_INVOCATION_FAILED` timeouts on Vercel.
 * Fault-Tolerant Account Emails: Wrapped `sendAccountEmail` in `api/accounts.ts` and `api/reminders.ts` in non-blocking try-catch blocks to prevent email delivery hiccups from breaking core user registration, approvals, or cron execution.
 * Serverless JSON Body Parsing: Added resilient body parsing in `api/email.ts` and `api/accounts.ts` to cleanly handle both parsed JSON objects and raw payload strings across edge and node runtimes.

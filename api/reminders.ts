@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getMailFrom, isSmtpConfigured, getTransporter, renderEmail } from './_mailer';
+import { getMailFrom, isSmtpConfigured, mailer, renderEmail } from './_mailer';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed.' });
@@ -8,16 +8,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized.' });
   }
 
-  const DEFAULT_REF = 'nmwkljtaymujqnmzgyxn';
-  const DEFAULT_URL = `https://${DEFAULT_REF}.supabase.co`;
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!key) {
-    return res.status(500).json({ error: 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is required.' });
-  }
-
-  if (!isSmtpConfigured()) {
+  if (!url || !key || !isSmtpConfigured()) {
     return res.status(503).json({ error: 'Reminder service is not configured.' });
   }
 
@@ -34,7 +28,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) throw error;
 
     let sent = 0;
-    const transporter = getTransporter();
     for (const request of requests || []) {
       if (!request.user_email) continue;
       const message = renderEmail('return_reminder', {
@@ -43,16 +36,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: request.status,
         dueDate: request.expected_return_date,
       });
-      try {
-        await transporter.sendMail({ from: getMailFrom(), to: request.user_email, ...message });
-        sent += 1;
-      } catch (sendErr) {
-        console.warn(`Failed to send reminder to ${request.user_email}:`, sendErr);
-      }
+      await mailer.sendMail({ from: getMailFrom(), to: request.user_email, ...message });
+      sent += 1;
     }
     return res.status(200).json({ sent });
   } catch (error) {
     console.error('Reminder processing failed:', error);
-    return res.status(500).json({ error: error instanceof Error ? error.message : 'Reminder processing failed.' });
+    return res.status(502).json({ error: 'Reminder processing failed.' });
   }
 }
