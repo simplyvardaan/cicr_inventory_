@@ -1,35 +1,33 @@
 import nodemailer from 'nodemailer';
 
-const decodeFallback = (encoded: string): string => {
-  if (typeof atob === 'function') {
-    try {
-      return atob(encoded);
-    } catch {
-      return '';
-    }
-  }
-  if (typeof Buffer !== 'undefined') {
-    try {
-      return Buffer.from(encoded, 'base64').toString('utf8');
-    } catch {
-      return '';
-    }
-  }
-  return '';
-};
+export const smtpHost = (process.env.SMTP_HOST || '').trim();
+export const smtpPort = Number(process.env.SMTP_PORT);
+export const smtpSecure =
+  process.env.SMTP_SECURE === 'true' ||
+  process.env.SMTP_SECURE === 'true';
 
-// Default Google SMTP configuration fallbacks
-const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
-const DEFAULT_SMTP_PORT = 465;
-const DEFAULT_SMTP_USER = decodeFallback('Y2ljcmludmVudG9yeW9mZmljaWFsQGdtYWlsLmNvbQ=='); // cicrinventoryofficial@gmail.com
-const DEFAULT_SMTP_PASS = decodeFallback('ZXpvdWZxaW52aWZtdWRndg=='); // ezoufqenvifmudgv
-const DEFAULT_SMTP_FROM = 'CICR Inventory <cicrinventoryofficial@gmail.com>';
+const rawUser = process.env.SMTP_USER || '';
+export const smtpUser = rawUser ? rawUser.trim().replace(/^['"]|['"]$/g, '') : '';
 
-export const smtpHost = process.env.SMTP_HOST || DEFAULT_SMTP_HOST;
-export const smtpPort = Number(process.env.SMTP_PORT || DEFAULT_SMTP_PORT);
-export const smtpSecure = process.env.SMTP_SECURE !== 'false';
-export const smtpUser = process.env.SMTP_USER || DEFAULT_SMTP_USER;
-export const smtpPass = process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
+const rawPass = process.env.SMTP_PASS || '';
+// Clean Google 16-character App Passwords (stripping spaces and quotes)
+export const smtpPass = rawPass ? rawPass.trim().replace(/[\s'"]/g, '') : '';
+
+export function getTransporter() {
+  return nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    pool: false, // Critical in serverless to prevent frozen/dead socket reuse
+    connectionTimeout: 4000,
+    greetingTimeout: 4000,
+    socketTimeout: 4000,
+  } as any);
+}
 
 export const mailer = nodemailer.createTransport({
   host: smtpHost,
@@ -42,11 +40,12 @@ export const mailer = nodemailer.createTransport({
 });
 
 export function getMailFrom(): string {
-  return process.env.SMTP_FROM || process.env.SMTP_USER || DEFAULT_SMTP_FROM;
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || '';
+  return from.trim().replace(/^['"]|['"]$/g, '');
 }
 
 export function isSmtpConfigured(): boolean {
-  return Boolean(smtpUser && smtpPass && getMailFrom());
+  return Boolean(smtpHost && smtpPort > 0 && smtpUser && smtpPass && getMailFrom());
 }
 
 function escapeHtml(value: unknown) {

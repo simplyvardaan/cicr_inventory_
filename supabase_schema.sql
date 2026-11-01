@@ -123,15 +123,13 @@ BEGIN
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'role', 'member'),
+    'member',
     COALESCE(NEW.raw_user_meta_data->>'roll_number', ''),
-    COALESCE(NEW.raw_user_meta_data->>'status', 'pending')
+    'pending'
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     email = EXCLUDED.email,
-    role = EXCLUDED.role,
-    status = EXCLUDED.status,
     roll_number = EXCLUDED.roll_number,
     updated_at = NOW();
   RETURN NEW;
@@ -190,57 +188,126 @@ ALTER TABLE public.borrow_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- 9. RLS Policies
--- Profiles: everyone can view profiles, users can update their own profile
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin' AND status = 'approved'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_changes()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_admin() AND (NEW.role IS DISTINCT FROM OLD.role OR NEW.status IS DISTINCT FROM OLD.status) THEN
+    RAISE EXCEPTION 'Only administrators may change profile role or status.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_profile_privilege_changes ON public.profiles;
+CREATE TRIGGER protect_profile_privilege_changes
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_privilege_changes();
+
+CREATE OR REPLACE FUNCTION public.prevent_borrow_workflow_changes()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_admin() AND (
+    NEW.status IS DISTINCT FROM OLD.status OR
+    NEW.user_id IS DISTINCT FROM OLD.user_id OR
+    NEW.item_id IS DISTINCT FROM OLD.item_id OR
+    NEW.quantity IS DISTINCT FROM OLD.quantity OR
+    NEW.approved_by IS DISTINCT FROM OLD.approved_by OR
+    NEW.borrow_date IS DISTINCT FROM OLD.borrow_date OR
+    NEW.actual_return_date IS DISTINCT FROM OLD.actual_return_date
+  ) THEN
+    RAISE EXCEPTION 'Only administrators may change borrow workflow fields.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_borrow_workflow_changes ON public.borrow_requests;
+CREATE TRIGGER protect_borrow_workflow_changes
+  BEFORE UPDATE ON public.borrow_requests
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_borrow_workflow_changes();
+
+-- Profiles: authenticated users can view their own profile; administrators can view all
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-CREATE POLICY "Public profiles are viewable by everyone" 
-  ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can view permitted profiles"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() = id OR public.is_admin());
 
 CREATE POLICY "Users can insert their own profile" 
-  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id AND role = 'member' AND status = 'pending');
 
 CREATE POLICY "Users can update their own profile" 
-  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id OR public.is_admin())
+  WITH CHECK (auth.uid() = id OR public.is_admin());
 
--- Inventory items: readable by anyone, editable by authenticated users
+-- Inventory items: readable by authenticated users, editable by administrators
 DROP POLICY IF EXISTS "Inventory is viewable by all users" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can insert inventory items" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can update inventory items" ON public.inventory_items;
 DROP POLICY IF EXISTS "Authenticated users can delete inventory items" ON public.inventory_items;
-CREATE POLICY "Inventory is viewable by all users" 
-  ON public.inventory_items FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can view inventory"
+  ON public.inventory_items FOR SELECT USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Authenticated users can insert inventory items" 
-  ON public.inventory_items FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Administrators can insert inventory items"
+  ON public.inventory_items FOR INSERT WITH CHECK (public.is_admin());
 
-CREATE POLICY "Authenticated users can update inventory items" 
-  ON public.inventory_items FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Administrators can update inventory items"
+  ON public.inventory_items FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
 
-CREATE POLICY "Authenticated users can delete inventory items" 
-  ON public.inventory_items FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Administrators can delete inventory items"
+  ON public.inventory_items FOR DELETE USING (public.is_admin());
 
--- Borrow requests: all authenticated users can view, users can insert their own requests, authenticated can update
+-- Borrow requests: users can view their own requests; administrators can manage workflow
 DROP POLICY IF EXISTS "Borrow requests viewable by authenticated users" ON public.borrow_requests;
 DROP POLICY IF EXISTS "Users can create borrow requests" ON public.borrow_requests;
 DROP POLICY IF EXISTS "Authenticated users can update borrow requests" ON public.borrow_requests;
-CREATE POLICY "Borrow requests viewable by authenticated users" 
-  ON public.borrow_requests FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can view permitted borrow requests"
+  ON public.borrow_requests FOR SELECT
+  USING (auth.uid() = user_id OR public.is_admin());
 
-CREATE POLICY "Users can create borrow requests" 
-  ON public.borrow_requests FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Users can create their own borrow requests"
+  ON public.borrow_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Authenticated users can update borrow requests" 
-  ON public.borrow_requests FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Administrators can update borrow requests"
+  ON public.borrow_requests FOR UPDATE
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
--- Activity logs: viewable and insertable by authenticated users
+-- Activity logs: authenticated users can view; users can insert only their own
 DROP POLICY IF EXISTS "Activity logs viewable by authenticated users" ON public.activity_logs;
 DROP POLICY IF EXISTS "Activity logs insertable by authenticated users" ON public.activity_logs;
 CREATE POLICY "Activity logs viewable by authenticated users" 
-  ON public.activity_logs FOR SELECT USING (auth.role() = 'authenticated');
+  ON public.activity_logs FOR SELECT USING (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Activity logs insertable by authenticated users" 
-  ON public.activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+  ON public.activity_logs FOR INSERT
+  WITH CHECK (auth.uid() = user_id OR public.is_admin());
 
 -- 10. Initial Seed Data for CICR Inventory
 INSERT INTO public.inventory_items (name, sku, category, description, location, total_qty, available_qty, min_threshold, condition, status, image_url, datasheet_url)

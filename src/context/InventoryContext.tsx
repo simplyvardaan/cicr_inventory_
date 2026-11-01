@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { InventoryItem, BorrowRequest, ActivityLog } from '../types/inventory';
 import { useAuth } from './AuthContext';
 import { notifyEmail } from '../lib/notifications';
@@ -26,6 +26,8 @@ interface InventoryContextType {
     status: 'approved' | 'rejected' | 'returned',
     adminNotes?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  requestItemReturn: (requestId: string, returnNotes?: string) => Promise<{ success: boolean; error?: string }>;
+  cancelReturnRequest: (requestId: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
   refreshData: () => Promise<void>;
 }
 
@@ -69,7 +71,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setItems(normalizedItems);
 
         // 2. Fetch real borrow requests from Supabase
-        const { data: dbRequests } = await supabaseAdmin
+        const { data: dbRequests } = await supabase
           .from('borrow_requests')
           .select('*')
           .order('created_at', { ascending: false });
@@ -78,8 +80,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setRequests(dbRequests as BorrowRequest[]);
         }
 
-        // 3. Fetch real activity logs (full multi-day audit history via supabaseAdmin)
-        const { data: dbLogs } = await supabaseAdmin
+        // 3. Fetch real activity logs (full multi-day audit history via supabase)
+        const { data: dbLogs } = await supabase
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
@@ -127,7 +129,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data) {
         setItems((prev) => [data as InventoryItem, ...prev]);
         try {
-          await supabaseAdmin.from('activity_logs').insert([
+          await supabase.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Admin',
@@ -225,7 +227,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const { data: dbData, error } = await supabaseAdmin
+      const { data: dbData, error } = await supabase
         .from('borrow_requests')
         .insert([
           {
@@ -248,7 +250,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (dbData) {
         setRequests((prev) => [dbData as BorrowRequest, ...prev]);
         try {
-          await supabaseAdmin.from('activity_logs').insert([
+          await supabase.from('activity_logs').insert([
             {
               user_id: user?.id,
               user_name: profile?.full_name || user?.email || 'Member',
@@ -304,7 +306,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (newStatus === 'approved') {
         updatePayload.borrow_date = new Date().toISOString().split('T')[0];
         
-        // Decrement available quantity in Supabase backend via supabaseAdmin
+        // Decrement available quantity in Supabase backend via supabase
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -316,7 +318,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabaseAdmin
+            await supabase
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -338,7 +340,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } else if (newStatus === 'returned') {
         updatePayload.actual_return_date = new Date().toISOString().split('T')[0];
 
-        // Increment available quantity back in Supabase backend via supabaseAdmin
+        // Increment available quantity back in Supabase backend via supabase
         if (targetReq) {
           const targetItem = items.find((i) => i.id === targetReq.item_id);
           if (targetItem) {
@@ -350,7 +352,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? 'Low Stock'
                 : 'In Stock';
 
-            await supabaseAdmin
+            await supabase
               .from('inventory_items')
               .update({
                 available_qty: newAvail,
@@ -371,8 +373,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
 
-      // Update borrow request in Supabase via supabaseAdmin
-      const { error } = await supabaseAdmin
+      // Update borrow request in Supabase via supabase
+      const { error } = await supabase
         .from('borrow_requests')
         .update(updatePayload)
         .eq('id', requestId);
@@ -386,7 +388,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Log activity in Supabase
       if (targetReq) {
-        await supabaseAdmin.from('activity_logs').insert([
+        await supabase.from('activity_logs').insert([
           {
             user_id: user?.id,
             user_name: profile?.full_name || 'Admin',
@@ -419,6 +421,110 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const requestItemReturn = async (requestId: string, returnNotes?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      // Strictly ensure only the user who issued it (or an admin) can initiate the return!
+      const isOwner =
+        (user?.id && targetReq.user_id === user.id) ||
+        (user?.email && targetReq.user_email?.toLowerCase() === user.email.toLowerCase());
+      const isAuthorizedAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'lead' ||
+        user?.user_metadata?.role === 'admin' ||
+        (user?.email && ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(user.email.toLowerCase()));
+
+      if (!isOwner && !isAuthorizedAdmin) {
+        return { success: false, error: 'Unauthorized: Only the member who issued this component can initiate its return.' };
+      }
+
+      if (targetReq.status !== 'approved') {
+        return { success: false, error: 'Only active issued loans can be submitted for return.' };
+      }
+
+      const noteTag = '[RETURN_REQUESTED]';
+      const cleanExistingNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const userDisplay = profile?.full_name || user?.email || targetReq.user_name || 'Member';
+      const updatedNotes = returnNotes?.trim()
+        ? `${noteTag} (${userDisplay}): ${returnNotes.trim()}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`
+        : `${noteTag} Return submitted by ${userDisplay} on ${new Date().toLocaleDateString('en-IN')}${cleanExistingNotes ? ` | ${cleanExistingNotes}` : ''}`;
+
+      const { error } = await supabase
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      try {
+        await supabase.from('activity_logs').insert([
+          {
+            user_id: user?.id,
+            user_name: userDisplay,
+            action: 'RETURN_REQUEST',
+            target_type: 'borrow_request',
+            target_id: requestId,
+            details: `${userDisplay} requested to return ${targetReq.quantity}x ${targetReq.item_name} for "${targetReq.project_name}". Sent to Admin Portal for clearance.`,
+          },
+        ]);
+      } catch {
+        // ignore log error
+      }
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to submit return request';
+      return { success: false, error: msg };
+    }
+  };
+
+  const cancelReturnRequest = async (requestId: string, reason?: string) => {
+    try {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (!targetReq) return { success: false, error: 'Requisition record not found.' };
+
+      const cleanNotes = (targetReq.admin_notes || '').replace(/\[RETURN_REQUESTED\][^\n|]*/g, '').replace(/\|+/g, '|').trim();
+      const updatedNotes = reason ? `${cleanNotes ? `${cleanNotes} | ` : ''}Return declined: ${reason}` : (cleanNotes || null);
+
+      const { error } = await supabase
+        .from('borrow_requests')
+        .update({
+          admin_notes: updatedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', requestId);
+
+      if (error) return { success: false, error: error.message };
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? { ...r, admin_notes: updatedNotes || undefined, updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      await refreshData();
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to cancel return request';
+      return { success: false, error: msg };
+    }
+  };
   return (
     <InventoryContext.Provider
       value={{
@@ -434,6 +540,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         submitBorrowRequest,
         updateBorrowStatus,
         refreshData,
+        requestItemReturn,
+        cancelReturnRequest,
       }}
     >
       {children}

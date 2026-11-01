@@ -15,7 +15,7 @@ import { AdminHubView } from './AdminHubView';
 import { OperatorProfileView } from './OperatorProfileView';
 import { IssuePassModal } from './IssuePassModal';
 import { InventoryItem, BorrowRequest } from '../../types/inventory';
-import { supabase, supabaseAdmin } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useToast } from '../common/Toast';
 import { Notification } from '../ui/notification-bell';
 
@@ -133,10 +133,101 @@ export const UserDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('status', 'pending');
-      if (!error && data) {
-        setPendingAccounts(data);
+        .select('*');
+
+      // Resolved accounts: Any account marked approved, rejected, or admin is permanently RESOLVED!
+      const resolvedEmails = new Set(
+        (data || [])
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
+          .map((p) => p.email?.toLowerCase())
+      );
+
+      const resolvedUserIds = new Set(
+        (data || [])
+          .filter(
+            (p) =>
+              p.status === 'approved' ||
+              p.status === 'rejected' ||
+              p.role === 'admin' ||
+              p.avatar_url === 'status:approved' ||
+              p.avatar_url === 'status:rejected'
+          )
+          .map((p) => p.id)
+      );
+
+      const pendingMap = new Map();
+
+      (data || []).forEach((p) => {
+        const isResolved =
+          p.role === 'admin' ||
+          p.status === 'approved' ||
+          p.status === 'rejected' ||
+          p.avatar_url === 'status:approved' ||
+          p.avatar_url === 'status:rejected';
+
+        if (!isResolved) {
+          const isPending =
+            p.status === 'pending' ||
+            p.avatar_url === 'status:pending' ||
+            !p.status;
+
+          const emailKey = p.email?.toLowerCase();
+          if (isPending && emailKey && !resolvedEmails.has(emailKey)) {
+            pendingMap.set(emailKey, p);
+          }
+        }
+      });
+
+      try {
+        const { data: reqLogs } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .eq('action', 'ACCOUNT_REQUEST')
+          .order('created_at', { ascending: false });
+
+        (reqLogs || []).forEach((log) => {
+          let details: any = {};
+          try {
+            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          } catch {
+            details = {};
+          }
+          const email = (details?.email || '').toLowerCase();
+          const userId = details?.userId || log.user_id;
+          const isPending = !details?.status || details?.status === 'pending';
+
+          // Strictly filter out any account whose email or user_id is already resolved (approved OR rejected)!
+          if (
+            isPending &&
+            email &&
+            !resolvedEmails.has(email) &&
+            (!userId || !resolvedUserIds.has(userId)) &&
+            !pendingMap.has(email)
+          ) {
+            pendingMap.set(email, {
+              id: userId || log.id,
+              full_name: details?.fullName || log.user_name || 'New Member',
+              email: details?.email,
+              roll_number: details?.enrollmentNo || '',
+              phone: details?.phone || '',
+              role: details?.role || 'member',
+              status: 'pending',
+              created_at: log.created_at,
+            });
+          }
+        });
+      } catch (logErr) {
+        console.warn('Notice loading request logs:', logErr);
+      }
+      if (!error) {
+        setPendingAccounts(Array.from(pendingMap.values()));
       }
     } catch {
       // ignore
@@ -322,7 +413,7 @@ export const UserDashboard: React.FC = () => {
         showToast('error', 'Action Restricted', 'Master superadmin roles cannot be modified.');
         return;
       }
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('profiles')
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq('id', targetUserId);
