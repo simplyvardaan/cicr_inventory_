@@ -75,7 +75,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const fullName = typeof req.body.full_name === 'string' ? req.body.full_name.trim() : '';
       const enrollmentNo = typeof req.body.enrollment_no === 'string' ? req.body.enrollment_no : '';
       const phone = typeof req.body.phone === 'string' ? req.body.phone : '';
-      const role = typeof req.body.role === 'string' ? req.body.role : 'member';
       const avatarUrl = typeof req.body.avatar_url === 'string' ? req.body.avatar_url : '';
       if (!email || !password || !fullName) return response(res, 400, { error: 'Name, email, and password are required.' });
 
@@ -83,13 +82,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: fullName, enrollment_no: enrollmentNo, phone, role, status: 'pending', avatar_url: avatarUrl || undefined },
+        user_metadata: {
+          full_name: fullName,
+          enrollment_no: enrollmentNo,
+          phone,
+          role: 'member',
+          status: 'pending',
+          avatar_url: avatarUrl || undefined,
+        },
       });
       if (createError || !created.user) return response(res, 400, { error: createError?.message || 'Account creation failed.' });
 
       const userId = created.user.id;
       const { error: profileError } = await supabase.from('profiles').upsert([{
-        id: userId, full_name: fullName, email, role, status: 'pending', roll_number: enrollmentNo, phone,
+        id: userId, full_name: fullName, email, role: 'member', status: 'pending', roll_number: enrollmentNo, phone,
         avatar_url: avatarUrl || 'status:pending',
       }]);
       requireDatabaseSuccess(profileError, 'Profile creation');
@@ -98,7 +104,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user_id: userId,
         user_name: fullName,
         action: 'ACCOUNT_REQUEST',
-        details: JSON.stringify({ userId, email, fullName, enrollmentNo, phone, role, status: 'pending', created_at: new Date().toISOString() }),
+        details: JSON.stringify({
+          userId,
+          email,
+          fullName,
+          enrollmentNo,
+          phone,
+          role: 'member',
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }),
       }]);
       requireDatabaseSuccess(logError, 'Account request logging');
       return response(res, 201, { success: true });
@@ -128,8 +143,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const resolvedUserId = existing.id;
 
     if (action === 'approve') {
-      await supabase.auth.admin.updateUserById(existing.id, { email_confirm: true, user_metadata: { ...existing.user_metadata, status } });
-      const { error: profileError } = await supabase.from('profiles').upsert([{ id: existing.id, full_name: fullName, email: email || existing.email, role: details?.role || 'member', status, roll_number: details?.enrollmentNo || '', phone: details?.phone || '', avatar_url: 'status:approved', updated_at: new Date().toISOString() }]);
+      await supabase.auth.admin.updateUserById(existing.id, {
+        email_confirm: true,
+        user_metadata: { ...existing.user_metadata, role: 'member', status },
+      });
+      const { error: profileError } = await supabase.from('profiles').upsert([{
+        id: existing.id,
+        full_name: fullName,
+        email: email || existing.email,
+        role: 'member',
+        status,
+        roll_number: details?.enrollmentNo || '',
+        phone: details?.phone || '',
+        avatar_url: 'status:approved',
+        updated_at: new Date().toISOString(),
+      }]);
       requireDatabaseSuccess(profileError, 'Approved profile update');
     } else {
       const { error: authError } = await supabase.auth.admin.updateUserById(resolvedUserId, { user_metadata: { ...existing.user_metadata, status } });

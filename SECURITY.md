@@ -49,8 +49,8 @@ flowchart LR
 
 ### SEC-01: Client-Side Role Escalation via Registration Payload
 - **Severity**: High
-- **Vulnerability**: The `signUp()` function in `AuthContext` previously accepted a generic `role` parameter without validating whether the registering email was an authorized superadmin. A malicious user could submit `{ role: 'admin' }` to claim administrative privileges.
-- **Remediation**: Implemented strict role enforcement in `signUp()`. The assigned role is hard-locked to `'member'` and status is hard-locked to `'pending'` unless the registering email strictly matches the master superadmin whitelist (`vardaansaxena096@gmail.com` or `cicrinventory@gmail.com`).
+- **Vulnerability**: The public account registration endpoint previously persisted a caller-supplied `role`, allowing a request containing `{ role: 'admin' }` to create an administrator account.
+- **Remediation**: The server now ignores the submitted role and hard-locks new registrations to `'member'` and `'pending'` in auth metadata, the profile, and the account-request audit record. Approval also preserves the member role; administrator promotion is restricted to the authenticated role-management path.
 - **Status**: **RESOLVED**
 
 ### SEC-02: Unauthenticated Account Approval & Rejection Calls
@@ -123,4 +123,3 @@ If you discover a potential security vulnerability within the CICR Inventory Hub
 - **Alternative Contact**: `cicrinventory@gmail.com`
 
 Please include a detailed description of the vulnerability, steps to reproduce, and any relevant logs. We request that you adhere to responsible disclosure principles.
-
