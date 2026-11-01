@@ -853,8 +853,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
-  const isLeadOrAdmin = isAdmin || profile?.role === 'lead';
+  const isMasterAdmin = Boolean(
+    user?.email &&
+      ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+        user.email.toLowerCase()
+      )
+  );
+  const isAdmin =
+    isMasterAdmin ||
+    profile?.role === 'admin' ||
+    user?.user_metadata?.role === 'admin';
+  const isLeadOrAdmin =
+    isAdmin ||
+    profile?.role === 'lead' ||
+    user?.user_metadata?.role === 'lead';
 
   return (
     <AuthContext.Provider

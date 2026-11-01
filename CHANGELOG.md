@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.19] - 2026-11-01
+
+### Fixed
+* **Admin Portal Request Reception & Real-Time Sync**:
+  - Integrated a dedicated **Equipment Requisitions** tab into the Admin Management Hub (`AdminHubView.tsx`) with real-time pending badge counter, search, status filters (Pending, Approved, Returned, Rejected), and one-click Approve / Reject / Return clearance actions.
+  - Added live 3-second auto-polling for pending account requests and club members in `UserDashboard.tsx`, ensuring new user registrations and requisitions are received immediately without manual refreshes.
+  - Enabled interactive navigation on summary metrics cards: clicking "Pending Signups" and "Requisitions" jumps directly to the respective approval queues.
+* **Administrative Privilege Resolution**:
+  - Unified `isAdmin` and `isLeadOrAdmin` across `AuthContext.tsx`, `UserDashboard.tsx`, and `RequisitionsView.tsx` to recognize superadmin identities and roles regardless of profile hydration latency.
+  - Ensured `RequisitionsView.tsx` always displays all club requisitions to administrators instead of filtering by personal ID.
+* **Resilient Parallel Data Hydration**:
+  - Refactored `refreshData` in `InventoryContext.tsx` to use `Promise.allSettled`, eliminating blocking dependencies so borrow requests, inventory items, and audit logs load independently.
+
+***
+
 ## [2.18.18] - 2026-11-01
 
 ### Fixed

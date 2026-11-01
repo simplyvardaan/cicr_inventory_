@@ -29,13 +29,25 @@ export const UserDashboard: React.FC = () => {
   const {
     user,
     profile,
-    isLeadOrAdmin,
     refreshProfile,
     updateProfile,
     approveUserAccount,
     rejectUserAccount,
   } = useAuth();
-  const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
+  const isMasterAdmin = Boolean(
+    user?.email &&
+      ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+        user.email.toLowerCase()
+      )
+  );
+  const isAdmin =
+    isMasterAdmin ||
+    profile?.role === 'admin' ||
+    user?.user_metadata?.role === 'admin';
+  const isLeadOrAdmin =
+    isAdmin ||
+    profile?.role === 'lead' ||
+    user?.user_metadata?.role === 'lead';
   const { items, requests, logs, deleteItem, updateBorrowStatus, refreshData } = useInventory();
   const { showToast } = useToast();
 
@@ -131,13 +143,21 @@ export const UserDashboard: React.FC = () => {
   // Fetch pending registrations and all members
   const fetchPendingAccounts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
+      const [profilesRes, logsRes] = await Promise.allSettled([
+        supabase.from('profiles').select('*'),
+        supabase
+          .from('activity_logs')
+          .select('*')
+          .eq('action', 'ACCOUNT_REQUEST')
+          .order('created_at', { ascending: false }),
+      ]);
+
+      const profData = profilesRes.status === 'fulfilled' ? profilesRes.value.data || [] : [];
+      const reqLogs = logsRes.status === 'fulfilled' ? logsRes.value.data || [] : [];
 
       // Resolved accounts: Any account marked approved, rejected, or admin is permanently RESOLVED!
       const resolvedEmails = new Set(
-        (data || [])
+        profData
           .filter(
             (p) =>
               p.status === 'approved' ||
@@ -150,7 +170,7 @@ export const UserDashboard: React.FC = () => {
       );
 
       const resolvedUserIds = new Set(
-        (data || [])
+        profData
           .filter(
             (p) =>
               p.status === 'approved' ||
@@ -164,7 +184,7 @@ export const UserDashboard: React.FC = () => {
 
       const pendingMap = new Map();
 
-      (data || []).forEach((p) => {
+      profData.forEach((p) => {
         const isResolved =
           p.role === 'admin' ||
           p.status === 'approved' ||
@@ -185,50 +205,38 @@ export const UserDashboard: React.FC = () => {
         }
       });
 
-      try {
-        const { data: reqLogs } = await supabase
-          .from('activity_logs')
-          .select('*')
-          .eq('action', 'ACCOUNT_REQUEST')
-          .order('created_at', { ascending: false });
+      reqLogs.forEach((log) => {
+        let details: any = {};
+        try {
+          details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+        } catch {
+          details = {};
+        }
+        const email = (details?.email || '').toLowerCase();
+        const userId = details?.userId || log.user_id;
+        const isPending = !details?.status || details?.status === 'pending';
 
-        (reqLogs || []).forEach((log) => {
-          let details: any = {};
-          try {
-            details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-          } catch {
-            details = {};
-          }
-          const email = (details?.email || '').toLowerCase();
-          const userId = details?.userId || log.user_id;
-          const isPending = !details?.status || details?.status === 'pending';
+        if (
+          isPending &&
+          email &&
+          !resolvedEmails.has(email) &&
+          (!userId || !resolvedUserIds.has(userId)) &&
+          !pendingMap.has(email)
+        ) {
+          pendingMap.set(email, {
+            id: userId || log.id,
+            full_name: details?.fullName || log.user_name || 'New Member',
+            email: details?.email,
+            roll_number: details?.enrollmentNo || '',
+            phone: details?.phone || '',
+            role: details?.role || 'member',
+            status: 'pending',
+            created_at: log.created_at,
+          });
+        }
+      });
 
-          // Strictly filter out any account whose email or user_id is already resolved (approved OR rejected)!
-          if (
-            isPending &&
-            email &&
-            !resolvedEmails.has(email) &&
-            (!userId || !resolvedUserIds.has(userId)) &&
-            !pendingMap.has(email)
-          ) {
-            pendingMap.set(email, {
-              id: userId || log.id,
-              full_name: details?.fullName || log.user_name || 'New Member',
-              email: details?.email,
-              roll_number: details?.enrollmentNo || '',
-              phone: details?.phone || '',
-              role: details?.role || 'member',
-              status: 'pending',
-              created_at: log.created_at,
-            });
-          }
-        });
-      } catch (logErr) {
-        console.warn('Notice loading request logs:', logErr);
-      }
-      if (!error) {
-        setPendingAccounts(Array.from(pendingMap.values()));
-      }
+      setPendingAccounts(Array.from(pendingMap.values()));
     } catch {
       // ignore
     }
@@ -255,6 +263,11 @@ export const UserDashboard: React.FC = () => {
     if (isAdmin) {
       fetchPendingAccounts();
       fetchAllMembers();
+      const interval = setInterval(() => {
+        fetchPendingAccounts();
+        fetchAllMembers();
+      }, 3000);
+      return () => clearInterval(interval);
     }
   }, [isAdmin]);
 
@@ -572,6 +585,7 @@ export const UserDashboard: React.FC = () => {
             onPromoteRole={handlePromoteRole}
             onApproveAccount={handleApproveAccount}
             onRejectAccount={handleRejectAccount}
+            onBorrowAction={handleBorrowAction}
             onRefresh={async () => {
               await refreshData();
               await fetchPendingAccounts();
