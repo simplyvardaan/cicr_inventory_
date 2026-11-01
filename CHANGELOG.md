@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.18] : 2026-11-01
+
+### Security & Hardening
+* **[Finding 1] Supabase Service-Role Key Client Exposure Remediated (`src/lib/supabase.ts`, `AuthContext.tsx`, `InventoryContext.tsx`, `UserDashboard.tsx`)**:
+  - Completely purged hardcoded base64 Supabase service-role keys and references from all frontend code.
+  - Eliminated `supabaseAdmin` client export and migrated all browser React queries to standard authenticated `supabase` client with anon key.
+  - Verified production bundle (`dist/assets/*.js`) contains zero service-role keys or admin credentials.
+* **[Finding 2] Admin Authorization Enforced on All Account Approvals/Rejections (`api/accounts.ts`)**:
+  - Enforced `requireAdmin` check on all non-registration endpoints (`approve`, `reject`, `role`).
+  - Unauthenticated callers can no longer approve or reject any member accounts.
+* **[Finding 3] Public Registration Privilege Escalation Prevented (`api/accounts.ts`)**:
+  - Hardcoded public registration to strictly assign `role: 'member'` and `status: 'pending'`.
+  - Caller-supplied `role` and `status` inputs from the request body are strictly ignored (only verified superadmin emails are permitted).
+* **[Finding 4] Database User Trigger Hardening (`supabase_schema.sql`)**:
+  - Updated `public.handle_new_user()` trigger to ignore client-controlled `raw_user_meta_data->>'role'` and `status`.
+  - Defaults all signups to `role = 'member'` and `status = 'pending'`, preventing unauthorized elevation via direct Supabase auth signup calls.
+* **[Finding 5] Database-Enforced Row Level Security for Inventory & Requisitions (`supabase_schema.sql`)**:
+  - Implemented `public.is_admin_or_lead()` helper function in PostgreSQL.
+  - Restricted `inventory_items` INSERT, UPDATE, and DELETE policies to verified admins and leads.
+  - Restricted `borrow_requests` mutations to admins, leads, or request owners on pending status.
+* **[Finding 6] Protected Profiles Table from Public Scraping (`supabase_schema.sql`)**:
+  - Replaced permissive `USING (true)` SELECT policy on `profiles` with `auth.role() = 'authenticated'`.
+  - PII (names, emails, phone numbers, roll numbers) is no longer exposed to unauthenticated public visitors.
+* **[Finding 7] Authenticated Failover Database API (`api/db.ts`)**:
+  - Implemented mandatory Bearer token verification on `/api/db`.
+  - Enforced administrator and role checks on all failover PostgreSQL / Neon mutations.
+* **[Finding 8 & SMTP Findings] Removed Hardcoded SMTP Credentials & Secured Email Dispatcher (`api/_mailer.ts`, `api/email.ts`, `api/reminders.ts`, `notifications.ts`)**:
+  - Removed embedded base64 SMTP credentials from `api/_mailer.ts` and `api/reminders.ts`. Credentials now read exclusively from secure server environment variables.
+  - Secured `/api/email` with mandatory Bearer token authentication and user verification, preventing arbitrary branded email spoofing and open relay abuse.
+
+---
+
 ## [2.18.17] : 2026-11-01
 
 ### Added

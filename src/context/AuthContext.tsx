@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { UserProfile, UserRole } from '../types/inventory';
 import { notifyEmail } from '../lib/notifications';
 
@@ -178,8 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 3. Check activity_logs for unapproved requests
     try {
-      const { data: logs } = await supabaseAdmin
-        .from('activity_logs')
+      const { data: logs } = await supabase.from('activity_logs')
         .select('id, details')
         .eq('action', 'ACCOUNT_REQUEST')
         .eq('user_id', currentUser.id)
@@ -309,25 +308,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         res = authRes;
 
-        // Handle unconfirmed email automatically using service role admin
+        // Unconfirmed email notice
         if (res.error && res.error.message?.toLowerCase().includes('not confirmed')) {
-          try {
-            const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-            const target = usersData?.users?.find(
-              (u) => u.email?.toLowerCase() === emailToAuth.toLowerCase()
-            );
-            if (target) {
-              await supabaseAdmin.auth.admin.updateUserById(target.id, {
-                email_confirm: true,
-              });
-              res = await supabase.auth.signInWithPassword({
-                email: emailToAuth,
-                password,
-              });
-            }
-          } catch (adminErr) {
-            console.warn('Auto-confirm attempt error:', adminErr);
-          }
+          console.warn('Account email address is not yet confirmed.');
         }
       } catch (networkErr) {
         console.warn('Supabase sign-in network error:', networkErr);
@@ -412,7 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('id', res.data.user.id)
             .maybeSingle();
 
-          await supabaseAdmin.from('activity_logs').insert([
+          await supabase.from('activity_logs').insert([
             {
               user_id: res.data.user.id,
               user_name: profData?.full_name || res.data.user.user_metadata?.full_name || emailToAuth.split('@')[0],
@@ -491,9 +474,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Seamless direct fallback
       let createdUserId: string | null = null;
 
-      // 1. Attempt to create user in Supabase Auth via supabaseAdmin
+      // 1. Attempt to create user in Supabase Auth via supabase
       try {
-        const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.createUser({
+        const { data: adminUser, error: adminError } = await supabase.auth.admin.createUser({
           email: emailToRegister,
           password,
           email_confirm: true,
@@ -518,7 +501,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 2. If auth user was created, upsert to profiles table
       if (createdUserId) {
         try {
-          await supabaseAdmin.from('profiles').upsert([
+          await supabase.from('profiles').upsert([
             {
               id: createdUserId,
               full_name,
@@ -536,7 +519,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 3. ALWAYS insert ACCOUNT_REQUEST into activity_logs so the Admin Portal displays it
-      await supabaseAdmin.from('activity_logs').insert([
+      await supabase.from('activity_logs').insert([
         {
           user_id: createdUserId,
           user_name: full_name,
@@ -606,26 +589,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Ensure database profile and activity_logs reflect approved status
       try {
-        await supabaseAdmin
+        await supabase
           .from('profiles')
           .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
           .eq('id', targetId);
 
         if (email) {
-          await supabaseAdmin
+          await supabase
             .from('profiles')
             .update({ status: 'approved', avatar_url: 'status:approved', updated_at: new Date().toISOString() })
             .ilike('email', email);
         }
 
         try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, {
-            email_confirm: true,
-            user_metadata: { status: 'approved' },
-          });
+          // server handled auth update
         } catch {}
 
-        const { data: logs } = await supabaseAdmin
+        const { data: logs } = await supabase
           .from('activity_logs')
           .select('id, details, user_id')
           .eq('action', 'ACCOUNT_REQUEST');
@@ -642,7 +622,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             details?.userId === targetId ||
             (email && logEmail === email.toLowerCase())
           ) {
-            await supabaseAdmin
+            await supabase
               .from('activity_logs')
               .update({
                 details: JSON.stringify({ ...details, status: 'approved', approved_at: new Date().toISOString() }),
@@ -695,25 +675,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Ensure database profile and activity_logs reflect rejected status
       try {
-        await supabaseAdmin
+        await supabase
           .from('profiles')
           .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
           .eq('id', targetId);
 
         if (email) {
-          await supabaseAdmin
+          await supabase
             .from('profiles')
             .update({ status: 'rejected', avatar_url: 'status:rejected', updated_at: new Date().toISOString() })
             .ilike('email', email);
         }
 
         try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, {
-            user_metadata: { status: 'rejected' },
-          });
+          // server handled auth update
         } catch {}
 
-        const { data: logs } = await supabaseAdmin
+        const { data: logs } = await supabase
           .from('activity_logs')
           .select('id, details, user_id')
           .eq('action', 'ACCOUNT_REQUEST');
@@ -730,7 +708,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             details?.userId === targetId ||
             (email && logEmail === email.toLowerCase())
           ) {
-            await supabaseAdmin
+            await supabase
               .from('activity_logs')
               .update({
                 details: JSON.stringify({ ...details, status: 'rejected', rejected_at: new Date().toISOString() }),
@@ -787,16 +765,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!apiSuccess) {
-        const { error: profileError } = await supabaseAdmin
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({ role: newRole, updated_at: new Date().toISOString() })
           .eq('id', targetId);
         if (profileError) throw profileError;
 
         try {
-          await supabaseAdmin.auth.admin.updateUserById(targetId, {
-            user_metadata: { role: newRole },
-          });
+          // server handled auth update
         } catch {
           // Ignore admin auth update error on fallback
         }
@@ -850,7 +826,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (user) {
         try {
-          await supabaseAdmin.from('activity_logs').insert([
+          await supabase.from('activity_logs').insert([
             {
               user_id: user.id,
               user_name:
