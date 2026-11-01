@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 export type NotificationEvent =
   | 'login'
   | 'logout'
@@ -15,33 +17,30 @@ export async function notifyEmail(
   to: string | undefined,
   data: Record<string, unknown>
 ): Promise<boolean> {
-  if (!to) {
-    console.warn(`Email notification skipped for ${event}: recipient is missing.`);
-    return false;
-  }
+  if (!to) return false;
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.access_token) {
-      console.warn(`Email notification skipped for ${event}: authentication is missing.`);
-      return false;
+    const token = sessionData?.session?.access_token;
+
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+
     const response = await fetch('/api/email', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${sessionData.session.access_token}`,
-      },
+      headers,
       body: JSON.stringify({ event, to, data }),
     });
+
     if (!response.ok) {
-      const details = await response.text();
-      console.warn(`Email notification failed for ${event}: ${response.status} ${details}`);
       return false;
     }
-    return true;
-  } catch (error) {
-    console.warn(`Email notification failed for ${event}:`, error);
+    const result = await response.json().catch(() => ({}));
+    return Boolean(result?.sent);
+  } catch {
     return false;
   }
 }
-import { supabase } from './supabase';

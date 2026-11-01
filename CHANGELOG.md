@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.18] - 2026-11-01
+
+### Fixed
+* **Vercel Production Deployment & Resilient Initialization**:
+  - Restored fail-safe public Supabase configuration fallbacks in src/lib/supabase.ts ensuring the frontend bundle never crashes when environment variables are not injected into the client bundle at build time.
+* **Serverless Email Notification Stability (api/email.ts, api/_mailer.ts)**:
+  - Eliminated FUNCTION_INVOCATION_FAILED (500) errors by applying strict 3500ms serverless socket, greeting, and connection timeouts with non-pooling transports.
+  - Added safe fallback responses (200 OK with { sent: false }) when SMTP credentials are unconfigured or connections time out, ensuring background notifications never disrupt user operations.
+  - Hardened api/accounts.ts to ensure account registration and approval workflows continue uninterrupted regardless of email service availability.
+* **Avatar URL Sanitization (net::ERR_UNKNOWN_URL_SCHEME)**:
+  - Enforced strict URI scheme validation (http://, https://, data:image/) on all profile image rendering in BottomNavbar, OperatorProfileView, and SignupForm.
+  - Filtered legacy status:* database indicators from being treated as image sources in AuthContext and user profile views.
+
+***
+
 ## [2.18.17] : 2026-11-01
 
 ### Added

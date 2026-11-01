@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           roll_number: data.roll_number || currentUser.user_metadata?.enrollment_no || '',
           role: (data.role as UserRole) || (currentUser.user_metadata?.role as UserRole) || 'member',
           phone: data.phone || currentUser.user_metadata?.phone || '',
-          avatar_url: data.avatar_url && !data.avatar_url.startsWith('status:') ? data.avatar_url : (currentUser.user_metadata?.avatar_url || ''),
+          avatar_url: (data.avatar_url && !data.avatar_url.startsWith('status:')) ? data.avatar_url : (currentUser.user_metadata?.avatar_url && !currentUser.user_metadata.avatar_url.startsWith('status:') ? currentUser.user_metadata.avatar_url : ''),
           created_at: data.created_at || currentUser.created_at,
           last_sign_in: currentUser.last_sign_in_at,
         };
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       roll_number: meta.enrollment_no || meta.roll_number || '',
       role: (meta.role as UserRole) || 'member',
       phone: meta.phone || '',
-      avatar_url: meta.avatar_url || '',
+      avatar_url: meta.avatar_url && !meta.avatar_url.startsWith('status:') ? meta.avatar_url : '',
       created_at: currentUser.created_at,
       last_sign_in: currentUser.last_sign_in_at,
     };
