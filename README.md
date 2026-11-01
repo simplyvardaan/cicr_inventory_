@@ -264,6 +264,19 @@ times out or returns a server error. Use the deployed Vercel app (or `vercel dev
 to run the gateway; plain `npm run dev` only serves the frontend and cannot run
 the server-side Neon fallback.
 
+### Local endpoint audit
+
+With the local development server running, probe every serverless API handler
+and append redacted JSONL results to `SECURITY-AUDIT-ENDPOINTS.jsonl`:
+
+```powershell
+python scripts\audit_endpoints.py
+```
+
+The probe defaults to loopback, uses validation-oriented payloads, truncates
+responses, and refuses non-local targets unless `--allow-external` is explicitly
+provided.
+
 ### 4. Configure the Neon backup
 
 Create a Neon PostgreSQL database and run [`neon_backup_schema.sql`](./neon_backup_schema.sql)

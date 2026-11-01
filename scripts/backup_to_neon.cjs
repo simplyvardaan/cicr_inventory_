@@ -16,6 +16,18 @@ if (!neonDatabaseUrl) {
   throw new Error('NEON_DATABASE_URL is required.');
 }
 
+if (!supabaseDatabaseUrl) {
+  throw new Error(
+    'SUPABASE_DB_URL is required to mirror password hashes from Supabase auth.users.'
+  );
+}
+
+if (!/^postgres(?:ql)?:\/\//i.test(supabaseDatabaseUrl)) {
+  throw new Error(
+    'SUPABASE_DB_URL must be a PostgreSQL connection string beginning with postgres:// or postgresql://.'
+  );
+}
+
 if (typeof globalThis.WebSocket === 'undefined') {
   globalThis.WebSocket = class DummyWebSocket {};
 }
@@ -27,9 +39,10 @@ const neon = new Client({
   connectionString: neonDatabaseUrl,
   ssl: { rejectUnauthorized: true },
 });
-const supabaseDatabase = supabaseDatabaseUrl
-  ? new Client({ connectionString: supabaseDatabaseUrl, ssl: { rejectUnauthorized: true } })
-  : null;
+const supabaseDatabase = new Client({
+  connectionString: supabaseDatabaseUrl,
+  ssl: { rejectUnauthorized: true },
+});
 
 const sourceTables = [
   { name: 'profiles', updatedColumn: 'updated_at' },
@@ -87,18 +100,19 @@ async function fetchAuthUsers() {
   }
 
   const hashes = new Map();
-  if (supabaseDatabase) {
-    const result = await supabaseDatabase.query(
-      'SELECT id, encrypted_password FROM auth.users WHERE encrypted_password IS NOT NULL'
-    );
-    for (const row of result.rows) hashes.set(row.id, row.encrypted_password);
-  } else {
-    console.warn('SUPABASE_DB_URL is not configured; password hashes cannot be mirrored from auth.users.');
+  const result = await supabaseDatabase.query(
+    'SELECT id, encrypted_password FROM auth.users WHERE encrypted_password IS NOT NULL AND encrypted_password <> $1',
+    ['']
+  );
+  for (const row of result.rows) {
+    if (typeof row.encrypted_password !== 'string' || !row.encrypted_password.startsWith('$')) {
+      throw new Error(`Unsupported password hash format for Supabase user ${row.id}.`);
+    }
+    hashes.set(row.id, row.encrypted_password);
   }
 
   return users.map((user) => {
-    const passwordHash = [hashes.get(user.id), user.password_hash, user.encrypted_password]
-      .find((value) => typeof value === 'string' && /^\$(2[aby]?|argon2(?:id)?|7)\$/.test(value));
+    const passwordHash = hashes.get(user.id);
 
     return {
       id: user.id,
@@ -217,7 +231,7 @@ async function syncOperationalTables(tables, authUsers) {
 
 async function backup() {
   await neon.connect();
-  if (supabaseDatabase) await supabaseDatabase.connect();
+  await supabaseDatabase.connect();
   await ensureSchema();
 
   const run = await neon.query(
@@ -262,7 +276,7 @@ async function backup() {
     throw error;
   } finally {
     await neon.end();
-    if (supabaseDatabase) await supabaseDatabase.end();
+    await supabaseDatabase.end();
   }
 }
 
