@@ -51,7 +51,15 @@ export const RequisitionsView: React.FC<RequisitionsViewProps> = ({
   const [confirmReturnId, setConfirmReturnId] = useState<string | null>(null);
   const [returnNote, setReturnNote] = useState('');
 
-  const activeRequestsList = isLeadOrAdmin
+  const isSuperAdminEmail = Boolean(
+    userEmail &&
+      ['vardaansaxena096@gmail.com', 'cicrinventory@gmail.com', 'cicrinventoryofficial@gmail.com'].includes(
+        userEmail.toLowerCase()
+      )
+  );
+  const hasAdminPrivileges = isLeadOrAdmin || isSuperAdminEmail;
+
+  const activeRequestsList = hasAdminPrivileges
     ? requests
     : requests.filter(
         (r) =>

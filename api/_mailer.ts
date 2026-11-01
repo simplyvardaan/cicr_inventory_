@@ -152,3 +152,8 @@ export function renderEmail(event: string, data: Record<string, unknown>) {
     html,
   };
 }
+
+
+export default async function handler(_req: any, res: any) {
+  return res.status(200).json({ ok: true, status: 'Mailer utility operational' });
+}

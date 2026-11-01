@@ -45,59 +45,62 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Fetch real data from Supabase backend
   const refreshData = useCallback(async () => {
-    if (isRefreshing.current) return;
-    isRefreshing.current = true;
-    setLoading(true);
     try {
-      // 1. Fetch real inventory items from Supabase
-      const { data: dbItems, error: itemsError } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (itemsError) {
-        if (itemsError.code === 'PGRST205' || itemsError.message.includes('not find the table')) {
-          setSchemaNeeded(true);
-          setIsLiveDatabase(false);
-          setItems([]);
-        } else {
-          setItems([]);
-        }
-      } else if (dbItems) {
-        setIsLiveDatabase(true);
-        setSchemaNeeded(false);
-        const normalizedItems: InventoryItem[] = (dbItems as any[]).map((item) => ({
-          ...item,
-          total_qty: Number(item.total_qty ?? item.quantity ?? 1),
-          available_qty: Number(item.available_qty ?? item.available_quantity ?? item.total_qty ?? item.quantity ?? 1),
-        }));
-        setItems(normalizedItems);
-
-        // 2. Fetch real borrow requests from Supabase
-        const { data: dbRequests } = await supabase
+      const [itemsRes, reqsRes, logsRes] = await Promise.allSettled([
+        supabase
+          .from('inventory_items')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
           .from('borrow_requests')
           .select('*')
-          .order('created_at', { ascending: false });
-
-        if (dbRequests) {
-          setRequests(dbRequests as BorrowRequest[]);
-        }
-
-        // 3. Fetch real activity logs (full multi-day audit history via supabase)
-        const { data: dbLogs } = await supabase
+          .order('created_at', { ascending: false }),
+        supabase
           .from('activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(250);
+          .limit(250),
+      ]);
 
-        if (dbLogs) {
+      // 1. Process inventory items
+      if (itemsRes.status === 'fulfilled') {
+        const { data: dbItems, error: itemsError } = itemsRes.value;
+        if (itemsError) {
+          if (itemsError.code === 'PGRST205' || itemsError.message.includes('not find the table')) {
+            setSchemaNeeded(true);
+            setIsLiveDatabase(false);
+          }
+        } else if (dbItems) {
+          setIsLiveDatabase(true);
+          setSchemaNeeded(false);
+          const normalizedItems: InventoryItem[] = (dbItems as any[]).map((item) => ({
+            ...item,
+            total_qty: Number(item.total_qty ?? item.quantity ?? 1),
+            available_qty: Number(item.available_qty ?? item.available_quantity ?? item.total_qty ?? item.quantity ?? 1),
+          }));
+          setItems(normalizedItems);
+        }
+      }
+
+      // 2. Process borrow requests
+      if (reqsRes.status === 'fulfilled') {
+        const { data: dbRequests, error: reqsError } = reqsRes.value;
+        if (!reqsError && dbRequests) {
+          setRequests(dbRequests as BorrowRequest[]);
+        } else if (reqsError) {
+          console.warn('Notice loading borrow requests:', reqsError.message);
+        }
+      }
+
+      // 3. Process activity logs
+      if (logsRes.status === 'fulfilled') {
+        const { data: dbLogs, error: logsError } = logsRes.value;
+        if (!logsError && dbLogs) {
           setLogs(dbLogs as ActivityLog[]);
         }
       }
-    } catch {
-      setItems([]);
-      setRequests([]);
-      setLogs([]);
+    } catch (err) {
+      console.warn('Notice during inventory refresh:', err);
     } finally {
       setLoading(false);
       isRefreshing.current = false;
