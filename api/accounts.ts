@@ -35,10 +35,16 @@ async function requireAdmin(req: VercelRequest, supabase: ReturnType<typeof getA
 
 async function sendAccountEmail(event: 'account_created' | 'account_approved' | 'account_rejected', to: string, data: Record<string, unknown>) {
   if (!isSmtpConfigured()) {
-    console.warn(`SMTP is not configured; skipped ${event} email.`);
     return;
   }
-  await mailer.sendMail({ from: getMailFrom(), to, ...renderEmail(event, data) });
+  try {
+    await Promise.race([
+      mailer.sendMail({ from: getMailFrom(), to, ...renderEmail(event, data) }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP transmission timed out')), 4000)),
+    ]);
+  } catch (err) {
+    console.warn(`Notice from accounts sendAccountEmail (${event}):`, err instanceof Error ? err.message : String(err));
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

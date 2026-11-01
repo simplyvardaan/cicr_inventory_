@@ -1,10 +1,14 @@
 import nodemailer from 'nodemailer';
 
-export const smtpHost = (process.env.SMTP_HOST || '').trim();
-export const smtpPort = Number(process.env.SMTP_PORT);
+// Default SMTP Configuration
+const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
+const DEFAULT_SMTP_PORT = 465;
+
+export const smtpHost = (process.env.SMTP_HOST || DEFAULT_SMTP_HOST).trim();
+export const smtpPort = Number(process.env.SMTP_PORT) || DEFAULT_SMTP_PORT;
 export const smtpSecure =
   process.env.SMTP_SECURE === 'true' ||
-  process.env.SMTP_SECURE === 'true';
+  (process.env.SMTP_SECURE !== 'false' && smtpPort === 465);
 
 const rawUser = process.env.SMTP_USER || '';
 export const smtpUser = rawUser ? rawUser.trim().replace(/^['"]|['"]$/g, '') : '';
@@ -12,6 +16,15 @@ export const smtpUser = rawUser ? rawUser.trim().replace(/^['"]|['"]$/g, '') : '
 const rawPass = process.env.SMTP_PASS || '';
 // Clean Google 16-character App Passwords (stripping spaces and quotes)
 export const smtpPass = rawPass ? rawPass.trim().replace(/[\s'"]/g, '') : '';
+
+export function getMailFrom(): string {
+  const from = process.env.SMTP_FROM || (smtpUser ? `CICR Inventory <${smtpUser}>` : '');
+  return from ? from.trim().replace(/^['"]|['"]$/g, '') : '';
+}
+
+export function isSmtpConfigured(): boolean {
+  return Boolean(smtpUser && smtpPass && getMailFrom());
+}
 
 export function getTransporter() {
   return nodemailer.createTransport({
@@ -22,31 +35,16 @@ export function getTransporter() {
       user: smtpUser,
       pass: smtpPass,
     },
-    pool: false, // Critical in serverless to prevent frozen/dead socket reuse
-    connectionTimeout: 4000,
-    greetingTimeout: 4000,
-    socketTimeout: 4000,
+    pool: false, // Critical in serverless to prevent frozen socket reuse
+    connectionTimeout: 3500,
+    greetingTimeout: 3500,
+    socketTimeout: 3500,
   } as any);
 }
 
-export const mailer = nodemailer.createTransport({
-  host: smtpHost,
-  port: smtpPort,
-  secure: smtpSecure,
-  auth: {
-    user: smtpUser,
-    pass: smtpPass,
-  },
-});
-
-export function getMailFrom(): string {
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || '';
-  return from.trim().replace(/^['"]|['"]$/g, '');
-}
-
-export function isSmtpConfigured(): boolean {
-  return Boolean(smtpHost && smtpPort > 0 && smtpUser && smtpPass && getMailFrom());
-}
+export const mailer = {
+  sendMail: (options: any) => getTransporter().sendMail(options),
+};
 
 function escapeHtml(value: unknown) {
   return String(value ?? '')
@@ -71,6 +69,7 @@ export function renderEmail(event: string, data: Record<string, unknown>) {
     account_created: 'CICR registration received - awaiting approval',
     account_approved: 'CICR account approved - access granted',
     account_rejected: 'CICR account rejected - registration update',
+    role_updated: 'CICR account privileges updated',
     borrow_requested: 'CICR borrow request received',
     borrow_approved: 'CICR borrow request approved',
     borrow_rejected: 'CICR borrow request rejected',
@@ -84,6 +83,7 @@ export function renderEmail(event: string, data: Record<string, unknown>) {
     account_created: `Hello ${name},\n\nYour CICR Inventory account has been registered successfully and is awaiting administrator approval. You will receive another email when an administrator approves or rejects your registration.`,
     account_approved: `Hello ${name},\n\nYour CICR Inventory account has been approved by an administrator. You can now sign in and use CICR Inventory.`,
     account_rejected: `Hello ${name},\n\nYour CICR Inventory registration has been rejected by an administrator. Please contact CICR leadership if you need more information.`,
+    role_updated: `Hello ${name},\n\nYour CICR Inventory account role has been updated to ${data.role ? String(data.role).toUpperCase() : 'MEMBER'}.`,
     borrow_requested: `Hello ${name},\n\nYour equipment borrow request was submitted and is awaiting review.`,
     borrow_approved: `Hello ${name},\n\nYour equipment borrow request was approved.`,
     borrow_rejected: `Hello ${name},\n\nYour equipment borrow request was rejected.`,
@@ -97,6 +97,7 @@ export function renderEmail(event: string, data: Record<string, unknown>) {
     account_created: { label: 'ACCOUNT // REVIEW PENDING', title: 'Registration received', action: 'CHECK ACCOUNT STATUS', path: '/profile' },
     account_approved: { label: 'ACCOUNT // ACCESS APPROVED', title: 'Your account is ready', action: 'OPEN CICR VAULT', path: '/' },
     account_rejected: { label: 'ACCOUNT // REVIEW COMPLETE', title: 'Registration update', action: 'CONTACT CICR', path: '/profile' },
+    role_updated: { label: 'ACCOUNT // ROLE UPDATED', title: 'Account privileges updated', action: 'OPEN CICR VAULT', path: '/' },
     borrow_requested: { label: 'REQUEST // SUBMITTED', title: 'Borrow request submitted', action: 'VIEW MY REQUESTS', path: '/requests' },
     borrow_approved: { label: 'REQUEST // APPROVED', title: 'Borrow request approved', action: 'VIEW EQUIPMENT', path: '/inventory' },
     borrow_rejected: { label: 'REQUEST // DECLINED', title: 'Borrow request needs attention', action: 'VIEW REQUEST DETAILS', path: '/requests' },

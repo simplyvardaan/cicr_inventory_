@@ -522,7 +522,7 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
                       {/* Header */}
                       <div className="px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800/80 flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-blue-600 dark:bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">
-                          {profile?.avatar_url ? (
+                          {profile?.avatar_url && (profile.avatar_url.startsWith('data:image') || profile.avatar_url.startsWith('http')) ? (
                             <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover rounded-full" />
                           ) : (
                             getInitial()
