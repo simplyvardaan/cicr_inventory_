@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.18.16] : 2026-11-01
+
+### Changed
+* Streamlined Edit Component Modal (`AddEditItemModal.tsx`):
+  - Form reduced strictly to the 4 essential fields: **Name** &rarr; **Domain** &rarr; **Total Units** &rarr; **Description**.
+  - Removed all extraneous inputs (available units override, condition, datasheet URL, and status preview cards).
+  - Maintained automatic evaluation of active loan states and stock availability.
+
+***
+
 ## [2.18.15] : 2026-11-01
 
 ### Added
